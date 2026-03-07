@@ -27,18 +27,47 @@
   ],
   "tasks": [
     {
-      "title": "Implement retry policy for OAuth callback",
-      "description": "Add resilient retry and timeout handling for provider callback flow.",
+      "title": "Authentication hardening",
+      "description": "Parent task for auth reliability and rollout improvements.",
       "complexity": 2,
       "priority": 3,
-      "taskTypeID": 10,
-      "estimatedEffort": 240
+      "taskTypeID": 30,
+      "estimatedEffort": 320,
+      "referenceID": "task-auth-hardening",
+      "subTasks": [
+        {
+          "title": "Implement retry policy for OAuth callback",
+          "description": "Add resilient retry and timeout handling for provider callback flow.",
+          "complexity": 2,
+          "priority": 3,
+          "taskTypeID": 10,
+          "estimatedEffort": 240,
+          "referenceID": "task-oauth-retry"
+        },
+        {
+          "title": "Prepare PM validation checklist for auth rollout",
+          "description": "Create go-live and rollback checklist for project manager review.",
+          "complexity": 1,
+          "priority": 2,
+          "taskTypeID": 0,
+          "estimatedEffort": 90,
+          "referenceID": "task-auth-checklist"
+        }
+      ]
     }
   ],
   "wikis": [
     {
       "name": "Authentication Technical Findings",
-      "description": "Root cause analysis for OAuth callback handling with fix strategy and rollout notes."
+      "description": "Root cause analysis for OAuth callback handling with fix strategy and rollout notes.",
+      "relatedTaskReferenceIDs": ["task-oauth-retry"],
+      "subWikis": [
+        {
+          "name": "Auth Rollout Checklist",
+          "description": "Checklist and validation gates for release planning.",
+          "relatedTaskReferenceIDs": ["task-auth-checklist"]
+        }
+      ]
     }
   ]
 }

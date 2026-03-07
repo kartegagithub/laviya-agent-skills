@@ -17,7 +17,7 @@ const tokenUsageInputSchema = z.object({
     currency: z.string().min(1).optional(),
     providerRequestID: z.string().optional()
 });
-const generatedTaskInputSchema = z.object({
+const generatedTaskInputSchema = z.lazy(() => z.object({
     title: z.string().min(1),
     description: z.string().optional(),
     complexity: z.number().int().min(0).max(3),
@@ -26,12 +26,16 @@ const generatedTaskInputSchema = z.object({
         .number()
         .int()
         .refine((value) => taskTypeValues.includes(value), "Invalid taskTypeID"),
-    estimatedEffort: z.number().min(0)
-});
-const generatedWikiInputSchema = z.object({
+    estimatedEffort: z.number().min(0),
+    referenceID: z.string().min(1).optional(),
+    subTasks: z.array(generatedTaskInputSchema).optional()
+}));
+const generatedWikiInputSchema = z.lazy(() => z.object({
     name: z.string().min(1),
-    description: z.string().optional()
-});
+    description: z.string().optional(),
+    subWikis: z.array(generatedWikiInputSchema).optional(),
+    relatedTaskReferenceIDs: z.array(z.string().min(1)).optional()
+}));
 export const completeExecutionPayloadSchema = z.object({
     taskID: z.number().int().positive(),
     aiAgentFlowRunID: z.number().int().positive(),

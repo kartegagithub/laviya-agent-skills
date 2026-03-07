@@ -28,14 +28,18 @@ Use only these orchestration tools:
 
 When needed in completion payload:
 - `tasks`:
-  - shape: `{ title, description, complexity, priority, taskTypeID, estimatedEffort }`
+  - shape: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
   - complexity: `0..3` (`Easy`, `Normal`, `Hard`, `Expert`)
   - priority: `0..3` (`No Priority`, `Low`, `Medium`, `High`)
   - taskTypeID: `0,10,20,30,40,50,60,70,80`
   - `estimatedEffort` is minutes
+  - `subTasks` supports recursive hierarchy
+  - `referenceID` is optional and can be used by wikis for linking
   - server copies project/space/folder and prefixes created task titles with `AIG`
 - `wikis`:
-  - shape: `{ name, description }`
+  - shape: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+  - `subWikis` supports recursive hierarchy
+  - `relatedTaskReferenceIDs` links wiki content to generated tasks by `referenceID`
   - server stores generated wikis under `Project Root Wiki > AI Generated > Wikis`
 - Use a unique `requestKey` per completion attempt.
 - If completion fails transiently, retry with the same `requestKey`.

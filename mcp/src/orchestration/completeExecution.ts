@@ -24,22 +24,48 @@ const tokenUsageInputSchema = z.object({
   providerRequestID: z.string().optional()
 });
 
-const generatedTaskInputSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  complexity: z.number().int().min(0).max(3),
-  priority: z.number().int().min(0).max(3),
-  taskTypeID: z
-    .number()
-    .int()
-    .refine((value) => taskTypeValues.includes(value as (typeof taskTypeValues)[number]), "Invalid taskTypeID"),
-  estimatedEffort: z.number().min(0)
-});
+type GeneratedTaskInput = {
+  title: string;
+  description?: string;
+  complexity: number;
+  priority: number;
+  taskTypeID: number;
+  estimatedEffort: number;
+  referenceID?: string;
+  subTasks?: GeneratedTaskInput[];
+};
 
-const generatedWikiInputSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional()
-});
+const generatedTaskInputSchema: z.ZodType<GeneratedTaskInput> = z.lazy(() =>
+  z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    complexity: z.number().int().min(0).max(3),
+    priority: z.number().int().min(0).max(3),
+    taskTypeID: z
+      .number()
+      .int()
+      .refine((value) => taskTypeValues.includes(value as (typeof taskTypeValues)[number]), "Invalid taskTypeID"),
+    estimatedEffort: z.number().min(0),
+    referenceID: z.string().min(1).optional(),
+    subTasks: z.array(generatedTaskInputSchema).optional()
+  })
+);
+
+type GeneratedWikiInput = {
+  name: string;
+  description?: string;
+  subWikis?: GeneratedWikiInput[];
+  relatedTaskReferenceIDs?: string[];
+};
+
+const generatedWikiInputSchema: z.ZodType<GeneratedWikiInput> = z.lazy(() =>
+  z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    subWikis: z.array(generatedWikiInputSchema).optional(),
+    relatedTaskReferenceIDs: z.array(z.string().min(1)).optional()
+  })
+);
 
 export const completeExecutionPayloadSchema = z.object({
   taskID: z.number().int().positive(),
