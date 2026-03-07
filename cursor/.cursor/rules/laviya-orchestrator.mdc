@@ -27,6 +27,16 @@ Do not invent tasks, do not skip execution start, and do not skip execution comp
    - generated wikis are stored under `Project Root Wiki > AI Generated > Wikis`
 10. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`.
 
+## Character Fidelity / UTF-8 (Critical)
+
+- Preserve source text exactly in all outputs and API payload text fields. Do not alter diacritics or script-specific characters.
+- ASCII transliteration is strictly forbidden for any language/script.
+- Example (Turkish): do not write `kaynagi/dogrulama/erisim/tutarsizlik`; write `kaynağı/doğrulama/erişim/tutarsızlık`.
+- This applies to all text fields, including `ExecutionSummary`, `ErrorMessage`, `Logs`, task/wiki titles, and descriptions.
+- Perform a final character-fidelity check before submission; if any text was degraded, regenerate before sending.
+- Send JSON requests as UTF-8 (`Content-Type: application/json; charset=utf-8`).
+- If this rule is violated, cancel submission and regenerate correctly.
+
 ## ExecutionSummary JSON shape
 
 ```json
