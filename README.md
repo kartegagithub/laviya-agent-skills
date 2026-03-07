@@ -1,24 +1,61 @@
-﻿# Laviya Agent Skills
+# Laviya Agent Skills
 
-This repository contains reusable orchestration assets for Laviya IDE and agent integrations.
+Laviya Agent Skills is a repository of reusable orchestration assets for IDE and agent integrations.
+It provides a production-oriented MCP runtime, shared orchestration prompt assets, and client-specific
+artifacts for tools such as Cursor and Claude.
 
-## Main components
+## What Is Included
 
-- `core/` shared base prompt and schema assets
-- `mcp/` production-oriented TypeScript MCP runtime scaffold
-- `cursor/` Cursor rule artifacts
-- `claude/` Claude skill artifacts
+- `core/`: shared orchestration prompt assets
+- `mcp/`: TypeScript MCP runtime scaffold (`@laviya/mcp-server`)
+- `cursor/`: Cursor rule artifacts
+- `claude/`: Claude skill artifacts
+- `docs/`: setup, npm publishing, and end-user onboarding guides
 
-## Runtime architecture docs
+## Repository Structure
 
-The full production architecture and implementation scaffold are documented in:
+```text
+laviya-agent-skills/
+  core/
+  mcp/
+    src/
+    examples/
+    README.md
+  cursor/
+  claude/
+  docs/
+    Setup.md
+    MCPServerPublish.md
+    InstallationAndUsage.md
+```
 
-- `mcp/README.md`
+## Quick Start
 
-This includes:
+```bash
+cd mcp
+npm install
+npm run typecheck
+npm run build
+npm run dev
+```
 
-- global vs project-local config model
-- MCP tool and runtime behavior design
-- distribution strategy
-- production readiness guidance
-- concrete file scaffold and examples
+Required environment variable:
+
+- `LAVIYA_API_KEY`
+
+## Documentation Index
+
+- Runtime architecture and implementation: `mcp/README.md`
+- Developer setup guide: `docs/Setup.md`
+- NPM publishing guide: `docs/MCPServerPublish.md`
+- End-user installation and usage: `docs/InstallationAndUsage.md`
+
+## Runtime Overview
+
+The MCP runtime follows a global-runtime plus project-local-config model:
+
+- machine-level runtime installation
+- repository-level project configuration (`.laviya/project.json` or `.laviya.json`)
+- runtime-enforced lifecycle mechanics (validation, retries, idempotency, and structured logging)
+
+For full architecture details and file-level scaffolding, refer to `mcp/README.md`.
