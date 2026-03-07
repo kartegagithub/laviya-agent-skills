@@ -15,5 +15,6 @@ Use only these tools for orchestration mechanics:
 Rules:
 
 - Do not create orchestration HTTP calls directly.
-- Respect `PreviousWorks` and `LLMSystemPromptContent`.
+- Respect `PreviousWorks`, `LLMSystemPromptContent`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`.
+- Produce user-facing outputs in the language specified by work item language fields.
 - Always end with explicit completion success/failure.

@@ -18,11 +18,12 @@ Use only these orchestration tools:
 1. Poll work only from Laviya.
 2. If work exists, immediately call `laviya_start_execution`.
 3. Use the work item as the full context for the current step.
-4. Respect `StepRoleName`, `UserRequest`, `LLMSystemPromptContent`, and `PreviousWorks`.
-5. Do not redo prior work unless the current step explicitly requires revalidation.
-6. Produce structured output for the next step.
-7. Always complete the execution explicitly.
-8. If blocked, complete with failure and explain clearly.
+4. Respect `StepRoleName`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`.
+5. Always produce user-facing outputs in the language provided by work item language fields.
+6. Do not redo prior work unless the current step explicitly requires revalidation.
+7. Produce structured output for the next step.
+8. Always complete the execution explicitly.
+9. If blocked, complete with failure and explain clearly.
 
 ## Optional generation payloads
 

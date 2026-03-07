@@ -14,17 +14,18 @@ Do not invent tasks, do not skip execution start, and do not skip execution comp
 
 1. Get work from Laviya.
 2. Start execution immediately for any returned work item.
-3. Use `StepRoleName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, and `PreviousWorks` as the current step context.
-4. Do not repeat earlier completed work unless explicit verification or correction is required.
-5. Produce an output that the next agent can consume directly.
-6. Complete the execution with a machine-readable JSON `ExecutionSummary`.
-7. If blocked, complete with `IsFailed=true` and a clear `ErrorMessage`.
-8. When needed, include optional `tasks` and `wikis` in completion payload:
+3. Use `StepRoleName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
+4. Produce user-facing outputs in the language specified by `AgentWorkLanguageCultureCode` (or `AgentWorkLanguageIsoCode` when culture is missing).
+5. Do not repeat earlier completed work unless explicit verification or correction is required.
+6. Produce an output that the next agent can consume directly.
+7. Complete the execution with a machine-readable JSON `ExecutionSummary`.
+8. If blocked, complete with `IsFailed=true` and a clear `ErrorMessage`.
+9. When needed, include optional `tasks` and `wikis` in completion payload:
    - `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort }`
    - created tasks inherit project/space/folder context and are prefixed with `AIG`
    - `wikis[]`: `{ name, description }`
    - generated wikis are stored under `Project Root Wiki > AI Generated > Wikis`
-9. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`.
+10. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`.
 
 ## ExecutionSummary JSON shape
 

@@ -2,7 +2,7 @@ import { getMyWork, getMyWorkInputSchema } from "../orchestration/getMyWork.js";
 export function registerGetMyWorkTool(deps) {
     deps.server.registerTool("laviya_get_my_work", {
         title: "Get My Work",
-        description: "Get the next eligible Laviya orchestration work item. Supports run pinning and project-level defaults.",
+        description: "Get the next eligible Laviya orchestration work item. Supports run pinning, project-level defaults, and returns language metadata to guide response language.",
         inputSchema: {
             runId: getMyWorkInputSchema.shape.runId,
             projectId: getMyWorkInputSchema.shape.projectId

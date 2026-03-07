@@ -311,6 +311,7 @@ Prompt design principles:
 - Keep lifecycle mechanics in runtime code, not prompt text.
 - Require MCP tools; forbid raw arbitrary HTTP from agent.
 - Require respecting `PreviousWorks` and orchestration context fields.
+- Require honoring work-item language fields (`AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`) for user-facing outputs.
 - Require structured JSON `ExecutionSummary`.
 - Require explicit success/failure completion and clear handoff.
 - Forbid invented token usage and invented API outputs.
