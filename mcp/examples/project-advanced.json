@@ -1,0 +1,22 @@
+{
+  "projectId": 1204,
+  "projectName": "Laviya Backend",
+  "agentProfile": "platform-orchestrator",
+  "pollMode": "long-poll",
+  "runPinning": {
+    "enabled": true,
+    "runId": 987654
+  },
+  "promptOverridePath": ".laviya/prompts/override.system.md",
+  "completion": {
+    "requireExecutionSummary": true,
+    "autoFailOnMissingSummary": true,
+    "includeLogs": true,
+    "includeTokenUsage": true
+  },
+  "codingRules": {
+    "cursorRulePath": ".cursor/rules/laviya-project.mdc",
+    "vscodeSettingsPath": ".vscode/settings.json",
+    "codingConventionsPath": "docs/coding-conventions.md"
+  }
+}

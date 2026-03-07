@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.laviya.app/complete-execution.schema.json",
+  "title": "CompleteExecutionPayload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["taskID", "aiAgentFlowRunID", "executionSummary", "isFailed"],
+  "properties": {
+    "taskID": { "type": "integer", "minimum": 1 },
+    "aiAgentFlowRunID": { "type": "integer", "minimum": 1 },
+    "aiAgentTaskExecutionID": { "type": "integer", "minimum": 1 },
+    "requestKey": { "type": "string", "minLength": 1 },
+    "executionSummary": { "type": "string", "minLength": 1 },
+    "errorMessage": { "type": ["string", "null"] },
+    "isFailed": { "type": "boolean" },
+    "logs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "actionType": { "type": "string" },
+          "actionDetails": { "type": "string" },
+          "message": { "type": "string" },
+          "level": { "type": "string" },
+          "duration": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "tokenUsages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "model": { "type": "string" },
+          "inputTokens": { "type": "integer", "minimum": 0 },
+          "outputTokens": { "type": "integer", "minimum": 0 },
+          "totalTokens": { "type": "integer", "minimum": 0 },
+          "cost": { "type": "number", "minimum": 0 },
+          "currency": { "type": "string" },
+          "providerRequestID": { "type": "string" }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "complexity", "priority", "taskTypeID", "estimatedEffort"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "complexity": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "taskTypeID": {
+            "type": "integer",
+            "enum": [0, 10, 20, 30, 40, 50, 60, 70, 80]
+          },
+          "estimatedEffort": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "wikis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "technicalAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

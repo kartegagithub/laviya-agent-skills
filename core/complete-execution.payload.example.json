@@ -1,0 +1,44 @@
+{
+  "taskID": 123,
+  "aiAgentFlowRunID": 456,
+  "aiAgentTaskExecutionID": 789,
+  "requestKey": "6d4e5e8d-73f2-45a1-96e9-2d7be9df4d7f",
+  "executionSummary": "{\"stepRole\":\"Developer\",\"task\":{\"taskId\":123,\"runId\":456,\"stepIndex\":2},\"outcome\":\"success\",\"deliverables\":[\"Implemented service method\"],\"keyDecisions\":[\"Used existing repository abstraction\"],\"assumptions\":[\"Database migration already exists\"],\"risks\":[\"Downstream API contract may still change\"],\"handoff\":{\"forNextStep\":\"Verify integration and edge cases\",\"questions\":[\"Should validation reject empty names?\"],\"artifacts\":[\"src/services/taskService.ts\",\"POST /api/tasks\"]}}",
+  "isFailed": false,
+  "errorMessage": null,
+  "logs": [
+    {
+      "actionType": "implementation",
+      "level": "INFO",
+      "message": "Implemented task orchestration adapter.",
+      "duration": 120
+    }
+  ],
+  "tokenUsages": [
+    {
+      "model": "gpt-4.1",
+      "inputTokens": 1500,
+      "outputTokens": 420,
+      "totalTokens": 1920,
+      "cost": 0.024,
+      "currency": "USD",
+      "providerRequestID": "req_abc_123"
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Implement retry policy for OAuth callback",
+      "description": "Add resilient retry and timeout handling for provider callback flow.",
+      "complexity": 2,
+      "priority": 3,
+      "taskTypeID": 10,
+      "estimatedEffort": 240
+    }
+  ],
+  "wikis": [
+    {
+      "name": "Authentication Technical Findings",
+      "description": "Root cause analysis for OAuth callback handling with fix strategy and rollout notes."
+    }
+  ]
+}

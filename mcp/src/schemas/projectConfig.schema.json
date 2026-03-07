@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.laviya.app/project-config.schema.json",
+  "title": "Laviya Project Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projectId", "agentProfile"],
+  "properties": {
+    "projectId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentProfile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pollMode": {
+      "type": "string",
+      "enum": ["pull", "long-poll"],
+      "default": "pull"
+    },
+    "runPinning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "runId": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "promptOverridePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requireExecutionSummary": {
+          "type": "boolean",
+          "default": true
+        },
+        "autoFailOnMissingSummary": {
+          "type": "boolean",
+          "default": true
+        },
+        "includeLogs": {
+          "type": "boolean",
+          "default": true
+        },
+        "includeTokenUsage": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "codingRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cursorRulePath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vscodeSettingsPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codingConventionsPath": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.laviya.app/global-config.schema.json",
+  "title": "Laviya Global Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "baseUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "defaultPollIntervalSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 300,
+      "default": 15
+    },
+    "defaultLeaseRefreshSeconds": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 300,
+      "default": 30
+    },
+    "requestTimeoutSeconds": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 300,
+      "default": 30
+    },
+    "logLevel": {
+      "type": "string",
+      "enum": ["debug", "info", "warn", "error"],
+      "default": "info"
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["apiKey", "apiKeyAndBearer"],
+          "default": "apiKeyAndBearer"
+        },
+        "headerName": {
+          "type": "string",
+          "default": "X-API-Key"
+        },
+        "sendBearerToken": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "retry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3
+        },
+        "baseDelayMs": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 60000,
+          "default": 500
+        },
+        "maxDelayMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "default": 5000
+        },
+        "jitter": {
+          "type": "boolean",
+          "default": true
+        },
+        "retryOnHttpStatus": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": [408, 409, 425, 429, 500, 502, 503, 504]
+        }
+      }
+    }
+  }
+}

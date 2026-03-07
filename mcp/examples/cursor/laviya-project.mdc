@@ -1,0 +1,11 @@
+---
+description: Project-specific additions for Laviya orchestration
+alwaysApply: false
+---
+
+# Laviya Project Rule
+
+- Use the global Laviya MCP tools for orchestration lifecycle actions.
+- Do not bypass MCP lifecycle steps with direct HTTP calls.
+- Keep code style aligned with this repository conventions.
+- If blocked, complete execution explicitly as failed with a clear handoff.

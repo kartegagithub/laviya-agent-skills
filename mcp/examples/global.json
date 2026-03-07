@@ -1,0 +1,19 @@
+{
+  "baseUrl": "https://api.laviya.app",
+  "defaultPollIntervalSeconds": 15,
+  "defaultLeaseRefreshSeconds": 30,
+  "requestTimeoutSeconds": 30,
+  "logLevel": "info",
+  "auth": {
+    "mode": "apiKeyAndBearer",
+    "headerName": "X-API-Key",
+    "sendBearerToken": true
+  },
+  "retry": {
+    "maxAttempts": 3,
+    "baseDelayMs": 500,
+    "maxDelayMs": 5000,
+    "jitter": true,
+    "retryOnHttpStatus": [408, 409, 425, 429, 500, 502, 503, 504]
+  }
+}

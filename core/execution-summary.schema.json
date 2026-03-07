@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laviya.app/schemas/execution-summary.schema.json",
+  "title": "ExecutionSummary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stepRole",
+    "task",
+    "outcome",
+    "deliverables",
+    "keyDecisions",
+    "assumptions",
+    "risks",
+    "handoff"
+  ],
+  "properties": {
+    "stepRole": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "runId", "stepIndex"],
+      "properties": {
+        "taskId": { "type": "integer" },
+        "runId": { "type": "integer" },
+        "stepIndex": { "type": "integer" }
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["success", "failed"]
+    },
+    "deliverables": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "keyDecisions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forNextStep", "questions", "artifacts"],
+      "properties": {
+        "forNextStep": {
+          "type": "string"
+        },
+        "questions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
