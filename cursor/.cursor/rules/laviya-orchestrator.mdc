@@ -1,4 +1,4 @@
----
+﻿---
 description: Laviya orchestration workflow rule for Cursor
 alwaysApply: false
 ---
@@ -14,18 +14,23 @@ Do not invent tasks, do not skip execution start, and do not skip execution comp
 
 1. Get work from Laviya.
 2. Start execution immediately for any returned work item.
-3. Use `StepRoleName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
-4. Produce user-facing outputs in the language specified by `AgentWorkLanguageCultureCode` (or `AgentWorkLanguageIsoCode` when culture is missing).
-5. Do not repeat earlier completed work unless explicit verification or correction is required.
-6. Produce an output that the next agent can consume directly.
-7. Complete the execution with a machine-readable JSON `ExecutionSummary`.
-8. If blocked, complete with `IsFailed=true` and a clear `ErrorMessage`.
-9. When needed, include optional `tasks` and `wikis` in completion payload:
-   - `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort }`
+3. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage.
+4. Refresh lease by calling start execution again when the step runs long.
+5. Use `StepRoleName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
+6. Produce user-facing outputs in the language specified by `AgentWorkLanguageCultureCode` (or `AgentWorkLanguageIsoCode` when culture is missing).
+7. Do not repeat earlier completed work unless explicit verification or correction is required.
+8. Produce an output that the next agent can consume directly.
+9. Complete the execution with a machine-readable JSON `ExecutionSummary`.
+10. If blocked, complete with `IsFailed=true` and a clear `ErrorMessage`.
+11. When needed, include optional `tasks` and `wikis` in completion payload:
+   - `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
    - created tasks inherit project/space/folder context and are prefixed with `AIG`
-   - `wikis[]`: `{ name, description }`
+   - `wikis[]`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+   - if `relatedTaskReferenceIDs` is provided, each value must exist in `tasks[].referenceID` in the same completion payload
+   - if no tasks are generated in the same payload, omit `relatedTaskReferenceIDs`
    - generated wikis are stored under `Project Root Wiki > AI Generated > Wikis`
-10. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`.
+12. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`, but if payload changes after validation/business failure use a new `RequestKey`.
+13. If completion returns HTTP 500, inspect response body/messages before retrying.
 
 ## Character Fidelity / UTF-8 (Critical)
 
@@ -60,5 +65,6 @@ Do not invent tasks, do not skip execution start, and do not skip execution comp
 
 - Never fabricate token usage.
 - Never fabricate prior work.
+- Never hardcode stale `AIAgentTaskExecutionID`.
 - Never silently swallow failures.
 - Never leave the orchestration lifecycle incomplete.

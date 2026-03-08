@@ -67,20 +67,131 @@ const generatedWikiInputSchema: z.ZodType<GeneratedWikiInput> = z.lazy(() =>
   })
 );
 
-export const completeExecutionPayloadSchema = z.object({
-  taskID: z.number().int().positive(),
-  aiAgentFlowRunID: z.number().int().positive(),
-  aiAgentTaskExecutionID: z.number().int().positive().optional(),
-  requestKey: z.string().min(1).optional(),
-  executionSummary: z.string().min(1),
-  errorMessage: z.string().optional().nullable(),
-  isFailed: z.boolean(),
-  logs: z.array(actionInputSchema).optional(),
-  tokenUsages: z.array(tokenUsageInputSchema).optional(),
-  tasks: z.array(generatedTaskInputSchema).optional(),
-  wikis: z.array(generatedWikiInputSchema).optional(),
-  technicalAnalysis: generatedWikiInputSchema.optional()
-});
+function normalizeReferenceID(referenceID: string): string {
+  return referenceID.trim().toLowerCase();
+}
+
+function collectTaskReferenceIDs(items: GeneratedTaskInput[] | undefined): string[] {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  const references: string[] = [];
+  const stack = [...items];
+  while (stack.length > 0) {
+    const item = stack.pop();
+    if (!item) {
+      continue;
+    }
+
+    if (item.referenceID && item.referenceID.trim()) {
+      references.push(item.referenceID.trim());
+    }
+
+    if (item.subTasks && item.subTasks.length > 0) {
+      stack.push(...item.subTasks);
+    }
+  }
+
+  return references;
+}
+
+function collectWikiReferenceIDs(items: GeneratedWikiInput[] | undefined): string[] {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  const references: string[] = [];
+  const stack = [...items];
+  while (stack.length > 0) {
+    const item = stack.pop();
+    if (!item) {
+      continue;
+    }
+
+    if (item.relatedTaskReferenceIDs && item.relatedTaskReferenceIDs.length > 0) {
+      for (const reference of item.relatedTaskReferenceIDs) {
+        if (reference && reference.trim()) {
+          references.push(reference.trim());
+        }
+      }
+    }
+
+    if (item.subWikis && item.subWikis.length > 0) {
+      stack.push(...item.subWikis);
+    }
+  }
+
+  return references;
+}
+
+export const completeExecutionPayloadSchema = z
+  .object({
+    taskID: z.number().int().positive(),
+    aiAgentFlowRunID: z.number().int().positive(),
+    aiAgentTaskExecutionID: z.number().int().positive().optional(),
+    requestKey: z.string().min(1).optional(),
+    executionSummary: z.string().min(1),
+    errorMessage: z.string().optional().nullable(),
+    isFailed: z.boolean(),
+    logs: z.array(actionInputSchema).optional(),
+    tokenUsages: z.array(tokenUsageInputSchema).optional(),
+    tasks: z.array(generatedTaskInputSchema).optional(),
+    wikis: z.array(generatedWikiInputSchema).optional(),
+    technicalAnalysis: generatedWikiInputSchema.optional()
+  })
+  .superRefine((payload, ctx) => {
+    const taskReferenceIDs = collectTaskReferenceIDs(payload.tasks);
+    const normalizedTaskReferences = new Set<string>();
+
+    for (const referenceID of taskReferenceIDs) {
+      const normalizedReference = normalizeReferenceID(referenceID);
+      if (normalizedTaskReferences.has(normalizedReference)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["tasks"],
+          message: `Duplicate tasks.referenceID detected (case-insensitive): ${referenceID}`
+        });
+      } else {
+        normalizedTaskReferences.add(normalizedReference);
+      }
+    }
+
+    const wikiReferenceIDs = [
+      ...collectWikiReferenceIDs(payload.wikis),
+      ...collectWikiReferenceIDs(payload.technicalAnalysis ? [payload.technicalAnalysis] : undefined)
+    ];
+
+    if (wikiReferenceIDs.length === 0) {
+      return;
+    }
+
+    if (normalizedTaskReferences.size === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["wikis"],
+        message:
+          "wikis.relatedTaskReferenceIDs requires tasks.referenceID values in the same payload. Remove relatedTaskReferenceIDs or provide matching tasks."
+      });
+      return;
+    }
+
+    const missingReferences = Array.from(
+      new Set(
+        wikiReferenceIDs
+          .filter((referenceID) => !normalizedTaskReferences.has(normalizeReferenceID(referenceID)))
+          .map((referenceID) => referenceID.trim())
+      )
+    );
+
+    if (missingReferences.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["wikis"],
+        message: `wikis.relatedTaskReferenceIDs contains values not found in tasks.referenceID (same payload required): ${missingReferences.join(", ")}`
+      });
+    }
+  });
 
 export type CompleteExecutionPayload = z.infer<typeof completeExecutionPayloadSchema>;
 
@@ -92,6 +203,13 @@ export async function completeExecution(
 ): Promise<unknown> {
   if (runtimeConfig.completion.requireExecutionSummary && !payload.executionSummary.trim()) {
     throw new Error("executionSummary is required by runtime configuration.");
+  }
+
+  if (!payload.aiAgentTaskExecutionID) {
+    logger.warn("CompleteExecution called without aiAgentTaskExecutionID. This may attach completion to an unexpected execution.", {
+      taskID: payload.taskID,
+      runID: payload.aiAgentFlowRunID
+    });
   }
 
   const requestKey =

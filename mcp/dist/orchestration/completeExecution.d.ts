@@ -18,7 +18,7 @@ type GeneratedWikiInput = {
     subWikis?: GeneratedWikiInput[];
     relatedTaskReferenceIDs?: string[];
 };
-export declare const completeExecutionPayloadSchema: z.ZodObject<{
+export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     taskID: z.ZodNumber;
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
@@ -74,6 +74,60 @@ export declare const completeExecutionPayloadSchema: z.ZodObject<{
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, "strip", z.ZodTypeAny, {
+    taskID: number;
+    aiAgentFlowRunID: number;
+    executionSummary: string;
+    isFailed: boolean;
+    aiAgentTaskExecutionID?: number | undefined;
+    requestKey?: string | undefined;
+    errorMessage?: string | null | undefined;
+    logs?: {
+        message?: string | undefined;
+        actionType?: string | undefined;
+        actionDetails?: string | undefined;
+        level?: string | undefined;
+        duration?: number | undefined;
+    }[] | undefined;
+    tokenUsages?: {
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }[] | undefined;
+    tasks?: GeneratedTaskInput[] | undefined;
+    wikis?: GeneratedWikiInput[] | undefined;
+    technicalAnalysis?: GeneratedWikiInput | undefined;
+}, {
+    taskID: number;
+    aiAgentFlowRunID: number;
+    executionSummary: string;
+    isFailed: boolean;
+    aiAgentTaskExecutionID?: number | undefined;
+    requestKey?: string | undefined;
+    errorMessage?: string | null | undefined;
+    logs?: {
+        message?: string | undefined;
+        actionType?: string | undefined;
+        actionDetails?: string | undefined;
+        level?: string | undefined;
+        duration?: number | undefined;
+    }[] | undefined;
+    tokenUsages?: {
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }[] | undefined;
+    tasks?: GeneratedTaskInput[] | undefined;
+    wikis?: GeneratedWikiInput[] | undefined;
+    technicalAnalysis?: GeneratedWikiInput | undefined;
+}>, {
     taskID: number;
     aiAgentFlowRunID: number;
     executionSummary: string;

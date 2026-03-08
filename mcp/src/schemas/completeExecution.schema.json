@@ -17,7 +17,11 @@
           "enum": [0, 10, 20, 30, 40, 50, 60, 70, 80]
         },
         "estimatedEffort": { "type": "number", "minimum": 0 },
-        "referenceID": { "type": "string", "minLength": 1 },
+        "referenceID": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional task reference key for wiki linking. Keep unique (case-insensitive) within the same completion payload."
+        },
         "subTasks": {
           "type": "array",
           "items": {
@@ -41,6 +45,7 @@
         },
         "relatedTaskReferenceIDs": {
           "type": "array",
+          "description": "Each value must match a tasks[].referenceID in the same completion payload.",
           "items": { "type": "string", "minLength": 1 }
         }
       }
@@ -52,7 +57,11 @@
   "properties": {
     "taskID": { "type": "integer", "minimum": 1 },
     "aiAgentFlowRunID": { "type": "integer", "minimum": 1 },
-    "aiAgentTaskExecutionID": { "type": "integer", "minimum": 1 },
+    "aiAgentTaskExecutionID": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Use the active execution ID returned by StartExecution (Data.id)."
+    },
     "requestKey": { "type": "string", "minLength": 1 },
     "executionSummary": { "type": "string", "minLength": 1 },
     "errorMessage": { "type": ["string", "null"] },
