@@ -1,6 +1,6 @@
 # End-User Installation and Usage Guide
 
-This guide is for users who want to install and use `@laviya/mcp-server`.
+This guide is for users who want to install and use `laviya-mcp-server`.
 
 ## 1. Prerequisites
 
@@ -11,19 +11,19 @@ This guide is for users who want to install and use `@laviya/mcp-server`.
 ## 2. Install the Package
 
 ```bash
-npm install -g @laviya/mcp-server
+npm install -g laviya-mcp-server
 ```
 
 Update:
 
 ```bash
-npm update -g @laviya/mcp-server
+npm update -g laviya-mcp-server
 ```
 
 Uninstall:
 
 ```bash
-npm uninstall -g @laviya/mcp-server
+npm uninstall -g laviya-mcp-server
 ```
 
 ## 3. Configure Environment Variables
@@ -104,7 +104,7 @@ Minimal `project.json`:
 
 ## 6. MCP Client Integration
 
-`@laviya/mcp-server` runs as a stdio MCP server.  
+`laviya-mcp-server` runs as a stdio MCP server.  
 Your MCP client should launch `node` with the package entrypoint (`dist/index.js`).
 
 Find global npm path:
@@ -121,7 +121,7 @@ Then configure your MCP client (example):
     "laviya": {
       "command": "node",
       "args": [
-        "C:/Users/<user>/AppData/Roaming/npm/node_modules/@laviya/mcp-server/dist/index.js"
+        "C:/Users/<user>/AppData/Roaming/npm/node_modules/laviya-mcp-server/dist/index.js"
       ],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",

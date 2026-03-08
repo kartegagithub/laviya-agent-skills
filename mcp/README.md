@@ -1,6 +1,6 @@
 # 1. Architecture Summary
 
-Laviya AI Orchestration Developer Runtime is implemented as a single machine-level Node.js + TypeScript MCP server package (`@laviya/mcp-server`).  
+Laviya AI Orchestration Developer Runtime is implemented as a single machine-level Node.js + TypeScript MCP server package (`laviya-mcp-server`).  
 Each repository provides only a lightweight local config (`.laviya/project.json` or `.laviya.json`) plus optional prompt/rule overrides.
 
 This is the recommended production model:
@@ -58,7 +58,7 @@ Windows
 %USERPROFILE%\.laviya\config\global.json
 
 macOS/Linux
-~/.npm-global/lib/node_modules/@laviya/mcp-server/
+~/.npm-global/lib/node_modules/laviya-mcp-server/
 ~/.laviya/config/global.json
 ```
 
@@ -344,14 +344,14 @@ Not allowed in project-local config:
 
 Recommended package names:
 
-- `@laviya/mcp-server`
+- `laviya-mcp-server`
 - `laviya-mcp-server`
 
 Commands:
 
 ```bash
-npm install -g @laviya/mcp-server
-npm update -g @laviya/mcp-server
+npm install -g laviya-mcp-server
+npm update -g laviya-mcp-server
 npm run dev
 npm run build && npm start
 ```

@@ -1,8 +1,8 @@
 {
-  "name": "@laviya/mcp-server",
+  "name": "laviya-mcp-server",
   "version": "0.1.0",
   "description": "Laviya AI Orchestration MCP runtime for IDE and agent integrations.",
-  "private": true,
+  "private": false,
   "type": "module",
   "engines": {
     "node": ">=20.11.0"

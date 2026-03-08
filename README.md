@@ -7,7 +7,7 @@ artifacts for tools such as Cursor and Claude.
 ## What Is Included
 
 - `core/`: shared orchestration prompt assets
-- `mcp/`: TypeScript MCP runtime scaffold (`@laviya/mcp-server`)
+- `mcp/`: TypeScript MCP runtime scaffold (`laviya-mcp-server`)
 - `cursor/`: Cursor rule artifacts
 - `claude/`: Claude skill artifacts
 - `docs/`: setup, npm publishing, and end-user onboarding guides

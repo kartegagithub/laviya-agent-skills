@@ -8,7 +8,7 @@ Source file: `mcp/package.json`
 
 Before publishing, confirm:
 
-- `name`: `@laviya/mcp-server` (or the final approved package name)
+- `name`: `laviya-mcp-server` (or the final approved package name)
 - `version`: valid semver (`MAJOR.MINOR.PATCH`)
 - `private`: must be `false`
 - `files`: includes publish artifacts (`dist`, `src/prompts`, `src/schemas`, `examples`, `README.md`)
@@ -89,15 +89,15 @@ npm publish --access public
 Post-publish verification:
 
 ```bash
-npm view @laviya/mcp-server version
-npm install -g @laviya/mcp-server
+npm view laviya-mcp-server version
+npm install -g laviya-mcp-server
 ```
 
 ## 7. Dist-Tag Strategy (Recommended)
 
 ```bash
-npm dist-tag add @laviya/mcp-server@0.2.0 latest
-npm dist-tag add @laviya/mcp-server@0.3.0-beta.1 next
+npm dist-tag add laviya-mcp-server@0.2.0 latest
+npm dist-tag add laviya-mcp-server@0.3.0-beta.1 next
 ```
 
 Typical usage:
@@ -112,7 +112,7 @@ Prefer deprecation over unpublishing whenever possible.
 Example:
 
 ```bash
-npm deprecate @laviya/mcp-server@0.2.0 "Use 0.2.1 due to critical bug fix."
+npm deprecate laviya-mcp-server@0.2.0 "Use 0.2.1 due to critical bug fix."
 ```
 
 Then release a new patch version with the fix.

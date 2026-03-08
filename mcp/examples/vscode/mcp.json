@@ -3,7 +3,7 @@
     "laviya": {
       "command": "node",
       "args": [
-        "C:/Users/<user>/AppData/Roaming/npm/node_modules/@laviya/mcp-server/dist/index.js"
+        "C:/Users/<user>/AppData/Roaming/npm/node_modules/laviya-mcp-server/dist/index.js"
       ],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
