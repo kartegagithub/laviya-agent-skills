@@ -8,6 +8,7 @@ interface RequestOptions {
   query?: Record<string, string | number | undefined>;
   body?: unknown;
   idempotencyKey?: string;
+  timeoutSeconds?: number;
 }
 
 export interface LaviyaApiClientOptions {
@@ -32,10 +33,13 @@ export class LaviyaApiError extends Error {
 }
 
 export class LaviyaApiClient {
+  private capturedAgentUid: string | undefined;
+  private refreshExecutionLeaseEndpointMissing = false;
+
   constructor(private readonly options: LaviyaApiClientOptions) {}
 
   async getMyWork(params: { runId?: number; projectId?: number; agentProfile?: string }): Promise<unknown> {
-    return this.request({
+    const response = await this.request({
       method: "GET",
       path: "/api/ai/GetMyWork",
       query: {
@@ -44,6 +48,9 @@ export class LaviyaApiClient {
         AgentProfile: params.agentProfile
       }
     });
+
+    this.captureAgentUid(response);
+    return response;
   }
 
   async startExecution(params: { runId: number; taskId: number; executionId?: number }): Promise<unknown> {
@@ -63,6 +70,10 @@ export class LaviyaApiClient {
     taskId: number;
     executionId?: number;
   }): Promise<unknown> {
+    if (this.refreshExecutionLeaseEndpointMissing) {
+      return this.startExecution(params);
+    }
+
     try {
       return await this.request({
         method: "POST",
@@ -75,6 +86,7 @@ export class LaviyaApiClient {
       });
     } catch (error: unknown) {
       if (error instanceof LaviyaApiError && error.status === 404) {
+        this.refreshExecutionLeaseEndpointMissing = true;
         this.options.logger.warn("RefreshExecutionLease endpoint not found, falling back to StartExecution", {
           runId: params.runId,
           taskId: params.taskId
@@ -90,7 +102,8 @@ export class LaviyaApiClient {
       method: "POST",
       path: "/api/ai/CompleteExecution",
       body: payload,
-      idempotencyKey
+      idempotencyKey,
+      timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
     });
   }
 
@@ -113,17 +126,18 @@ export class LaviyaApiClient {
         return await this.requestOnce(options, attempt);
       } catch (error: unknown) {
         lastError = error;
-        const shouldRetry = this.shouldRetry(error, attempt);
+        const shouldRetry = this.shouldRetry(options, error, attempt);
         if (!shouldRetry) {
           throw error;
         }
 
         const wait = this.computeBackoff(attempt);
+        const errorContext = buildErrorContext(error);
         this.options.logger.warn("Laviya API request failed, retrying", {
           path: options.path,
           attempt,
           waitMs: wait,
-          error: error instanceof Error ? error.message : String(error)
+          ...errorContext
         });
         await delay(wait);
         attempt += 1;
@@ -144,8 +158,9 @@ export class LaviyaApiClient {
       headers.Authorization = `Bearer ${this.options.apiKey}`;
     }
 
-    if (this.options.agentUid) {
-      headers["X-Agent-UID"] = this.options.agentUid;
+    const activeAgentUid = this.resolveAgentUid();
+    if (activeAgentUid) {
+      headers["X-Agent-UID"] = activeAgentUid;
     }
 
     if (options.idempotencyKey) {
@@ -153,7 +168,8 @@ export class LaviyaApiClient {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.options.requestTimeoutSeconds * 1_000);
+    const timeoutSeconds = resolveTimeoutSeconds(options, this.options.requestTimeoutSeconds);
+    const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1_000);
 
     this.options.logger.debug("Sending Laviya API request", {
       method: options.method,
@@ -169,7 +185,21 @@ export class LaviyaApiClient {
         signal: controller.signal
       });
 
-      const parsedBody = await this.parseResponseBody(response);
+      let parsedBody: unknown;
+      try {
+        parsedBody = await this.parseResponseBody(response);
+      } catch (error: unknown) {
+        const normalizedStatus = response.status >= 400 ? response.status : undefined;
+        throw new LaviyaApiError(
+          `Failed to read response body on ${options.path} (HTTP ${response.status})`,
+          normalizedStatus,
+          {
+            responseStatus: response.status,
+            ...buildErrorContext(error)
+          }
+        );
+      }
+
       if (!response.ok) {
         throw new LaviyaApiError(
           `Laviya API error ${response.status} on ${options.path}`,
@@ -181,7 +211,10 @@ export class LaviyaApiClient {
       return parsedBody;
     } catch (error: unknown) {
       if (isAbortError(error)) {
-        throw new LaviyaApiError(`Request timeout after ${this.options.requestTimeoutSeconds}s on ${options.path}`);
+        throw new LaviyaApiError(`Request timeout after ${timeoutSeconds}s on ${options.path}`);
+      }
+      if (isTerminatedError(error)) {
+        throw new LaviyaApiError(`Connection terminated on ${options.path}`);
       }
       throw error;
     } finally {
@@ -222,12 +255,16 @@ export class LaviyaApiClient {
     return { raw };
   }
 
-  private shouldRetry(error: unknown, attempt: number): boolean {
+  private shouldRetry(options: RequestOptions, error: unknown, attempt: number): boolean {
     if (attempt >= this.options.retry.maxAttempts) {
       return false;
     }
 
     if (error instanceof LaviyaApiError) {
+      if (options.path === "/api/ai/CompleteExecution") {
+        return false;
+      }
+
       if (!error.status) {
         return true;
       }
@@ -245,8 +282,137 @@ export class LaviyaApiClient {
     const jitter = Math.floor(Math.random() * 250);
     return Math.min(this.options.retry.maxDelayMs, exp + jitter);
   }
+
+  private captureAgentUid(payload: unknown): void {
+    const discoveredAgentUid = extractAgentUid(payload);
+    if (!discoveredAgentUid) {
+      return;
+    }
+
+    if (this.options.agentUid && this.options.agentUid !== discoveredAgentUid) {
+      this.options.logger.warn(
+        "GetMyWork response contains a different AIAgentUID than configured LAVIYA_AGENT_UID. Keeping configured value."
+      );
+      return;
+    }
+
+    if (this.capturedAgentUid === discoveredAgentUid) {
+      return;
+    }
+
+    this.capturedAgentUid = discoveredAgentUid;
+    this.options.logger.info("Captured AIAgentUID from GetMyWork response for follow-up requests.");
+  }
+
+  private resolveAgentUid(): string | undefined {
+    return this.options.agentUid ?? this.capturedAgentUid;
+  }
 }
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
+}
+
+function isTerminatedError(error: unknown): boolean {
+  return error instanceof Error && /terminated/i.test(error.message);
+}
+
+function resolveTimeoutSeconds(options: RequestOptions, defaultTimeoutSeconds: number): number {
+  if (options.timeoutSeconds && Number.isFinite(options.timeoutSeconds) && options.timeoutSeconds > 0) {
+    return options.timeoutSeconds;
+  }
+
+  return defaultTimeoutSeconds;
+}
+
+function extractAgentUid(payload: unknown): string | undefined {
+  const root = asRecord(payload);
+  const candidates: unknown[] = [payload];
+
+  if (root) {
+    candidates.push(root.Data, root.data);
+  }
+
+  for (const candidate of candidates) {
+    const record = asRecord(candidate);
+    if (!record) {
+      continue;
+    }
+
+    const uid =
+      toNonEmptyString(record.AIAgentUID) ??
+      toNonEmptyString(record.aiAgentUID) ??
+      toNonEmptyString(record.AgentUID) ??
+      toNonEmptyString(record.agentUID);
+
+    if (uid) {
+      return uid;
+    }
+  }
+
+  return undefined;
+}
+
+function buildErrorContext(error: unknown): Record<string, unknown> {
+  if (!(error instanceof Error)) {
+    return {
+      error: String(error)
+    };
+  }
+
+  const context: Record<string, unknown> = {
+    error: error.message,
+    errorName: error.name
+  };
+
+  const errorCode = extractCode(error);
+  if (errorCode) {
+    context.errorCode = errorCode;
+  }
+
+  const cause = asRecord((error as Error & { cause?: unknown }).cause);
+  if (cause) {
+    const causeMessage = toNonEmptyString(cause.message);
+    if (causeMessage) {
+      context.cause = causeMessage;
+    }
+
+    const causeCode = extractCode(cause);
+    if (causeCode) {
+      context.causeCode = causeCode;
+    }
+  }
+
+  return context;
+}
+
+function extractCode(value: unknown): string | undefined {
+  const record = asRecord(value);
+  if (!record) {
+    return undefined;
+  }
+
+  const code = record.code;
+  if (typeof code === "string" || typeof code === "number") {
+    return String(code);
+  }
+
+  return undefined;
+}
+
+function toNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
 }

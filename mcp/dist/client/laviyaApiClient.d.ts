@@ -16,6 +16,8 @@ export declare class LaviyaApiError extends Error {
 }
 export declare class LaviyaApiClient {
     private readonly options;
+    private capturedAgentUid;
+    private refreshExecutionLeaseEndpointMissing;
     constructor(options: LaviyaApiClientOptions);
     getMyWork(params: {
         runId?: number;
@@ -40,5 +42,7 @@ export declare class LaviyaApiClient {
     private parseResponseBody;
     private shouldRetry;
     private computeBackoff;
+    private captureAgentUid;
+    private resolveAgentUid;
 }
 //# sourceMappingURL=laviyaApiClient.d.ts.map

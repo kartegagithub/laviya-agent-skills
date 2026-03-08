@@ -1,3 +1,4 @@
+import { extractExecutionId } from "../orchestration/executionId.js";
 import { startExecution, startExecutionInputSchema } from "../orchestration/startExecution.js";
 export function registerStartExecutionTool(deps) {
     deps.server.registerTool("laviya_start_execution", {
@@ -12,7 +13,17 @@ export function registerStartExecutionTool(deps) {
         try {
             const parsed = startExecutionInputSchema.parse(input);
             const result = await startExecution(deps.client, deps.logger, parsed);
-            deps.leaseManager.start(parsed);
+            const executionId = extractExecutionId(result) ?? parsed.executionId;
+            deps.leaseManager.start({
+                ...parsed,
+                executionId
+            });
+            if (!executionId) {
+                deps.logger.warn("StartExecution response did not contain an execution id.", {
+                    runId: parsed.runId,
+                    taskId: parsed.taskId
+                });
+            }
             return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
         catch (error) {

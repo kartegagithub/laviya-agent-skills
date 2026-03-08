@@ -10,6 +10,7 @@ export interface LeaseContext {
 
 export class LeaseManager {
   private timer: NodeJS.Timeout | undefined;
+  private activeContext: LeaseContext | undefined;
 
   constructor(
     private readonly client: LaviyaApiClient,
@@ -18,7 +19,14 @@ export class LeaseManager {
   ) {}
 
   start(context: LeaseContext): void {
+    this.activeContext = { ...context };
+
     if (this.timer) {
+      this.logger.info("Updated execution lease manager context", {
+        runId: context.runId,
+        taskId: context.taskId,
+        executionId: context.executionId
+      });
       return;
     }
 
@@ -30,18 +38,31 @@ export class LeaseManager {
     });
 
     this.timer = setInterval(() => {
-      void this.refresh(context);
+      if (!this.activeContext) {
+        return;
+      }
+      void this.refresh(this.activeContext);
     }, this.refreshIntervalSeconds * 1_000);
   }
 
   stop(): void {
     if (!this.timer) {
+      this.activeContext = undefined;
       return;
     }
 
     clearInterval(this.timer);
     this.timer = undefined;
+    this.activeContext = undefined;
     this.logger.info("Stopped execution lease manager");
+  }
+
+  getActiveContext(): LeaseContext | undefined {
+    if (!this.activeContext) {
+      return undefined;
+    }
+
+    return { ...this.activeContext };
   }
 
   private async refresh(context: LeaseContext): Promise<void> {

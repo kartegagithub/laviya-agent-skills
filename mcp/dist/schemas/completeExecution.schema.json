@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.laviya.app/complete-execution.schema.json",
+  "title": "CompleteExecutionPayload",
+  "$defs": {
+    "generatedTaskInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "complexity", "priority", "taskTypeID", "estimatedEffort"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "complexity": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "taskTypeID": {
+          "type": "integer",
+          "enum": [0, 10, 20, 30, 40, 50, 60, 70, 80]
+        },
+        "estimatedEffort": { "type": "number", "minimum": 0 },
+        "referenceID": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional task reference key for wiki linking. Keep unique (case-insensitive) within the same completion payload."
+        },
+        "subTasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/generatedTaskInput"
+          }
+        }
+      }
+    },
+    "generatedWikiInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "subWikis": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/generatedWikiInput"
+          }
+        },
+        "relatedTaskReferenceIDs": {
+          "type": "array",
+          "description": "Each value must match a tasks[].referenceID in the same completion payload.",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["taskID", "aiAgentFlowRunID", "executionSummary", "isFailed"],
+  "properties": {
+    "taskID": { "type": "integer", "minimum": 1 },
+    "aiAgentFlowRunID": { "type": "integer", "minimum": 1 },
+    "aiAgentTaskExecutionID": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Use the active execution ID returned by StartExecution (Data.id)."
+    },
+    "requestKey": { "type": "string", "minLength": 1 },
+    "executionSummary": { "type": "string", "minLength": 1 },
+    "errorMessage": { "type": ["string", "null"] },
+    "isFailed": { "type": "boolean" },
+    "logs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "actionType": { "type": "string" },
+          "actionDetails": { "type": "string" },
+          "message": { "type": "string" },
+          "level": { "type": "string" },
+          "duration": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "tokenUsages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "model": { "type": "string" },
+          "inputTokens": { "type": "integer", "minimum": 0 },
+          "outputTokens": { "type": "integer", "minimum": 0 },
+          "totalTokens": { "type": "integer", "minimum": 0 },
+          "cost": { "type": "number", "minimum": 0 },
+          "currency": { "type": "string" },
+          "providerRequestID": { "type": "string" }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/generatedTaskInput"
+      }
+    },
+    "wikis": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/generatedWikiInput"
+      }
+    },
+    "technicalAnalysis": {
+      "$ref": "#/$defs/generatedWikiInput"
+    }
+  }
+}

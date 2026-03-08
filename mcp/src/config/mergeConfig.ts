@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { access, constants, readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadRuntimeEnv, type LogLevel } from "../utils/env.js";
@@ -49,7 +49,10 @@ export async function buildRuntimeConfig(options: RuntimeBootstrapOptions = {}):
   const globalLoaded = await loadGlobalConfig(options.globalConfigPath);
   const projectLoaded = await loadProjectConfig(cwd);
 
-  const basePromptPath = fileURLToPath(new URL("../prompts/orchestrator.system.md", import.meta.url));
+  const basePromptPath = await resolveRuntimeAssetPath(
+    "../prompts/orchestrator.system.md",
+    "../../src/prompts/orchestrator.system.md"
+  );
   const overridePath = resolveOverridePath(projectLoaded.projectRoot, projectLoaded.config?.promptOverridePath);
 
   const basePrompt = await readFile(basePromptPath, "utf8");
@@ -106,4 +109,27 @@ function resolveOverridePath(projectRoot: string, configuredPath?: string): stri
   }
 
   return resolve(projectRoot, configuredPath);
+}
+
+async function resolveRuntimeAssetPath(primaryRelativePath: string, fallbackRelativePath: string): Promise<string> {
+  const primaryPath = fileURLToPath(new URL(primaryRelativePath, import.meta.url));
+  if (await fileExists(primaryPath)) {
+    return primaryPath;
+  }
+
+  const fallbackPath = fileURLToPath(new URL(fallbackRelativePath, import.meta.url));
+  if (await fileExists(fallbackPath)) {
+    return fallbackPath;
+  }
+
+  throw new Error(`Runtime asset not found. Tried: ${primaryPath} and ${fallbackPath}`);
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }

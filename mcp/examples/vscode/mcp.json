@@ -7,8 +7,6 @@
       ],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
-        "LAVIYA_BASE_URL": "${env:LAVIYA_BASE_URL}",
-        "LAVIYA_AGENT_UID": "${env:LAVIYA_AGENT_UID}",
         "LAVIYA_LOG_LEVEL": "info"
       }
     }

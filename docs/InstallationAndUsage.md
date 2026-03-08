@@ -125,14 +125,14 @@ Then configure your MCP client (example):
       ],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
-        "LAVIYA_BASE_URL": "${env:LAVIYA_BASE_URL}",
-        "LAVIYA_AGENT_UID": "${env:LAVIYA_AGENT_UID}",
         "LAVIYA_LOG_LEVEL": "info"
       }
     }
   }
 }
 ```
+
+If an optional environment variable (for example `LAVIYA_BASE_URL` or `LAVIYA_AGENT_UID`) is not set on your machine, omit it from the MCP `env` block or provide a concrete value.
 
 Reference example: `mcp/examples/vscode/mcp.json`
 

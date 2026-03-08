@@ -3,11 +3,19 @@ import { z } from "zod";
 export const logLevels = ["debug", "info", "warn", "error"] as const;
 export type LogLevel = (typeof logLevels)[number];
 
+function emptyStringToUndefined(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value.trim().length === 0 ? undefined : value;
+}
+
 const envSchema = z.object({
   LAVIYA_API_KEY: z.string().min(1, "LAVIYA_API_KEY is required"),
-  LAVIYA_BASE_URL: z.string().url().optional(),
-  LAVIYA_AGENT_UID: z.string().min(1).optional(),
-  LAVIYA_LOG_LEVEL: z.enum(logLevels).optional()
+  LAVIYA_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  LAVIYA_AGENT_UID: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
+  LAVIYA_LOG_LEVEL: z.preprocess(emptyStringToUndefined, z.enum(logLevels).optional())
 });
 
 export interface RuntimeEnv {
