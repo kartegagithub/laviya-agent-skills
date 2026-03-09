@@ -136,7 +136,113 @@ If an optional environment variable (for example `LAVIYA_BASE_URL` or `LAVIYA_AG
 
 Reference example: `mcp/examples/vscode/mcp.json`
 
-## 7. Available MCP Tools
+## 7. Client-Specific MCP Setup
+
+### 7.1 Codex CLI
+
+Add the MCP server with `codex mcp add`:
+
+```bash
+codex mcp add laviya \
+  --env LAVIYA_API_KEY=your-api-key \
+  --env LAVIYA_BASE_URL=https://api.laviya.app \
+  --env LAVIYA_LOG_LEVEL=info \
+  -- npx -y laviya-mcp-server@0.1.11
+```
+
+Verify registration:
+
+```bash
+codex mcp list
+codex mcp get laviya
+```
+
+Equivalent `~/.codex/config.toml` shape:
+
+```toml
+[mcp_servers.laviya]
+command = "npx"
+args = ["-y", "laviya-mcp-server@0.1.11"]
+
+[mcp_servers.laviya.env]
+LAVIYA_API_KEY = "your-api-key"
+LAVIYA_BASE_URL = "https://api.laviya.app"
+LAVIYA_LOG_LEVEL = "info"
+```
+
+### 7.2 VS Code
+
+Use user-level MCP config at:
+
+- Windows: `%APPDATA%\Code\User\mcp.json`
+
+Example:
+
+```json
+{
+  "servers": {
+    "laviya-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "laviya-mcp-server@0.1.11"],
+      "env": {
+        "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
+        "LAVIYA_BASE_URL": "https://api.laviya.app",
+        "LAVIYA_LOG_LEVEL": "info"
+      }
+    }
+  },
+  "inputs": []
+}
+```
+
+Reference example: `mcp/examples/vscode/mcp.json`
+
+### 7.3 Antigravity (VS Code Extension)
+
+Antigravity uses the same MCP server definition model as VS Code.  
+Add the `laviya-mcp-server` entry in the same `mcp.json` file.
+Do not include `"type": "stdio"` if your Antigravity schema rejects that field.
+
+Recommended server block:
+
+```json
+{
+  "command": "npx",
+  "args": ["-y", "laviya-mcp-server@0.1.11"],
+  "env": {
+    "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
+    "LAVIYA_BASE_URL": "https://api.laviya.app",
+    "LAVIYA_LOG_LEVEL": "info"
+  }
+}
+```
+
+### 7.4 Claude
+
+Register the same stdio MCP server in Claude MCP settings using `npx`:
+
+```json
+{
+  "mcpServers": {
+    "laviya": {
+      "command": "npx",
+      "args": ["-y", "laviya-mcp-server@0.1.11"],
+      "env": {
+        "LAVIYA_API_KEY": "your-api-key",
+        "LAVIYA_BASE_URL": "https://api.laviya.app",
+        "LAVIYA_LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+Then include the skill artifact:
+
+- `mcp/examples/claude/SKILL.md`
+
+## 8. Available MCP Tools
 
 - `laviya_get_my_work`
 - `laviya_start_execution`
@@ -150,8 +256,8 @@ Typical lifecycle:
 3. Call `laviya_complete_execution` to finalize the task.
 4. Call `laviya_report_token_usage` when token reporting is required.
 
-## 8. Common Issues
+## 9. Common Issues
 
 - `Invalid environment configuration`: missing or invalid `LAVIYA_API_KEY`.
 - `Invalid project config`: invalid schema in `.laviya/project.json`.
-- MCP connection errors: verify the `dist/index.js` path in `args`.
+- MCP connection errors: verify your configured command (`npx` or `node .../dist/index.js`) and `args`.

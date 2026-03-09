@@ -9,7 +9,7 @@ import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
 
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.1.11";
 
 export interface RuntimeServer {
   server: McpServer;

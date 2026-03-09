@@ -360,6 +360,16 @@ VS Code integration:
 
 - Use `examples/vscode/mcp.json` as MCP server definition.
 
+Codex integration:
+
+- Register the server with `codex mcp add` and run `laviya-mcp-server` via `npx`.
+- Reference: `../docs/InstallationAndUsage.md` (Client-Specific MCP Setup > Codex CLI).
+
+Antigravity integration:
+
+- Use the same stdio MCP server definition used for VS Code (`mcp.json` user config).
+- Reference: `../docs/InstallationAndUsage.md` (Client-Specific MCP Setup > Antigravity).
+
 Cursor integration:
 
 - Use same MCP server plus repo-local rule file (`.cursor/rules/laviya-project.mdc`).
@@ -367,6 +377,7 @@ Cursor integration:
 Claude Code integration:
 
 - Use `examples/claude/SKILL.md` and point tooling to the same MCP runtime.
+- Reference: `../docs/InstallationAndUsage.md` (Client-Specific MCP Setup > Claude).
 
 # 13. Production Readiness
 

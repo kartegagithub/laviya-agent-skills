@@ -8,7 +8,7 @@ import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger } from "./utils/logger.js";
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.1.11";
 export async function createRuntimeServer(options = {}) {
     const runtimeConfig = await buildRuntimeConfig(options);
     const logger = createLogger(runtimeConfig.logLevel, {

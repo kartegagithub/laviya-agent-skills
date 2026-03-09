@@ -6,12 +6,12 @@
     "url": "https://github.com/kartegagithub/laviya-agent-skills",
     "source": "github"
   },
-  "version": "0.1.9",
+  "version": "0.1.11",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "laviya-mcp-server",
-      "version": "0.1.9",
+      "version": "0.1.11",
       "transport": {
         "type": "stdio"
       },

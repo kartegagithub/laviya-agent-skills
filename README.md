@@ -49,6 +49,7 @@ Required environment variable:
 - Developer setup guide: `docs/Setup.md`
 - NPM publishing guide: `docs/MCPServerPublish.md`
 - End-user installation and usage: `docs/InstallationAndUsage.md`
+- Client-specific MCP setup (Codex, VS Code, Antigravity, Claude): `docs/InstallationAndUsage.md`
 
 ## Runtime Overview
 
