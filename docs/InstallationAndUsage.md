@@ -176,7 +176,7 @@ If your Codex sandbox blocks `npx` with a home-directory error, register a direc
 
 ```bash
 codex mcp remove laviya
-codex mcp add laviya -- "C:/Program Files/nodejs/node.exe" "E:/Production/Laviya/laviya-agent-skills/mcp/dist/index.js"
+codex mcp add laviya -- "C:/Program Files/nodejs/node.exe" "C:/Users/<user>/AppData/Roaming/npm/node_modules/laviya-mcp-server/dist/index.js"
 ```
 
 Equivalent `~/.codex/config.toml` shape:
