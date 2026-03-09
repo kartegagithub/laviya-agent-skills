@@ -12,8 +12,8 @@ declare const projectConfigSchema: z.ZodObject<{
         enabled: boolean;
         runId?: number | undefined;
     }, {
-        runId?: number | undefined;
         enabled?: boolean | undefined;
+        runId?: number | undefined;
     }>>;
     promptOverridePath: z.ZodOptional<z.ZodString>;
     completion: z.ZodOptional<z.ZodObject<{
@@ -72,8 +72,8 @@ declare const projectConfigSchema: z.ZodObject<{
     projectName?: string | undefined;
     pollMode?: "pull" | "long-poll" | undefined;
     runPinning?: {
-        runId?: number | undefined;
         enabled?: boolean | undefined;
+        runId?: number | undefined;
     } | undefined;
     promptOverridePath?: string | undefined;
     completion?: {

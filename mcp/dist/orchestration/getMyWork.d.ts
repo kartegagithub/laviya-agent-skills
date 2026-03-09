@@ -6,11 +6,11 @@ export declare const getMyWorkInputSchema: z.ZodObject<{
     runId: z.ZodOptional<z.ZodNumber>;
     projectId: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    runId?: number | undefined;
     projectId?: number | undefined;
+    runId?: number | undefined;
 }, {
-    runId?: number | undefined;
     projectId?: number | undefined;
+    runId?: number | undefined;
 }>;
 export type GetMyWorkInput = z.infer<typeof getMyWorkInputSchema>;
 export declare function getMyWork(client: LaviyaApiClient, runtimeConfig: RuntimeConfig, logger: Logger, input: GetMyWorkInput): Promise<unknown>;

@@ -12,7 +12,6 @@ export class LaviyaApiError extends Error {
 export class LaviyaApiClient {
     options;
     capturedAgentUid;
-    refreshExecutionLeaseEndpointMissing = false;
     constructor(options) {
         this.options = options;
     }
@@ -39,33 +38,6 @@ export class LaviyaApiClient {
                 AIAgentTaskExecutionID: params.executionId
             }
         });
-    }
-    async refreshExecutionLease(params) {
-        if (this.refreshExecutionLeaseEndpointMissing) {
-            return this.startExecution(params);
-        }
-        try {
-            return await this.request({
-                method: "POST",
-                path: "/api/ai/RefreshExecutionLease",
-                body: {
-                    aiAgentFlowRunID: params.runId,
-                    taskID: params.taskId,
-                    aiAgentTaskExecutionID: params.executionId
-                }
-            });
-        }
-        catch (error) {
-            if (error instanceof LaviyaApiError && error.status === 404) {
-                this.refreshExecutionLeaseEndpointMissing = true;
-                this.options.logger.warn("RefreshExecutionLease endpoint not found, falling back to StartExecution", {
-                    runId: params.runId,
-                    taskId: params.taskId
-                });
-                return this.startExecution(params);
-            }
-            throw error;
-        }
     }
     async completeExecution(payload, idempotencyKey) {
         return this.request({

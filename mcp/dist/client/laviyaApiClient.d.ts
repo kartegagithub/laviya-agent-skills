@@ -17,7 +17,6 @@ export declare class LaviyaApiError extends Error {
 export declare class LaviyaApiClient {
     private readonly options;
     private capturedAgentUid;
-    private refreshExecutionLeaseEndpointMissing;
     constructor(options: LaviyaApiClientOptions);
     getMyWork(params: {
         runId?: number;
@@ -25,11 +24,6 @@ export declare class LaviyaApiClient {
         agentProfile?: string;
     }): Promise<unknown>;
     startExecution(params: {
-        runId: number;
-        taskId: number;
-        executionId?: number;
-    }): Promise<unknown>;
-    refreshExecutionLease(params: {
         runId: number;
         taskId: number;
         executionId?: number;

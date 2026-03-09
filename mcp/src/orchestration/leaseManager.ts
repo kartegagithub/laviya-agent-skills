@@ -67,7 +67,7 @@ export class LeaseManager {
 
   private async refresh(context: LeaseContext): Promise<void> {
     try {
-      await this.client.refreshExecutionLease(context);
+      await this.client.startExecution(context);
       this.logger.debug("Execution lease refreshed", {
         runId: context.runId,
         taskId: context.taskId,
