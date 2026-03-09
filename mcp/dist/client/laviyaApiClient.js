@@ -30,6 +30,29 @@ export class LaviyaApiClient {
         this.captureAgentUid(response);
         return response;
     }
+    async feedTask(payload) {
+        return this.request({
+            method: "POST",
+            path: "/api/ai/FeedTask",
+            body: payload
+        });
+    }
+    async getLocalWorkStatus(params) {
+        return this.request({
+            method: "GET",
+            path: "/api/ai/GetLocalWorkStatus",
+            query: {
+                RunID: params.runId
+            }
+        });
+    }
+    async cancelLocalWork(payload) {
+        return this.request({
+            method: "POST",
+            path: "/api/ai/CancelLocalWork",
+            body: payload
+        });
+    }
     async startExecution(params) {
         return this.request({
             method: "GET",

@@ -1,4 +1,4 @@
-# MCP Server NPM + Registry Publishing Guide
+﻿# MCP Server NPM + Registry Publishing Guide
 
 This document explains the complete release flow for `mcp`:
 
@@ -177,11 +177,11 @@ Expected success output pattern:
 Examples:
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills 0.1.12
+.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills 0.1.13
 ```
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills 0.1.12
+.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills 0.1.13
 ```
 
 ```powershell
@@ -234,3 +234,4 @@ $githubToken = (Get-Content -Path ".\.mcpregistry_github_token" -Raw).Trim()
 4. `npm publish --access public` succeeded.
 5. `npm view laviya-mcp-server version` matches release version.
 6. `.\.tools\mcp-publisher.exe publish .\server.json` succeeded.
+

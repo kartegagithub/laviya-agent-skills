@@ -273,6 +273,9 @@ Runtime responsibilities implemented in code:
 
 MCP tools exposed:
 
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -285,10 +288,25 @@ MCP prompt/resource exposed:
 
 Tool contracts:
 
+- `laviya_feed_task`
+  - Input: `{ payload: { taskID, userRequest?, agentUID?, cancelActiveRun?, requestKey?, attachmentFileIDs? } }`
+  - Behavior: starts or reuses a hidden local-direct run for flow-independent task execution.
+  - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with feed/run metadata.
+  - Error strategy: payload validation + backend business rule propagation.
+- `laviya_get_local_work_status`
+  - Input: `runId`
+  - Behavior: reads run status, latest execution status, and generated artifact counters.
+  - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`).
+  - Error strategy: input validation + structured error logging.
+- `laviya_cancel_local_work`
+  - Input: `{ payload: { runID, reason? } }`
+  - Behavior: cancels local-direct run and active execution leases.
+  - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with final status snapshot.
+  - Error strategy: payload validation + structured error logging.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
   - Behavior: resolves defaults from runtime/project config, polls work, and supports lite payload defaults.
-  - Output: minified JSON text by default with optional field omission.
+  - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) as text; minified by default with optional field omission.
   - Error strategy: validates input, logs error, throws tool error.
 - `laviya_start_execution`
   - Input: `runId`, `taskId`, `executionId?`
@@ -419,28 +437,34 @@ Implemented files in this scaffold:
 10. src/orchestration/startExecution.ts
 11. src/orchestration/completeExecution.ts
 12. src/orchestration/reportTokenUsage.ts
-13. src/orchestration/leaseManager.ts
-14. src/tools/getMyWorkTool.ts
-15. src/tools/startExecutionTool.ts
-16. src/tools/completeExecutionTool.ts
-17. src/tools/reportTokenUsageTool.ts
-18. src/prompts/orchestrator.system.md
-19. src/utils/env.ts
-20. src/utils/logger.ts
-21. src/utils/requestKey.ts
-22. src/utils/json.ts
-23. src/schemas/projectConfig.schema.json
-24. src/schemas/globalConfig.schema.json
-25. src/schemas/executionSummary.schema.json
-26. src/schemas/completeExecution.schema.json
-27. examples/global.json
-28. examples/project.json
-29. examples/project-advanced.json
-30. examples/override.system.md
-31. examples/cursor/laviya-project.mdc
-32. examples/claude/SKILL.md
-33. examples/vscode/mcp.json
-34. README.md
+13. src/orchestration/feedTask.ts
+14. src/orchestration/getLocalWorkStatus.ts
+15. src/orchestration/cancelLocalWork.ts
+16. src/orchestration/leaseManager.ts
+17. src/tools/getMyWorkTool.ts
+18. src/tools/startExecutionTool.ts
+19. src/tools/completeExecutionTool.ts
+20. src/tools/reportTokenUsageTool.ts
+21. src/tools/feedTaskTool.ts
+22. src/tools/getLocalWorkStatusTool.ts
+23. src/tools/cancelLocalWorkTool.ts
+24. src/prompts/orchestrator.system.md
+25. src/utils/env.ts
+26. src/utils/logger.ts
+27. src/utils/requestKey.ts
+28. src/utils/json.ts
+29. src/schemas/projectConfig.schema.json
+30. src/schemas/globalConfig.schema.json
+31. src/schemas/executionSummary.schema.json
+32. src/schemas/completeExecution.schema.json
+33. examples/global.json
+34. examples/project.json
+35. examples/project-advanced.json
+36. examples/override.system.md
+37. examples/cursor/laviya-project.mdc
+38. examples/claude/SKILL.md
+39. examples/vscode/mcp.json
+40. README.md
 ```
 
 # 15. Usage Instructions

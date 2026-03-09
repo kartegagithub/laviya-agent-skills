@@ -123,3 +123,15 @@ After `npm run dev`, startup logs should include:
 - `pollMode`
 - `globalConfigPath` (if global config exists)
 - `projectConfigPath` (if project config exists)
+
+Core MCP tools available in this runtime:
+
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
+- `laviya_get_my_work`
+- `laviya_start_execution`
+- `laviya_complete_execution`
+- `laviya_report_token_usage`
+
+Tool outputs are API envelope JSON text: `{ HasFailed, Messages, Data }`.

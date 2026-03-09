@@ -2,15 +2,18 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LaviyaApiClient } from "./client/laviyaApiClient.js";
 import { buildRuntimeConfig, type RuntimeBootstrapOptions, type RuntimeConfig } from "./config/mergeConfig.js";
 import { LeaseManager } from "./orchestration/leaseManager.js";
+import { registerCancelLocalWorkTool } from "./tools/cancelLocalWorkTool.js";
 import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
+import { registerFeedTaskTool } from "./tools/feedTaskTool.js";
+import { registerGetLocalWorkStatusTool } from "./tools/getLocalWorkStatusTool.js";
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
 import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
 
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.12";
+const SERVER_VERSION = "0.1.13";
 
 export interface RuntimeServer {
   server: McpServer;
@@ -58,6 +61,24 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     runtimeConfig,
     logger: logger.child({ component: "prompt-assets" })
+  });
+
+  registerFeedTaskTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_feed_task" })
+  });
+
+  registerGetLocalWorkStatusTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_get_local_work_status" })
+  });
+
+  registerCancelLocalWorkTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_cancel_local_work" })
   });
 
   registerGetMyWorkTool({

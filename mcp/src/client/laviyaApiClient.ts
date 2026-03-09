@@ -61,6 +61,32 @@ export class LaviyaApiClient {
     return response;
   }
 
+  async feedTask(payload: unknown): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      path: "/api/ai/FeedTask",
+      body: payload
+    });
+  }
+
+  async getLocalWorkStatus(params: { runId: number }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      path: "/api/ai/GetLocalWorkStatus",
+      query: {
+        RunID: params.runId
+      }
+    });
+  }
+
+  async cancelLocalWork(payload: unknown): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      path: "/api/ai/CancelLocalWork",
+      body: payload
+    });
+  }
+
   async startExecution(params: { runId: number; taskId: number; executionId?: number }): Promise<unknown> {
     return this.request({
       method: "GET",

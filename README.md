@@ -59,4 +59,16 @@ The MCP runtime follows a global-runtime plus project-local-config model:
 - repository-level project configuration (`.laviya/project.json` or `.laviya.json`)
 - runtime-enforced lifecycle mechanics (validation, retries, idempotency, and structured logging)
 
+Current MCP tool set includes both orchestration and local-direct task feed flows:
+
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
+- `laviya_get_my_work`
+- `laviya_start_execution`
+- `laviya_complete_execution`
+- `laviya_report_token_usage`
+
+All tools return API envelope JSON text in the shape: `{ HasFailed, Messages, Data }`.
+
 For full architecture details and file-level scaffolding, refer to `mcp/README.md`.

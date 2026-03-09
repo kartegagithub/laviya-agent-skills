@@ -1,4 +1,4 @@
-# End-User Installation and Usage Guide
+﻿# End-User Installation and Usage Guide
 
 This guide is for users who want to install and use `laviya-mcp-server`.
 
@@ -147,7 +147,7 @@ codex mcp add laviya \
   --env LAVIYA_API_KEY=your-api-key \
   --env LAVIYA_BASE_URL=https://api.laviya.app \
   --env LAVIYA_LOG_LEVEL=info \
-  -- npx -y laviya-mcp-server@0.1.12
+  -- npx -y laviya-mcp-server@0.1.13
 ```
 
 Verify registration:
@@ -177,6 +177,18 @@ Call MCP tool laviya_start_execution with {"runId": 1234, "taskId": 5678}.
 ```
 
 ```text
+Call MCP tool laviya_feed_task with {"payload":{"taskID":5678,"userRequest":"Perform local-direct analysis and create wiki outputs.","cancelActiveRun":false}}.
+```
+
+```text
+Call MCP tool laviya_get_local_work_status with {"runId":1234}.
+```
+
+```text
+Call MCP tool laviya_cancel_local_work with {"payload":{"runID":1234,"reason":"Operator cancelled run"}}.
+```
+
+```text
 Read MCP resource laviya://prompts/orchestrator.system.md and return the text.
 ```
 
@@ -196,7 +208,7 @@ Equivalent `~/.codex/config.toml` shape:
 ```toml
 [mcp_servers.laviya]
 command = "npx"
-args = ["-y", "laviya-mcp-server@0.1.12"]
+args = ["-y", "laviya-mcp-server@0.1.13"]
 
 [mcp_servers.laviya.env]
 LAVIYA_API_KEY = "your-api-key"
@@ -218,7 +230,7 @@ Example:
     "laviya-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.12"],
+      "args": ["-y", "laviya-mcp-server@0.1.13"],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -243,7 +255,7 @@ Recommended server block:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "laviya-mcp-server@0.1.12"],
+  "args": ["-y", "laviya-mcp-server@0.1.13"],
   "env": {
     "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
     "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -261,7 +273,7 @@ Register the same stdio MCP server in Claude MCP settings using `npx`:
   "mcpServers": {
     "laviya": {
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.12"],
+      "args": ["-y", "laviya-mcp-server@0.1.13"],
       "env": {
         "LAVIYA_API_KEY": "your-api-key",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -278,6 +290,9 @@ Then include the skill artifact:
 
 ## 8. Available MCP Tools
 
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -285,13 +300,25 @@ Then include the skill artifact:
 
 Typical lifecycle:
 
-1. Call `laviya_get_my_work` to fetch work.
-2. Call `laviya_start_execution` to begin execution.
-3. Call `laviya_complete_execution` to finalize the task.
-4. Call `laviya_report_token_usage` when token reporting is required.
+1. Optional local-direct bootstrap: call `laviya_feed_task` for flow-independent task feeding.
+2. Optional monitoring/control: use `laviya_get_local_work_status` / `laviya_cancel_local_work`.
+3. Call `laviya_get_my_work` to fetch work.
+4. Call `laviya_start_execution` to begin execution.
+5. Call `laviya_complete_execution` to finalize the task.
+6. Call `laviya_report_token_usage` when token reporting is required.
+
+Tool response format:
+
+- All tools return raw Laviya API envelope JSON as text:
+  - `HasFailed: boolean`
+  - `Messages: [{ Code?, Message }]`
+  - `Data: object | null`
+- If `HasFailed=true`, treat as failed call.
+- For `laviya_get_my_work`, `Data=null` means no eligible work currently.
 
 ## 9. Common Issues
 
 - `Invalid environment configuration`: missing or invalid `LAVIYA_API_KEY`.
 - `Invalid project config`: invalid schema in `.laviya/project.json`.
 - MCP connection errors: verify your configured command (`npx` or `node .../dist/index.js`) and `args`.
+
