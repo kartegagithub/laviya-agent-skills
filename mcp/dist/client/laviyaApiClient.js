@@ -22,7 +22,9 @@ export class LaviyaApiClient {
             query: {
                 RunID: params.runId,
                 ProjectID: params.projectId,
-                AgentProfile: params.agentProfile
+                AgentProfile: params.agentProfile,
+                IncludeFileBytes: params.includeFileBytes === undefined ? undefined : params.includeFileBytes ? "true" : "false",
+                PreviousLogsLimit: params.previousLogsLimit
             }
         });
         this.captureAgentUid(response);

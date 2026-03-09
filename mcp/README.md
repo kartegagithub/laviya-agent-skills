@@ -260,6 +260,7 @@ Runtime responsibilities implemented in code:
 - Load global config with defaults.
 - Discover nearest project config from current working directory.
 - Load base prompt, then append optional project override prompt.
+- Expose resolved prompt text through MCP prompt/resource endpoints.
 - Initialize API client with retries, timeout, auth headers, and idempotency.
 - Generate deterministic request keys for completion and token reporting.
 - Refresh execution lease on interval with fallback behavior.
@@ -277,12 +278,17 @@ MCP tools exposed:
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
 
+MCP prompt/resource exposed:
+
+- Prompt: `laviya_orchestrator_system_prompt`
+- Resource URI: `laviya://prompts/orchestrator.system.md`
+
 Tool contracts:
 
 - `laviya_get_my_work`
-  - Input: `runId?`, `projectId?`
-  - Behavior: resolves defaults from runtime/project config and polls work.
-  - Output: raw Laviya API payload as JSON text.
+  - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
+  - Behavior: resolves defaults from runtime/project config, polls work, and supports lite payload defaults.
+  - Output: minified JSON text by default with optional field omission.
   - Error strategy: validates input, logs error, throws tool error.
 - `laviya_start_execution`
   - Input: `runId`, `taskId`, `executionId?`

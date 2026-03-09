@@ -147,7 +147,7 @@ codex mcp add laviya \
   --env LAVIYA_API_KEY=your-api-key \
   --env LAVIYA_BASE_URL=https://api.laviya.app \
   --env LAVIYA_LOG_LEVEL=info \
-  -- npx -y laviya-mcp-server@0.1.11
+  -- npx -y laviya-mcp-server@0.1.12
 ```
 
 Verify registration:
@@ -169,7 +169,19 @@ Call MCP tool laviya_get_my_work with {} and return raw JSON.
 ```
 
 ```text
+Call MCP tool laviya_get_my_work with {"includeFileBytes": false, "previousLogsLimit": 20, "output": {"minify": true, "omitFields": ["Data.PreviousWorks.Logs"]}}.
+```
+
+```text
 Call MCP tool laviya_start_execution with {"runId": 1234, "taskId": 5678}.
+```
+
+```text
+Read MCP resource laviya://prompts/orchestrator.system.md and return the text.
+```
+
+```text
+Call MCP prompt laviya_orchestrator_system_prompt and return the prompt messages.
 ```
 
 If your Codex sandbox blocks `npx` with a home-directory error, register a direct Node command instead:
@@ -184,7 +196,7 @@ Equivalent `~/.codex/config.toml` shape:
 ```toml
 [mcp_servers.laviya]
 command = "npx"
-args = ["-y", "laviya-mcp-server@0.1.11"]
+args = ["-y", "laviya-mcp-server@0.1.12"]
 
 [mcp_servers.laviya.env]
 LAVIYA_API_KEY = "your-api-key"
@@ -206,7 +218,7 @@ Example:
     "laviya-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.11"],
+      "args": ["-y", "laviya-mcp-server@0.1.12"],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -231,7 +243,7 @@ Recommended server block:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "laviya-mcp-server@0.1.11"],
+  "args": ["-y", "laviya-mcp-server@0.1.12"],
   "env": {
     "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
     "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -249,7 +261,7 @@ Register the same stdio MCP server in Claude MCP settings using `npx`:
   "mcpServers": {
     "laviya": {
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.11"],
+      "args": ["-y", "laviya-mcp-server@0.1.12"],
       "env": {
         "LAVIYA_API_KEY": "your-api-key",
         "LAVIYA_BASE_URL": "https://api.laviya.app",

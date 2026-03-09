@@ -2,13 +2,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LaviyaApiClient } from "./client/laviyaApiClient.js";
 import { buildRuntimeConfig } from "./config/mergeConfig.js";
 import { LeaseManager } from "./orchestration/leaseManager.js";
+import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
 import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger } from "./utils/logger.js";
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.11";
+const SERVER_VERSION = "0.1.12";
 export async function createRuntimeServer(options = {}) {
     const runtimeConfig = await buildRuntimeConfig(options);
     const logger = createLogger(runtimeConfig.logLevel, {
@@ -34,6 +35,11 @@ export async function createRuntimeServer(options = {}) {
     const server = new McpServer({
         name: SERVER_NAME,
         version: SERVER_VERSION
+    });
+    registerOrchestratorPromptAssets({
+        server,
+        runtimeConfig,
+        logger: logger.child({ component: "prompt-assets" })
     });
     registerGetMyWorkTool({
         server,

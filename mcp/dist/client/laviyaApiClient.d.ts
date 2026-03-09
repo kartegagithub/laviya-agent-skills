@@ -22,6 +22,8 @@ export declare class LaviyaApiClient {
         runId?: number;
         projectId?: number;
         agentProfile?: string;
+        includeFileBytes?: boolean;
+        previousLogsLimit?: number;
     }): Promise<unknown>;
     startExecution(params: {
         runId: number;

@@ -34,16 +34,16 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
         duration: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }, {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }>, "many">>;
     tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
         model: z.ZodOptional<z.ZodString>;
@@ -83,10 +83,10 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     errorMessage?: string | null | undefined;
     logs?: {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }[] | undefined;
     tokenUsages?: {
         model?: string | undefined;
@@ -110,10 +110,10 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     errorMessage?: string | null | undefined;
     logs?: {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }[] | undefined;
     tokenUsages?: {
         model?: string | undefined;
@@ -137,10 +137,10 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     errorMessage?: string | null | undefined;
     logs?: {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }[] | undefined;
     tokenUsages?: {
         model?: string | undefined;
@@ -164,10 +164,10 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     errorMessage?: string | null | undefined;
     logs?: {
         message?: string | undefined;
+        duration?: number | undefined;
         actionType?: string | undefined;
         actionDetails?: string | undefined;
         level?: string | undefined;
-        duration?: number | undefined;
     }[] | undefined;
     tokenUsages?: {
         model?: string | undefined;

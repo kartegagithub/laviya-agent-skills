@@ -37,14 +37,23 @@ export class LaviyaApiClient {
 
   constructor(private readonly options: LaviyaApiClientOptions) {}
 
-  async getMyWork(params: { runId?: number; projectId?: number; agentProfile?: string }): Promise<unknown> {
+  async getMyWork(params: {
+    runId?: number;
+    projectId?: number;
+    agentProfile?: string;
+    includeFileBytes?: boolean;
+    previousLogsLimit?: number;
+  }): Promise<unknown> {
     const response = await this.request({
       method: "GET",
       path: "/api/ai/GetMyWork",
       query: {
         RunID: params.runId,
         ProjectID: params.projectId,
-        AgentProfile: params.agentProfile
+        AgentProfile: params.agentProfile,
+        IncludeFileBytes:
+          params.includeFileBytes === undefined ? undefined : params.includeFileBytes ? "true" : "false",
+        PreviousLogsLimit: params.previousLogsLimit
       }
     });
 
