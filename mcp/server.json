@@ -1,0 +1,50 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kartegagithub/laviya-agent-skills",
+  "description": "Laviya AI Orchestration MCP runtime for IDE and agent integrations.",
+  "repository": {
+    "url": "https://github.com/kartegagithub/laviya-agent-skills",
+    "source": "github"
+  },
+  "version": "0.1.9",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "laviya-mcp-server",
+      "version": "0.1.9",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Laviya API key used for MCP runtime authentication.",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "LAVIYA_API_KEY"
+        },
+        {
+          "description": "Optional base URL override for the Laviya API endpoint.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "LAVIYA_BASE_URL"
+        },
+        {
+          "description": "Optional agent UID override for execution orchestration.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "LAVIYA_AGENT_UID"
+        },
+        {
+          "description": "Optional log level override (debug|info|warn|error).",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "LAVIYA_LOG_LEVEL"
+        }
+      ]
+    }
+  ]
+}
