@@ -157,6 +157,28 @@ codex mcp list
 codex mcp get laviya
 ```
 
+Calling MCP tools from Codex chat:
+
+- Be explicit that you want an MCP tool call.
+- Do not send only the tool name, because plain text like `laviya_get_my_work` may be interpreted as normal chat text.
+
+Example prompts:
+
+```text
+Call MCP tool laviya_get_my_work with {} and return raw JSON.
+```
+
+```text
+Call MCP tool laviya_start_execution with {"runId": 1234, "taskId": 5678}.
+```
+
+If your Codex sandbox blocks `npx` with a home-directory error, register a direct Node command instead:
+
+```bash
+codex mcp remove laviya
+codex mcp add laviya -- "C:/Program Files/nodejs/node.exe" "E:/Production/Laviya/laviya-agent-skills/mcp/dist/index.js"
+```
+
 Equivalent `~/.codex/config.toml` shape:
 
 ```toml
