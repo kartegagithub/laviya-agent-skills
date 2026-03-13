@@ -147,7 +147,7 @@ codex mcp add laviya \
   --env LAVIYA_API_KEY=your-api-key \
   --env LAVIYA_BASE_URL=https://api.laviya.app \
   --env LAVIYA_LOG_LEVEL=info \
-  -- npx -y laviya-mcp-server@0.1.13
+  -- npx -y laviya-mcp-server@0.1.14
 ```
 
 Verify registration:
@@ -208,7 +208,7 @@ Equivalent `~/.codex/config.toml` shape:
 ```toml
 [mcp_servers.laviya]
 command = "npx"
-args = ["-y", "laviya-mcp-server@0.1.13"]
+args = ["-y", "laviya-mcp-server@0.1.14"]
 
 [mcp_servers.laviya.env]
 LAVIYA_API_KEY = "your-api-key"
@@ -230,7 +230,7 @@ Example:
     "laviya-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.13"],
+      "args": ["-y", "laviya-mcp-server@0.1.14"],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -255,7 +255,7 @@ Recommended server block:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "laviya-mcp-server@0.1.13"],
+  "args": ["-y", "laviya-mcp-server@0.1.14"],
   "env": {
     "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
     "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -273,7 +273,7 @@ Register the same stdio MCP server in Claude MCP settings using `npx`:
   "mcpServers": {
     "laviya": {
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.13"],
+      "args": ["-y", "laviya-mcp-server@0.1.14"],
       "env": {
         "LAVIYA_API_KEY": "your-api-key",
         "LAVIYA_BASE_URL": "https://api.laviya.app",

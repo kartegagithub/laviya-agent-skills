@@ -177,11 +177,11 @@ Expected success output pattern:
 Examples:
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills 0.1.13
+.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills 0.1.14
 ```
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills 0.1.13
+.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills 0.1.14
 ```
 
 ```powershell
