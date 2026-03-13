@@ -32,19 +32,19 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
         message: z.ZodOptional<z.ZodString>;
         level: z.ZodOptional<z.ZodString>;
         duration: z.ZodOptional<z.ZodNumber>;
-    }, "strip", z.ZodTypeAny, {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }, {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }>, "many">>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
     tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
         model: z.ZodOptional<z.ZodString>;
         inputTokens: z.ZodOptional<z.ZodNumber>;
@@ -53,135 +53,247 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
         cost: z.ZodOptional<z.ZodNumber>;
         currency: z.ZodOptional<z.ZodString>;
         providerRequestID: z.ZodOptional<z.ZodString>;
-    }, "strip", z.ZodTypeAny, {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }, {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }>, "many">>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
-}, "strip", z.ZodTypeAny, {
-    taskID: number;
-    aiAgentFlowRunID: number;
-    executionSummary: string;
-    isFailed: boolean;
-    aiAgentTaskExecutionID?: number | undefined;
-    requestKey?: string | undefined;
-    errorMessage?: string | null | undefined;
-    logs?: {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }[] | undefined;
-    tokenUsages?: {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }[] | undefined;
-    tasks?: GeneratedTaskInput[] | undefined;
-    wikis?: GeneratedWikiInput[] | undefined;
-    technicalAnalysis?: GeneratedWikiInput | undefined;
-}, {
-    taskID: number;
-    aiAgentFlowRunID: number;
-    executionSummary: string;
-    isFailed: boolean;
-    aiAgentTaskExecutionID?: number | undefined;
-    requestKey?: string | undefined;
-    errorMessage?: string | null | undefined;
-    logs?: {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }[] | undefined;
-    tokenUsages?: {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }[] | undefined;
-    tasks?: GeneratedTaskInput[] | undefined;
-    wikis?: GeneratedWikiInput[] | undefined;
-    technicalAnalysis?: GeneratedWikiInput | undefined;
-}>, {
-    taskID: number;
-    aiAgentFlowRunID: number;
-    executionSummary: string;
-    isFailed: boolean;
-    aiAgentTaskExecutionID?: number | undefined;
-    requestKey?: string | undefined;
-    errorMessage?: string | null | undefined;
-    logs?: {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }[] | undefined;
-    tokenUsages?: {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }[] | undefined;
-    tasks?: GeneratedTaskInput[] | undefined;
-    wikis?: GeneratedWikiInput[] | undefined;
-    technicalAnalysis?: GeneratedWikiInput | undefined;
-}, {
-    taskID: number;
-    aiAgentFlowRunID: number;
-    executionSummary: string;
-    isFailed: boolean;
-    aiAgentTaskExecutionID?: number | undefined;
-    requestKey?: string | undefined;
-    errorMessage?: string | null | undefined;
-    logs?: {
-        message?: string | undefined;
-        duration?: number | undefined;
-        actionType?: string | undefined;
-        actionDetails?: string | undefined;
-        level?: string | undefined;
-    }[] | undefined;
-    tokenUsages?: {
-        model?: string | undefined;
-        inputTokens?: number | undefined;
-        outputTokens?: number | undefined;
-        totalTokens?: number | undefined;
-        cost?: number | undefined;
-        currency?: string | undefined;
-        providerRequestID?: string | undefined;
-    }[] | undefined;
-    tasks?: GeneratedTaskInput[] | undefined;
-    wikis?: GeneratedWikiInput[] | undefined;
-    technicalAnalysis?: GeneratedWikiInput | undefined;
-}>;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    taskID: z.ZodNumber;
+    aiAgentFlowRunID: z.ZodNumber;
+    aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
+    requestKey: z.ZodOptional<z.ZodString>;
+    executionSummary: z.ZodString;
+    errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    isFailed: z.ZodBoolean;
+    logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
+    wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    taskID: z.ZodNumber;
+    aiAgentFlowRunID: z.ZodNumber;
+    aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
+    requestKey: z.ZodOptional<z.ZodString>;
+    executionSummary: z.ZodString;
+    errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    isFailed: z.ZodBoolean;
+    logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
+    wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
+}, z.ZodTypeAny, "passthrough">>, z.objectOutputType<{
+    taskID: z.ZodNumber;
+    aiAgentFlowRunID: z.ZodNumber;
+    aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
+    requestKey: z.ZodOptional<z.ZodString>;
+    executionSummary: z.ZodString;
+    errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    isFailed: z.ZodBoolean;
+    logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
+    wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    taskID: z.ZodNumber;
+    aiAgentFlowRunID: z.ZodNumber;
+    aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
+    requestKey: z.ZodOptional<z.ZodString>;
+    executionSummary: z.ZodString;
+    errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    isFailed: z.ZodBoolean;
+    logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        actionType: z.ZodOptional<z.ZodString>;
+        actionDetails: z.ZodOptional<z.ZodString>;
+        message: z.ZodOptional<z.ZodString>;
+        level: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodNumber>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tokenUsages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        model: z.ZodOptional<z.ZodString>;
+        inputTokens: z.ZodOptional<z.ZodNumber>;
+        outputTokens: z.ZodOptional<z.ZodNumber>;
+        totalTokens: z.ZodOptional<z.ZodNumber>;
+        cost: z.ZodOptional<z.ZodNumber>;
+        currency: z.ZodOptional<z.ZodString>;
+        providerRequestID: z.ZodOptional<z.ZodString>;
+    }, z.ZodTypeAny, "passthrough">>, "many">>;
+    tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
+    wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
+}, z.ZodTypeAny, "passthrough">>;
 export type CompleteExecutionPayload = z.infer<typeof completeExecutionPayloadSchema>;
 export declare function completeExecution(client: LaviyaApiClient, runtimeConfig: RuntimeConfig, logger: Logger, payload: CompleteExecutionPayload): Promise<unknown>;
 export {};

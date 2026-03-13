@@ -5,7 +5,7 @@
   "$defs": {
     "generatedTaskInput": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": ["title", "complexity", "priority", "taskTypeID", "estimatedEffort"],
       "properties": {
         "title": { "type": "string", "minLength": 1 },
@@ -32,7 +32,7 @@
     },
     "generatedWikiInput": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": ["name"],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
@@ -52,7 +52,7 @@
     }
   },
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": ["taskID", "aiAgentFlowRunID", "executionSummary", "isFailed"],
   "properties": {
     "taskID": { "type": "integer", "minimum": 1 },
@@ -70,7 +70,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "actionType": { "type": "string" },
           "actionDetails": { "type": "string" },
@@ -84,7 +84,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "model": { "type": "string" },
           "inputTokens": { "type": "integer", "minimum": 0 },

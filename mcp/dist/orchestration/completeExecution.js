@@ -7,7 +7,7 @@ const actionInputSchema = z.object({
     message: z.string().optional(),
     level: z.string().min(1).optional(),
     duration: z.number().int().min(0).optional()
-});
+}).passthrough();
 const tokenUsageInputSchema = z.object({
     model: z.string().min(1).optional(),
     inputTokens: z.number().int().min(0).optional(),
@@ -16,7 +16,7 @@ const tokenUsageInputSchema = z.object({
     cost: z.number().min(0).optional(),
     currency: z.string().min(1).optional(),
     providerRequestID: z.string().optional()
-});
+}).passthrough();
 const generatedTaskInputSchema = z.lazy(() => z.object({
     title: z.string().min(1),
     description: z.string().optional(),
@@ -29,13 +29,13 @@ const generatedTaskInputSchema = z.lazy(() => z.object({
     estimatedEffort: z.number().min(0),
     referenceID: z.string().min(1).optional(),
     subTasks: z.array(generatedTaskInputSchema).optional()
-}));
+}).passthrough());
 const generatedWikiInputSchema = z.lazy(() => z.object({
     name: z.string().min(1),
     description: z.string().optional(),
     subWikis: z.array(generatedWikiInputSchema).optional(),
     relatedTaskReferenceIDs: z.array(z.string().min(1)).optional()
-}));
+}).passthrough());
 function normalizeReferenceID(referenceID) {
     return referenceID.trim().toLowerCase();
 }
@@ -98,6 +98,7 @@ export const completeExecutionPayloadSchema = z
     wikis: z.array(generatedWikiInputSchema).optional(),
     technicalAnalysis: generatedWikiInputSchema.optional()
 })
+    .passthrough()
     .superRefine((payload, ctx) => {
     const taskReferenceIDs = collectTaskReferenceIDs(payload.tasks);
     const normalizedTaskReferences = new Set();
