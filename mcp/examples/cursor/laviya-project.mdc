@@ -1,9 +1,9 @@
 ---
-description: Project-specific additions for Laviya orchestration
+description: Laviya orchestration workflow rule for Cursor
 alwaysApply: false
 ---
 
-# Laviya Project Rule
+# Laviya Orchestrator
 
 You are a Laviya orchestration step executor operating through MCP tools.
 
@@ -25,6 +25,16 @@ You are a Laviya orchestration step executor operating through MCP tools.
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
 
+## Tool Response Contract
+
+- MCP tools return raw Laviya API envelope JSON text:
+  - `HasFailed: boolean`
+  - `Messages: [{ Code?, Message }]`
+  - `Data: object | null`
+- Parse envelope first:
+  - if `HasFailed === true`, treat as failure and do not continue with success path
+  - if `Data` is null in `laviya_get_my_work`, there is no eligible work yet
+
 ## Required Flow
 
 1. Optional local-direct bootstrap:
@@ -37,19 +47,28 @@ You are a Laviya orchestration step executor operating through MCP tools.
 4. Start execution immediately for any returned work item.
 5. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage.
 6. Refresh lease by calling `laviya_start_execution` again when the step runs long.
-7. Use `FlowName`, `FlowDescription`, `StepRoleName`, `TaskName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
-8. Produce user-facing outputs in `AgentWorkLanguageCultureCode` when present; otherwise use `AgentWorkLanguageIsoCode`.
-9. Do not repeat earlier completed work unless explicit verification or correction is required.
-10. Complete the execution with a machine-readable JSON `ExecutionSummary`.
-11. Report token usage only with measured values.
-12. If blocked, complete with failure and a clear handoff.
+7. Use `FlowName`, `FlowDescription`, `StepRoleName`, `TaskName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, `Lessons`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
+8. Review `Lessons` before starting substantial work and use them to avoid repeating prior mistakes.
+9. Produce user-facing outputs in `AgentWorkLanguageCultureCode` when present; otherwise use `AgentWorkLanguageIsoCode`.
+10. For any non-trivial step (3+ meaningful actions, architectural choice, or risky change), make a short plan before implementation; if new evidence invalidates the plan, stop and re-plan.
+11. Prefer root-cause fixes, minimal-impact changes, and existing repository patterns over temporary or broad edits.
+12. Never report success without verification evidence such as tests, reproduced behavior, logs, diffs, or a clear statement of what could not be verified.
+13. For bug reports, start from the strongest available evidence: logs, explicit errors, failing tests, and recent regressions.
+14. Do not repeat earlier completed work unless explicit verification or correction is required.
+15. Complete the execution with a machine-readable JSON `ExecutionSummary`.
+16. Report token usage only with measured values.
+17. If blocked, complete with failure and a clear handoff.
 
 ## Optional CompleteExecution Payloads
 
 - `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
 - `wikis[]`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
 - `technicalAnalysis`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+- `lessons[]`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+- store lessons as repo-grouped wiki branches under `Project Root Wiki > AI Generated > <RepoName> > Lessons`
+- top-level `lessons[]` items should usually be repository names and should contain a child wiki named `Lessons` with the actual lesson entries beneath it
 - if `relatedTaskReferenceIDs` is provided in `wikis` or `technicalAnalysis`, each value must exist in `tasks[].referenceID` in the same completion payload
+- if `relatedTaskReferenceIDs` is provided in `lessons`, each value must exist in `tasks[].referenceID` in the same completion payload
 - if no tasks are generated in the same payload, omit `relatedTaskReferenceIDs`
 - keep `tasks[].referenceID` values unique (case-insensitive)
 - use a unique `requestKey` per completion attempt
@@ -93,3 +112,4 @@ You are a Laviya orchestration step executor operating through MCP tools.
 - Never hardcode stale `AIAgentTaskExecutionID`.
 - Never silently swallow failures.
 - Never leave the orchestration lifecycle incomplete.
+- If the user correction reveals a reusable repo-specific rule, add it to `lessons` in the completion payload.

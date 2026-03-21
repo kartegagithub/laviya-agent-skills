@@ -138,6 +138,7 @@ export const completeExecutionPayloadSchema = z
     tokenUsages: z.array(tokenUsageInputSchema).optional(),
     tasks: z.array(generatedTaskInputSchema).optional(),
     wikis: z.array(generatedWikiInputSchema).optional(),
+    lessons: z.array(generatedWikiInputSchema).optional(),
     technicalAnalysis: generatedWikiInputSchema.optional()
   })
   .passthrough()
@@ -160,6 +161,7 @@ export const completeExecutionPayloadSchema = z
 
     const wikiReferenceIDs = [
       ...collectWikiReferenceIDs(payload.wikis),
+      ...collectWikiReferenceIDs(payload.lessons),
       ...collectWikiReferenceIDs(payload.technicalAnalysis ? [payload.technicalAnalysis] : undefined)
     ];
 
@@ -172,7 +174,7 @@ export const completeExecutionPayloadSchema = z
         code: z.ZodIssueCode.custom,
         path: ["wikis"],
         message:
-          "wikis.relatedTaskReferenceIDs requires tasks.referenceID values in the same payload. Remove relatedTaskReferenceIDs or provide matching tasks."
+          "wikis/lessons.relatedTaskReferenceIDs requires tasks.referenceID values in the same payload. Remove relatedTaskReferenceIDs or provide matching tasks."
       });
       return;
     }
@@ -189,7 +191,7 @@ export const completeExecutionPayloadSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["wikis"],
-        message: `wikis.relatedTaskReferenceIDs contains values not found in tasks.referenceID (same payload required): ${missingReferences.join(", ")}`
+        message: `wikis/lessons.relatedTaskReferenceIDs contains values not found in tasks.referenceID (same payload required): ${missingReferences.join(", ")}`
       });
     }
   });

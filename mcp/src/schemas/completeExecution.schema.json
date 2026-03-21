@@ -108,6 +108,13 @@
         "$ref": "#/$defs/generatedWikiInput"
       }
     },
+    "lessons": {
+      "type": "array",
+      "description": "Repo-grouped lessons stored under Project Root Wiki > AI Generated > <RepoName> > Lessons.",
+      "items": {
+        "$ref": "#/$defs/generatedWikiInput"
+      }
+    },
     "technicalAnalysis": {
       "$ref": "#/$defs/generatedWikiInput"
     }

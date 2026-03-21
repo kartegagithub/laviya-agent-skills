@@ -72,6 +72,7 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    lessons: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
     taskID: z.ZodNumber;
@@ -127,6 +128,7 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    lessons: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
     taskID: z.ZodNumber;
@@ -182,6 +184,7 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    lessons: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, z.ZodTypeAny, "passthrough">>, z.objectOutputType<{
     taskID: z.ZodNumber;
@@ -237,6 +240,7 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    lessons: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
     taskID: z.ZodNumber;
@@ -292,6 +296,7 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     }, z.ZodTypeAny, "passthrough">>, "many">>;
     tasks: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedTaskInput, z.ZodTypeDef, GeneratedTaskInput>, "many">>;
     wikis: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
+    lessons: z.ZodOptional<z.ZodArray<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>, "many">>;
     technicalAnalysis: z.ZodOptional<z.ZodType<GeneratedWikiInput, z.ZodTypeDef, GeneratedWikiInput>>;
 }, z.ZodTypeAny, "passthrough">>;
 export type CompleteExecutionPayload = z.infer<typeof completeExecutionPayloadSchema>;

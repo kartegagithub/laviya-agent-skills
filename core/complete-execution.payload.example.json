@@ -71,6 +71,24 @@
       ]
     }
   ],
+  "lessons": [
+    {
+      "name": "Laviya_BE",
+      "description": "Repository-specific lessons for backend orchestration work.",
+      "subWikis": [
+        {
+          "name": "Lessons",
+          "description": "Self-improvement notes captured from prior corrections.",
+          "subWikis": [
+            {
+              "name": "Refresh execution leases before completion",
+              "description": "Long-running steps must call StartExecution again before completion so stale execution IDs are not reused."
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "technicalAnalysis": {
     "name": "Authentication Failure Analysis",
     "description": "Dedicated technical analysis tree for callback failures, fallback behavior, and observability gaps.",
