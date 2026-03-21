@@ -4,6 +4,11 @@ Laviya Agent Skills is a repository of reusable orchestration assets for IDE and
 It provides a production-oriented MCP runtime, shared orchestration prompt assets, and client-specific
 artifacts for tools such as Cursor and Claude.
 
+## Packages
+
+- `laviya-agent-skills`: reusable prompt, rule, and skill asset bundle for Node-based tooling
+- `laviya-mcp-server`: stdio MCP runtime published from `mcp/`
+
 ## What Is Included
 
 - `core/`: shared orchestration prompt assets
@@ -42,6 +47,24 @@ npm run dev
 Required environment variable:
 
 - `LAVIYA_API_KEY`
+
+## Installable Asset Package
+
+Install the reusable asset bundle:
+
+```bash
+npm install laviya-agent-skills
+```
+
+Example usage:
+
+```js
+import { assets, resolveAssetPath } from "laviya-agent-skills";
+import { readFileSync } from "node:fs";
+
+const cursorRule = readFileSync(assets.cursorRule, "utf8");
+const orchestratorPrompt = readFileSync(resolveAssetPath("orchestratorSystemPrompt"), "utf8");
+```
 
 ## Documentation Index
 

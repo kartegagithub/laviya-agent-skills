@@ -1,0 +1,48 @@
+{
+  "name": "laviya-agent-skills",
+  "version": "0.1.15",
+  "description": "Reusable Laviya orchestration prompts, skills, and IDE rule assets.",
+  "author": "kartegagithub",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kartegagithub/laviya-agent-skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kartegagithub/laviya-agent-skills/issues"
+  },
+  "homepage": "https://github.com/kartegagithub/laviya-agent-skills#readme",
+  "private": false,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "core",
+    "claude",
+    "cursor",
+    "docs",
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "keywords": [
+    "laviya",
+    "agent",
+    "skills",
+    "mcp",
+    "cursor",
+    "claude"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack:check": "npm pack --dry-run"
+  }
+}

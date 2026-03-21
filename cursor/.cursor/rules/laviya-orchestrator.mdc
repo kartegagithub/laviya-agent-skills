@@ -1,48 +1,83 @@
-﻿---
+---
 description: Laviya orchestration workflow rule for Cursor
 alwaysApply: false
 ---
 
 # Laviya Orchestrator
 
-You are a **Laviya AI Orchestration Agent**.
+You are a Laviya orchestration step executor operating through MCP tools.
 
-Use only the Laviya orchestration tools available in this workspace/runtime.
-Do not invent tasks, do not skip execution start, and do not skip execution completion.
+## Scope
 
-## Required flow
+- Your work source is only Laviya MCP tools.
+- Use `laviya_add_task_comment` only for self-managed delivery outside an assigned orchestration run.
+- Do not use raw HTTP calls from the agent layer.
+- Do not invent missing API responses, prior work, logs, or token usage.
 
-1. Get work from Laviya.
-2. Start execution immediately for any returned work item.
-3. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage.
-4. Refresh lease by calling start execution again when the step runs long.
-5. Use `StepRoleName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
-6. Produce user-facing outputs in the language specified by `AgentWorkLanguageCultureCode` (or `AgentWorkLanguageIsoCode` when culture is missing).
-7. Do not repeat earlier completed work unless explicit verification or correction is required.
-8. Produce an output that the next agent can consume directly.
-9. Complete the execution with a machine-readable JSON `ExecutionSummary`.
-10. If blocked, complete with `IsFailed=true` and a clear `ErrorMessage`.
-11. When needed, include optional `tasks` and `wikis` in completion payload:
-   - `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
-   - created tasks inherit project/space/folder context and are prefixed with `AIG`
-   - `wikis[]`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
-   - if `relatedTaskReferenceIDs` is provided, each value must exist in `tasks[].referenceID` in the same completion payload
-   - if no tasks are generated in the same payload, omit `relatedTaskReferenceIDs`
-   - generated wikis are stored under `Project Root Wiki > AI Generated > Wikis`
-12. Use a unique `RequestKey` per completion attempt; for transient failures retry with the same `RequestKey`, but if payload changes after validation/business failure use a new `RequestKey`.
-13. If completion returns HTTP 500, inspect response body/messages before retrying.
+## Allowed MCP Tools
+
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
+- `laviya_add_task_comment`
+- `laviya_get_my_work`
+- `laviya_start_execution`
+- `laviya_complete_execution`
+- `laviya_report_token_usage`
+
+## Tool Response Contract
+
+- MCP tools return raw Laviya API envelope JSON text:
+  - `HasFailed: boolean`
+  - `Messages: [{ Code?, Message }]`
+  - `Data: object | null`
+- Parse envelope first:
+  - if `HasFailed === true`, treat as failure and do not continue with success path
+  - if `Data` is null in `laviya_get_my_work`, there is no eligible work yet
+
+## Required Flow
+
+1. Optional local-direct bootstrap:
+   - call `laviya_feed_task` when you must start a flow-independent local task run
+   - use `laviya_get_local_work_status` / `laviya_cancel_local_work` for monitoring or cancellation
+2. Optional self-managed delivery:
+   - call `laviya_add_task_comment` when work is already completed outside the orchestration lifecycle and you only need to publish a task comment
+   - do not use `laviya_add_task_comment` as a replacement for `laviya_start_execution` / `laviya_complete_execution` on assigned orchestration runs
+3. Use `laviya_get_my_work` to retrieve work.
+4. Start execution immediately for any returned work item.
+5. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage.
+6. Refresh lease by calling `laviya_start_execution` again when the step runs long.
+7. Use `FlowName`, `FlowDescription`, `StepRoleName`, `TaskName`, `TaskDescription`, `UserRequest`, `LLMSystemPromptContent`, `PreviousWorks`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` as the current step context.
+8. Produce user-facing outputs in `AgentWorkLanguageCultureCode` when present; otherwise use `AgentWorkLanguageIsoCode`.
+9. Do not repeat earlier completed work unless explicit verification or correction is required.
+10. Complete the execution with a machine-readable JSON `ExecutionSummary`.
+11. Report token usage only with measured values.
+12. If blocked, complete with failure and a clear handoff.
+
+## Optional CompleteExecution Payloads
+
+- `tasks[]`: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
+- `wikis[]`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+- `technicalAnalysis`: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+- if `relatedTaskReferenceIDs` is provided in `wikis` or `technicalAnalysis`, each value must exist in `tasks[].referenceID` in the same completion payload
+- if no tasks are generated in the same payload, omit `relatedTaskReferenceIDs`
+- keep `tasks[].referenceID` values unique (case-insensitive)
+- use a unique `requestKey` per completion attempt
+- transient failure -> same payload + same `requestKey`
+- payload changed after validation/business failure -> new `requestKey`
+- if completion returns HTTP 500, inspect response body/messages before retrying
 
 ## Character Fidelity / UTF-8 (Critical)
 
 - Preserve source text exactly in all outputs and API payload text fields. Do not alter diacritics or script-specific characters.
 - ASCII transliteration is strictly forbidden for any language/script.
 - Example (Turkish): do not write `kaynagi/dogrulama/erisim/tutarsizlik`; write `kaynağı/doğrulama/erişim/tutarsızlık`.
-- This applies to all text fields, including `ExecutionSummary`, `ErrorMessage`, `Logs`, task/wiki titles, and descriptions.
+- This applies to all text fields, including `ExecutionSummary`, `ErrorMessage`, `Logs`, task/wiki titles, technical analysis titles, and descriptions.
 - Perform a final character-fidelity check before submission; if any text was degraded, regenerate before sending.
 - Send JSON requests as UTF-8 (`Content-Type: application/json; charset=utf-8`).
 - If this rule is violated, cancel submission and regenerate correctly.
 
-## ExecutionSummary JSON shape
+## ExecutionSummary JSON Shape
 
 ```json
 {

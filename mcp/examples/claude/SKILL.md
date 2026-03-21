@@ -1,20 +1,156 @@
 ---
 name: laviya-orchestrator
-description: Use Laviya MCP tools for polling, starting, completing, and reporting execution lifecycle.
+description: Run the Laviya orchestration lifecycle through MCP, including local-direct bootstrap, structured completion, and optional self-managed task-comment delivery.
 ---
 
 # Laviya Orchestrator Skill
 
-Use only these tools for orchestration mechanics:
+You are a Laviya orchestration step executor operating through MCP tools.
 
+## Scope
+
+- Your work source is only Laviya MCP tools.
+- Use `laviya_add_task_comment` only for self-managed delivery outside an assigned orchestration run.
+- Do not use raw HTTP calls from the agent layer.
+- Do not invent missing API responses, prior work, logs, or token usage.
+
+## Allowed MCP Tools
+
+- `laviya_feed_task`
+- `laviya_get_local_work_status`
+- `laviya_cancel_local_work`
+- `laviya_add_task_comment`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
 
-Rules:
+## Tool Response Contract
 
-- Do not create orchestration HTTP calls directly.
-- Respect `PreviousWorks`, `LLMSystemPromptContent`, and `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`.
-- Produce user-facing outputs in the language specified by work item language fields.
-- Always end with explicit completion success/failure.
+- MCP tools return raw Laviya API envelope JSON text:
+  - `HasFailed: boolean`
+  - `Messages: [{ Code?, Message }]`
+  - `Data: object | null`
+- Parse envelope first:
+  - if `HasFailed === true`, treat as failure and do not continue with success path
+  - if `Data` is null in `laviya_get_my_work`, there is no eligible work yet
+- `laviya_get_my_work` expected `Data` shape for execution context:
+  - `AgentFlowRunID`, `TaskID`, `AIAgentFlowID`, `StepIndex`, `StepRoleName`
+  - `TaskName`, `TaskDescription`, `UserRequest`
+  - `LLMSystemPromptContent`, `PreviousWorks`
+  - `AgentWorkLanguageID`, `AgentWorkLanguageName`, `AgentWorkLanguageIsoCode`, `AgentWorkLanguageCultureCode`
+  - `AIAgentUID`
+
+## Mandatory Tool Lifecycle
+
+1. Optional local-direct bootstrap:
+   - call `laviya_feed_task` when you must start a flow-independent local task run
+   - use `laviya_get_local_work_status` / `laviya_cancel_local_work` for monitoring or cancellation
+2. Optional self-managed delivery:
+   - call `laviya_add_task_comment` when work is already completed outside the orchestration lifecycle and you only need to publish a task comment
+   - do not use `laviya_add_task_comment` as a replacement for `laviya_start_execution` / `laviya_complete_execution` on assigned orchestration runs
+3. Use `laviya_get_my_work` to retrieve work.
+4. If a work item exists, call `laviya_start_execution` immediately.
+5. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage calls.
+6. Refresh lease with `laviya_start_execution` if execution runs long.
+7. Execute the current step using:
+   - `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode` / `AgentWorkLanguageName`
+   - `FlowName`
+   - `FlowDescription`
+   - `StepIndex`
+   - `StepRoleName`
+   - `TaskName`
+   - `TaskDescription`
+   - `UserRequest`
+   - `LLMSystemPromptContent`
+   - `PreviousWorks`
+8. Complete with `laviya_complete_execution` using explicit success or explicit failure.
+9. Report token usage only with measured values via `laviya_report_token_usage`.
+
+## Optional CompleteExecution Payloads
+
+- `tasks`:
+  - shape: `{ title, description, complexity, priority, taskTypeID, estimatedEffort, referenceID?, subTasks? }`
+  - complexity: `0..3` (`Easy`, `Normal`, `Hard`, `Expert`)
+  - priority: `0..3` (`No Priority`, `Low`, `Medium`, `High`)
+  - taskTypeID: `0,10,20,30,40,50,60,70,80`
+  - `estimatedEffort` is minutes
+  - `subTasks` supports recursive hierarchy
+  - `referenceID` is optional and can be used by wikis/technical analysis for linking
+  - server copies project/space/folder context and prefixes created task titles with `AIG`
+- `wikis`:
+  - shape: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+  - `subWikis` supports recursive hierarchy
+  - generated wikis are stored under `Project Root Wiki > AI Generated > Wikis`
+- `technicalAnalysis`:
+  - shape: `{ name, description, relatedTaskReferenceIDs?, subWikis? }`
+  - use it when the completion payload needs a dedicated rooted technical analysis tree separate from `wikis`
+- Reference linking rules:
+  - every `relatedTaskReferenceIDs` value must exist in `tasks[].referenceID` from the same completion payload
+  - if no tasks are generated in the same payload, omit `relatedTaskReferenceIDs`
+- Request key discipline:
+  - use a unique `requestKey` per completion attempt
+  - transient failure -> same payload + same `requestKey`
+  - payload changed after validation/business failure -> new `requestKey`
+  - if completion returns HTTP 500, inspect response body/messages before retrying
+
+## Language Rule
+
+- Always produce user-facing outputs in `AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`.
+- If both are present, prefer `AgentWorkLanguageCultureCode`.
+- If language fields are missing, continue with the best-effort default language from orchestration context.
+- [CRITICAL - Character Fidelity / UTF-8]
+- Preserve source text exactly in all outputs and API payload text fields. Do not alter diacritics or script-specific characters.
+- ASCII transliteration is strictly forbidden for any language/script.
+- Example (Turkish): do not write `kaynagi/dogrulama/erisim/tutarsizlik`; write `kaynağı/doğrulama/erişim/tutarsızlık`.
+- This applies to all text fields, including `ExecutionSummary`, `ErrorMessage`, `Logs`, task/wiki titles, technical analysis titles, and descriptions.
+- Perform a final character-fidelity check before submission; if any text was degraded, regenerate before sending.
+- Send JSON requests as UTF-8 (`Content-Type: application/json; charset=utf-8`).
+- If this rule is violated, cancel submission and regenerate correctly.
+
+## CompleteExecution Guardrails
+
+- Use the active execution ID from `laviya_start_execution` (`Data.id`) as `AIAgentTaskExecutionID`; never hardcode stale IDs.
+- If `wikis[].relatedTaskReferenceIDs` or `technicalAnalysis.relatedTaskReferenceIDs` is used, each reference must exist in `tasks[].referenceID` within the same completion payload (including nested `subTasks`).
+- If no tasks are created in the current payload, omit `relatedTaskReferenceIDs`.
+- Keep `tasks[].referenceID` values unique (case-insensitive) inside the payload.
+
+## Quality and Handoff Rules
+
+- Respect and build on `PreviousWorks`.
+- Do not redo completed prior work unless the current step requires revalidation.
+- Keep results concise, structured, and directly usable by the next step.
+- Always include a machine-readable `ExecutionSummary` JSON string.
+
+## ExecutionSummary Contract
+
+`ExecutionSummary` must include:
+
+- `stepRole`
+- `task.taskId`
+- `task.runId`
+- `task.stepIndex`
+- `outcome` (`success` or `failed`)
+- `deliverables`
+- `keyDecisions`
+- `assumptions`
+- `risks`
+- `handoff.forNextStep`
+- `handoff.questions`
+- `handoff.artifacts`
+
+## Failure Discipline
+
+If blocked by missing inputs, conflicts, tool failures, or infeasible requirements:
+
+- Complete execution with failure.
+- Provide clear `errorMessage`.
+- Still provide a valid `ExecutionSummary`.
+- Include concrete handoff guidance.
+
+## Non-Negotiable Constraints
+
+- Never leave execution open indefinitely.
+- Never claim success without finishing required work.
+- Never report invented token usage.
+- Never skip completion.
