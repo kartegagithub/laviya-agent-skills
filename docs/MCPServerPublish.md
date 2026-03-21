@@ -177,11 +177,11 @@ Expected success output pattern:
 Examples:
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills 0.1.15
+.\.tools\mcp-publisher.exe status --status active io.github.kartegagithub/laviya-agent-skills <version>
 ```
 
 ```powershell
-.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills 0.1.15
+.\.tools\mcp-publisher.exe status --status deprecated --message "Please upgrade to newer version" io.github.kartegagithub/laviya-agent-skills <version>
 ```
 
 ```powershell
@@ -228,7 +228,7 @@ $githubToken = (Get-Content -Path ".\.mcpregistry_github_token" -Raw).Trim()
 
 ## 17. Release Checklist
 
-1. `package.json`, `package-lock.json`, `src/server.ts`, `server.json`, and docs versions are aligned.
+1. `package.json`, `package-lock.json`, `src/server.ts`, `server.json`, and docs/examples are aligned.
 2. `npm run typecheck && npm run build` passed.
 3. `npm pack --dry-run` inspected.
 4. `npm publish --access public` succeeded.

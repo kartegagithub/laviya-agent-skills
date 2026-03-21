@@ -1,7 +1,7 @@
 {
   "name": "laviya-mcp-server",
   "mcpName": "io.github.kartegagithub/laviya-agent-skills",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Laviya AI Orchestration MCP runtime for IDE and agent integrations.",
   "author": "kartegagithub",
   "license": "MIT",
@@ -11,6 +11,9 @@
   },
   "icon": "images/laviya_128.png",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "bin": {
     "laviya-mcp-server": "dist/index.js"
