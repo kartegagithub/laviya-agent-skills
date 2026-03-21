@@ -189,6 +189,10 @@ Call MCP tool laviya_cancel_local_work with {"payload":{"runID":1234,"reason":"O
 ```
 
 ```text
+Call MCP tool laviya_add_task_comment with {"payload":{"taskID":5678,"description":"Implemented the requested backend change, added tests, and verified the comment flow."}}.
+```
+
+```text
 Read MCP resource laviya://prompts/orchestrator.system.md and return the text.
 ```
 
@@ -293,6 +297,7 @@ Then include the skill artifact:
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
+- `laviya_add_task_comment`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -302,10 +307,11 @@ Typical lifecycle:
 
 1. Optional local-direct bootstrap: call `laviya_feed_task` for flow-independent task feeding.
 2. Optional monitoring/control: use `laviya_get_local_work_status` / `laviya_cancel_local_work`.
-3. Call `laviya_get_my_work` to fetch work.
-4. Call `laviya_start_execution` to begin execution.
-5. Call `laviya_complete_execution` to finalize the task.
-6. Call `laviya_report_token_usage` when token reporting is required.
+3. Optional self-managed delivery reporting: call `laviya_add_task_comment` when your own agent finishes work outside the orchestration lifecycle and only needs to publish its output to a task comment.
+4. Call `laviya_get_my_work` to fetch work.
+5. Call `laviya_start_execution` to begin execution.
+6. Call `laviya_complete_execution` to finalize the task.
+7. Call `laviya_report_token_usage` when token reporting is required.
 
 Tool response format:
 

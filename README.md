@@ -64,6 +64,7 @@ Current MCP tool set includes both orchestration and local-direct task feed flow
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
+- `laviya_add_task_comment`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`

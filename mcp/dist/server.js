@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LaviyaApiClient } from "./client/laviyaApiClient.js";
 import { buildRuntimeConfig } from "./config/mergeConfig.js";
 import { LeaseManager } from "./orchestration/leaseManager.js";
+import { registerAddTaskCommentTool } from "./tools/addTaskCommentTool.js";
 import { registerCancelLocalWorkTool } from "./tools/cancelLocalWorkTool.js";
 import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
@@ -58,6 +59,11 @@ export async function createRuntimeServer(options = {}) {
         server,
         client,
         logger: logger.child({ tool: "laviya_cancel_local_work" })
+    });
+    registerAddTaskCommentTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_add_task_comment" })
     });
     registerGetMyWorkTool({
         server,

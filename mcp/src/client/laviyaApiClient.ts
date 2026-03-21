@@ -99,6 +99,14 @@ export class LaviyaApiClient {
     });
   }
 
+  async addTaskComment(payload: unknown): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      path: "/api/ai/AddTaskComment",
+      body: payload
+    });
+  }
+
   async completeExecution(payload: unknown, idempotencyKey: string): Promise<unknown> {
     return this.request({
       method: "POST",
@@ -263,7 +271,7 @@ export class LaviyaApiClient {
     }
 
     if (error instanceof LaviyaApiError) {
-      if (options.path === "/api/ai/CompleteExecution") {
+      if (options.path === "/api/ai/CompleteExecution" || options.path === "/api/ai/AddTaskComment") {
         return false;
       }
 

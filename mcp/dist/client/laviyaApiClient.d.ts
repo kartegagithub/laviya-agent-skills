@@ -35,6 +35,7 @@ export declare class LaviyaApiClient {
         taskId: number;
         executionId?: number;
     }): Promise<unknown>;
+    addTaskComment(payload: unknown): Promise<unknown>;
     completeExecution(payload: unknown, idempotencyKey: string): Promise<unknown>;
     reportTokenUsage(payload: unknown, idempotencyKey?: string): Promise<unknown>;
     private request;

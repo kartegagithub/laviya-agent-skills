@@ -276,6 +276,7 @@ MCP tools exposed:
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
+- `laviya_add_task_comment`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -303,6 +304,11 @@ Tool contracts:
   - Behavior: cancels local-direct run and active execution leases.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with final status snapshot.
   - Error strategy: payload validation + structured error logging.
+- `laviya_add_task_comment`
+  - Input: `{ payload: { taskID, description } }`
+  - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle.
+  - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with created task comment metadata.
+  - Error strategy: payload validation + backend business rule propagation. Automatic retry is intentionally disabled to avoid duplicate comments.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
   - Behavior: resolves defaults from runtime/project config, polls work, and supports lite payload defaults.
