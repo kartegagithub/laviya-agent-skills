@@ -164,6 +164,9 @@ Calling MCP tools from Codex chat:
 
 Example prompts:
 
+- Important: MCP tool input is not raw HTTP body. Do not send `{"Data": {...}}` to MCP tools.
+- For `laviya_complete_execution` and `laviya_report_token_usage`, send `{ "payload": { ... } }` with camelCase keys such as `taskID`, `aiAgentFlowRunID`, `executionSummary`, `isFailed`.
+
 ```text
 Call MCP tool laviya_get_my_work with {} and return raw JSON.
 ```
@@ -190,6 +193,14 @@ Call MCP tool laviya_cancel_local_work with {"payload":{"runID":1234,"reason":"O
 
 ```text
 Call MCP tool laviya_add_task_comment with {"payload":{"taskID":5678,"description":"Implemented the requested backend change, added tests, and verified the comment flow."}}.
+```
+
+```text
+Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"requestKey":"8b42b153-4767-401f-974d-f81f6700f54a","executionSummary":"{\"stepRole\":\"Developer\",\"task\":{\"taskId\":5678,\"runId\":1234,\"stepIndex\":1},\"outcome\":\"success\",\"deliverables\":[\"Implemented backend change\"],\"keyDecisions\":[\"Reused existing orchestration helpers\"],\"assumptions\":[],\"risks\":[],\"handoff\":{\"forNextStep\":\"Run integration validation.\",\"questions\":[],\"artifacts\":[\"src/services/example.ts\"]}}","isFailed":false}}.
+```
+
+```text
+Call MCP tool laviya_report_token_usage with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"tokenUsages":[{"model":"gpt-4.1-mini","inputTokens":220,"outputTokens":80,"totalTokens":300}]}}.
 ```
 
 ```text

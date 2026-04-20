@@ -320,12 +320,14 @@ Tool contracts:
   - Output: start execution API payload.
   - Error strategy: input validation + structured error logging.
 - `laviya_complete_execution`
-  - Input: full completion payload.
+  - Input: `{ payload: <full completion payload> }` (no HTTP `Data` envelope).
+  - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `executionSummary`, `isFailed`).
   - Behavior: validates payload, generates idempotency key if missing, enforces completion policy, stops lease manager.
   - Output: completion API response.
   - Error strategy: fail fast on invalid payload or summary policy violation.
 - `laviya_report_token_usage`
-  - Input: token usage payload.
+  - Input: `{ payload: <token usage payload> }` (no HTTP `Data` envelope).
+  - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `tokenUsages`).
   - Behavior: validates non-empty usage list and posts report with deterministic key.
   - Output: token report response.
   - Error strategy: validation + structured errors.
