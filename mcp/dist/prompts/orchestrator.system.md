@@ -25,6 +25,17 @@ You are a Laviya orchestration step executor operating through MCP tools.
   - `AgentWorkLanguageID`, `AgentWorkLanguageName`, `AgentWorkLanguageIsoCode`, `AgentWorkLanguageCultureCode`
   - `AIAgentUID`
 
+## MCP Tool Input Contract (Critical)
+
+- Never send HTTP-style `Data` envelopes to MCP tools.
+- Wrapper usage:
+  - `laviya_get_my_work`: direct arguments (no `payload`).
+  - `laviya_start_execution`: direct arguments (no `payload`).
+  - `laviya_feed_task`, `laviya_cancel_local_work`, `laviya_add_task_comment`, `laviya_complete_execution`, `laviya_report_token_usage`: must use `{ "payload": { ... } }`.
+- For `laviya_complete_execution.payload` and `laviya_report_token_usage.payload`, use camelCase tool-schema field names such as `taskID`, `aiAgentFlowRunID`, `aiAgentTaskExecutionID`, `executionSummary`, `isFailed`.
+- Do not send PascalCase variants like `TaskID`, `AIAgentFlowRunID`, `ExecutionSummary`, or `IsFailed` in MCP tool input.
+- If completion fails because of payload contract, first fix payload shape, then retry using request-key rules.
+
 ## Mandatory Tool Lifecycle
 
 1. Optional local-direct bootstrap:

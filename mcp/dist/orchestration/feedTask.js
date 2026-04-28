@@ -1,17 +1,10 @@
 import { z } from "zod";
 export const feedTaskPayloadSchema = z.object({
-    taskID: z.number().int().positive(),
-    userRequest: z.string().optional(),
-    agentUID: z.string().min(1).optional(),
-    cancelActiveRun: z.boolean().default(false),
-    requestKey: z.string().min(1).optional(),
-    attachmentFileIDs: z.array(z.number().int().positive()).optional()
-});
+    taskID: z.number().int().positive()
+}).strict();
 export async function feedTask(client, logger, payload) {
     logger.info("Feeding task into local-direct orchestration", {
-        taskID: payload.taskID,
-        cancelActiveRun: payload.cancelActiveRun,
-        hasAgentUID: !!payload.agentUID
+        taskID: payload.taskID
     });
     return client.feedTask(payload);
 }

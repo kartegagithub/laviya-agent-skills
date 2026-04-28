@@ -25,7 +25,9 @@ export declare class LaviyaApiClient {
         includeFileBytes?: boolean;
         previousLogsLimit?: number;
     }): Promise<unknown>;
-    feedTask(payload: unknown): Promise<unknown>;
+    feedTask(params: {
+        taskID: number;
+    }): Promise<unknown>;
     getLocalWorkStatus(params: {
         runId: number;
     }): Promise<unknown>;

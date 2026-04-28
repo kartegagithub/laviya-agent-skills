@@ -61,12 +61,17 @@ export class LaviyaApiClient {
     return response;
   }
 
-  async feedTask(payload: unknown): Promise<unknown> {
-    return this.request({
-      method: "POST",
+  async feedTask(params: { taskID: number }): Promise<unknown> {
+    const response = await this.request({
+      method: "GET",
       path: "/api/ai/FeedTask",
-      body: payload
+      query: {
+        TaskID: params.taskID
+      }
     });
+
+    this.captureAgentUid(response);
+    return response;
   }
 
   async getLocalWorkStatus(params: { runId: number }): Promise<unknown> {
@@ -158,7 +163,8 @@ export class LaviyaApiClient {
   }
 
   private async requestOnce(options: RequestOptions, attempt: number): Promise<unknown> {
-    const url = this.buildUrl(options.path, options.query);
+    const activeAgentUid = this.resolveAgentUid();
+    const url = this.buildUrl(options.path, options.query, activeAgentUid);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       [this.options.auth.headerName]: this.options.apiKey
@@ -168,7 +174,6 @@ export class LaviyaApiClient {
       headers.Authorization = `Bearer ${this.options.apiKey}`;
     }
 
-    const activeAgentUid = this.resolveAgentUid();
     if (activeAgentUid) {
       headers["X-Agent-UID"] = activeAgentUid;
     }
@@ -232,9 +237,17 @@ export class LaviyaApiClient {
     }
   }
 
-  private buildUrl(path: string, query?: Record<string, string | number | undefined>): URL {
+  private buildUrl(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+    activeAgentUid?: string
+  ): URL {
     const url = new URL(path, this.options.baseUrl);
     if (!query) {
+      url.searchParams.set("apiKey", this.options.apiKey);
+      if (activeAgentUid) {
+        url.searchParams.set("agentUID", activeAgentUid);
+      }
       return url;
     }
 
@@ -242,6 +255,11 @@ export class LaviyaApiClient {
       if (value !== undefined) {
         url.searchParams.set(key, String(value));
       }
+    }
+
+    url.searchParams.set("apiKey", this.options.apiKey);
+    if (activeAgentUid) {
+      url.searchParams.set("agentUID", activeAgentUid);
     }
 
     return url;

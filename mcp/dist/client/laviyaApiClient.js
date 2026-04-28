@@ -30,12 +30,16 @@ export class LaviyaApiClient {
         this.captureAgentUid(response);
         return response;
     }
-    async feedTask(payload) {
-        return this.request({
-            method: "POST",
+    async feedTask(params) {
+        const response = await this.request({
+            method: "GET",
             path: "/api/ai/FeedTask",
-            body: payload
+            query: {
+                TaskID: params.taskID
+            }
         });
+        this.captureAgentUid(response);
+        return response;
     }
     async getLocalWorkStatus(params) {
         return this.request({
@@ -117,7 +121,8 @@ export class LaviyaApiClient {
         throw lastError instanceof Error ? lastError : new Error("Laviya API request failed");
     }
     async requestOnce(options, attempt) {
-        const url = this.buildUrl(options.path, options.query);
+        const activeAgentUid = this.resolveAgentUid();
+        const url = this.buildUrl(options.path, options.query, activeAgentUid);
         const headers = {
             "Content-Type": "application/json",
             [this.options.auth.headerName]: this.options.apiKey
@@ -125,7 +130,6 @@ export class LaviyaApiClient {
         if (this.options.auth.sendBearerToken) {
             headers.Authorization = `Bearer ${this.options.apiKey}`;
         }
-        const activeAgentUid = this.resolveAgentUid();
         if (activeAgentUid) {
             headers["X-Agent-UID"] = activeAgentUid;
         }
@@ -176,15 +180,23 @@ export class LaviyaApiClient {
             clearTimeout(timeout);
         }
     }
-    buildUrl(path, query) {
+    buildUrl(path, query, activeAgentUid) {
         const url = new URL(path, this.options.baseUrl);
         if (!query) {
+            url.searchParams.set("apiKey", this.options.apiKey);
+            if (activeAgentUid) {
+                url.searchParams.set("agentUID", activeAgentUid);
+            }
             return url;
         }
         for (const [key, value] of Object.entries(query)) {
             if (value !== undefined) {
                 url.searchParams.set(key, String(value));
             }
+        }
+        url.searchParams.set("apiKey", this.options.apiKey);
+        if (activeAgentUid) {
+            url.searchParams.set("agentUID", activeAgentUid);
         }
         return url;
     }

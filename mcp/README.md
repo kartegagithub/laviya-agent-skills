@@ -261,7 +261,7 @@ Runtime responsibilities implemented in code:
 - Discover nearest project config from current working directory.
 - Load base prompt, then append optional project override prompt.
 - Expose resolved prompt text through MCP prompt/resource endpoints.
-- Initialize API client with retries, timeout, auth headers, and idempotency.
+- Initialize API client with retries, timeout, query-based auth (`apiKey`, `agentUID`) and idempotency.
 - Generate deterministic request keys for completion and token reporting.
 - Refresh execution lease on interval with fallback behavior.
 - Enforce execution summary presence when configured.
@@ -290,7 +290,7 @@ MCP prompt/resource exposed:
 Tool contracts:
 
 - `laviya_feed_task`
-  - Input: `{ payload: { taskID, userRequest?, agentUID?, cancelActiveRun?, requestKey?, attachmentFileIDs? } }`
+  - Input: `{ payload: { taskID } }` (strict: no extra payload keys)
   - Behavior: starts or reuses a hidden local-direct run for flow-independent task execution.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with feed/run metadata.
   - Error strategy: payload validation + backend business rule propagation.

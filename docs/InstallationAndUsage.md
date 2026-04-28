@@ -147,7 +147,7 @@ codex mcp add laviya \
   --env LAVIYA_API_KEY=your-api-key \
   --env LAVIYA_BASE_URL=https://api.laviya.app \
   --env LAVIYA_LOG_LEVEL=info \
-  -- npx -y laviya-mcp-server@0.1.15
+  -- npx -y laviya-mcp-server@0.1.19
 ```
 
 Verify registration:
@@ -180,7 +180,7 @@ Call MCP tool laviya_start_execution with {"runId": 1234, "taskId": 5678}.
 ```
 
 ```text
-Call MCP tool laviya_feed_task with {"payload":{"taskID":5678,"userRequest":"Perform local-direct analysis and create wiki outputs.","cancelActiveRun":false}}.
+Call MCP tool laviya_feed_task with {"payload":{"taskID":5678}}.
 ```
 
 ```text
@@ -223,7 +223,7 @@ Equivalent `~/.codex/config.toml` shape:
 ```toml
 [mcp_servers.laviya]
 command = "npx"
-args = ["-y", "laviya-mcp-server@0.1.15"]
+args = ["-y", "laviya-mcp-server@0.1.19"]
 
 [mcp_servers.laviya.env]
 LAVIYA_API_KEY = "your-api-key"
@@ -245,7 +245,7 @@ Example:
     "laviya-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.15"],
+      "args": ["-y", "laviya-mcp-server@0.1.19"],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -270,7 +270,7 @@ Recommended server block:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "laviya-mcp-server@0.1.15"],
+  "args": ["-y", "laviya-mcp-server@0.1.19"],
   "env": {
     "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
     "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -288,7 +288,7 @@ Register the same stdio MCP server in Claude MCP settings using `npx`:
   "mcpServers": {
     "laviya": {
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.15"],
+      "args": ["-y", "laviya-mcp-server@0.1.19"],
       "env": {
         "LAVIYA_API_KEY": "your-api-key",
         "LAVIYA_BASE_URL": "https://api.laviya.app",

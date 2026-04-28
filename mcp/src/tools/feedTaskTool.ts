@@ -15,7 +15,7 @@ export function registerFeedTaskTool(deps: FeedTaskToolDeps): void {
     {
       title: "Feed Task",
       description:
-        "Feed a task into local-direct AI execution mode. Backend creates or reuses a hidden single-step flow run for the task.",
+        "Feed a task into local-direct AI execution mode by TaskID. Backend creates or reuses a hidden single-step flow run for the task.",
       inputSchema: {
         payload: feedTaskPayloadSchema
       }
