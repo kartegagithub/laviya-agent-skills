@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { z } from "zod";
 import { readJsonFileIfExists } from "../utils/json.js";
 
@@ -39,16 +39,41 @@ export type GlobalConfig = z.infer<typeof globalConfigSchema>;
 export interface LoadedGlobalConfig {
   config: GlobalConfig;
   path?: string;
+  warning?: string;
 }
 
 export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = globalConfigSchema.parse({});
 
-export function resolveGlobalConfigPath(): string {
+export function resolveGlobalConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+  const fromEnv = toNonEmptyString(env.LAVIYA_GLOBAL_CONFIG_PATH);
+  if (fromEnv) {
+    return resolve(fromEnv);
+  }
+
   return join(homedir(), ".laviya", "config", "global.json");
 }
 
-export async function loadGlobalConfig(configPath = resolveGlobalConfigPath()): Promise<LoadedGlobalConfig> {
-  const raw = await readJsonFileIfExists<unknown>(configPath);
+export async function loadGlobalConfig(configPath?: string): Promise<LoadedGlobalConfig> {
+  const resolvedPath = configPath ? resolve(configPath) : resolveGlobalConfigPath();
+  const isDefaultPath = !configPath;
+
+  let raw: unknown;
+  try {
+    raw = await readJsonFileIfExists<unknown>(resolvedPath);
+  } catch (error: unknown) {
+    if (isDefaultPath && isPermissionError(error)) {
+      const errorCode = isErrnoException(error) ? error.code : undefined;
+      const detail = errorCode ? ` (${errorCode})` : "";
+
+      return {
+        config: DEFAULT_GLOBAL_CONFIG,
+        path: undefined,
+        warning: `Unable to read default global config at ${resolvedPath}${detail}. Falling back to built-in defaults. Set LAVIYA_GLOBAL_CONFIG_PATH to a readable file to remove this warning.`
+      };
+    }
+
+    throw error;
+  }
 
   if (!raw) {
     return {
@@ -60,7 +85,7 @@ export async function loadGlobalConfig(configPath = resolveGlobalConfigPath()): 
   const parsed = globalConfigSchema.safeParse(raw);
   if (!parsed.success) {
     const reasons = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
-    throw new Error(`Invalid global config at ${configPath}: ${reasons}`);
+    throw new Error(`Invalid global config at ${resolvedPath}: ${reasons}`);
   }
 
   return {
@@ -70,6 +95,27 @@ export async function loadGlobalConfig(configPath = resolveGlobalConfigPath()): 
       auth: { ...DEFAULT_GLOBAL_CONFIG.auth, ...parsed.data.auth },
       retry: { ...DEFAULT_GLOBAL_CONFIG.retry, ...parsed.data.retry }
     },
-    path: configPath
+    path: resolvedPath
   };
+}
+
+function toNonEmptyString(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function isPermissionError(error: unknown): boolean {
+  if (!isErrnoException(error)) {
+    return false;
+  }
+
+  return error.code === "EPERM" || error.code === "EACCES";
+}
+
+function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return typeof error === "object" && error !== null && "code" in error;
 }

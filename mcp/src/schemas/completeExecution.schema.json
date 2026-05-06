@@ -53,7 +53,7 @@
   },
   "type": "object",
   "additionalProperties": true,
-  "required": ["taskID", "aiAgentFlowRunID", "executionSummary", "isFailed"],
+  "required": ["taskID", "aiAgentFlowRunID", "isFailed"],
   "properties": {
     "taskID": { "type": "integer", "minimum": 1 },
     "aiAgentFlowRunID": { "type": "integer", "minimum": 1 },
@@ -63,7 +63,15 @@
       "description": "Use the active execution ID returned by StartExecution (Data.id)."
     },
     "requestKey": { "type": "string", "minLength": 1 },
-    "executionSummary": { "type": "string", "minLength": 1 },
+    "executionSummary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Required when executionSummaryObject is not provided."
+    },
+    "executionSummaryObject": {
+      "description": "Optional JSON-serializable object; runtime converts this value to executionSummary text automatically.",
+      "oneOf": [{ "type": "object" }, { "type": "array" }, { "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }]
+    },
     "errorMessage": { "type": ["string", "null"] },
     "isFailed": { "type": "boolean" },
     "logs": {

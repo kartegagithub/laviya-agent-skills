@@ -16,7 +16,7 @@ export declare class LaviyaApiError extends Error {
 }
 export declare class LaviyaApiClient {
     private readonly options;
-    private capturedAgentUid;
+    private activeAgentUid;
     constructor(options: LaviyaApiClientOptions);
     getMyWork(params: {
         runId?: number;

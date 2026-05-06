@@ -20,7 +20,7 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
     {
       title: "Complete Execution",
       description:
-        "Complete the active execution with structured summary, optional generated tasks/wikis, and deterministic idempotency handling.",
+        "Complete the active execution with structured summary (executionSummary text or executionSummaryObject JSON), optional generated tasks/wikis, and deterministic idempotency handling.",
       inputSchema: {
         payload: completeExecutionPayloadSchema
       }

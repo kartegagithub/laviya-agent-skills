@@ -235,6 +235,7 @@ Optional:
 - `LAVIYA_BASE_URL`
 - `LAVIYA_AGENT_UID`
 - `LAVIYA_LOG_LEVEL`
+- `LAVIYA_GLOBAL_CONFIG_PATH` (readable path override for global config file)
 
 Examples:
 
@@ -244,6 +245,8 @@ export LAVIYA_BASE_URL="https://api.laviya.app"
 export LAVIYA_AGENT_UID="optional-agent-uid"
 export LAVIYA_LOG_LEVEL="info"
 ```
+
+`LAVIYA_AGENT_UID` is used as the initial agent context only. Runtime automatically follows the latest `AIAgentUID` returned by API responses during flow execution.
 
 Secrets must remain in environment variables, not repo config files.  
 Merge order in runtime:

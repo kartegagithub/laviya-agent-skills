@@ -45,6 +45,7 @@ npm start
 - `LAVIYA_BASE_URL` (optional)
 - `LAVIYA_AGENT_UID` (optional)
 - `LAVIYA_LOG_LEVEL` (optional: `debug|info|warn|error`)
+- `LAVIYA_GLOBAL_CONFIG_PATH` (optional readable path override for global config)
 
 PowerShell example:
 
@@ -64,12 +65,16 @@ export LAVIYA_AGENT_UID="optional-agent-uid"
 export LAVIYA_LOG_LEVEL="info"
 ```
 
+If `LAVIYA_AGENT_UID` is set, runtime uses it as the initial agent context and then follows the latest `AIAgentUID` returned by API responses.
+
 ## 4. Create Global Config
 
 The runtime reads the global config from:
 
 - Windows: `%USERPROFILE%\.laviya\config\global.json`
 - macOS/Linux: `~/.laviya/config/global.json`
+
+If your runtime environment cannot access the home directory path, set `LAVIYA_GLOBAL_CONFIG_PATH` to a readable file location.
 
 Use `mcp/examples/global.json` as a baseline.
 
@@ -114,6 +119,7 @@ Config discovery behavior:
 - `Invalid environment configuration`: check `LAVIYA_API_KEY` and environment variable values.
 - `Invalid project config`: validate `.laviya/project.json` fields and types.
 - `Invalid global config`: validate the JSON shape in `~/.laviya/config/global.json`.
+- Home-directory permission errors (`EPERM`, `EACCES`): set `LAVIYA_GLOBAL_CONFIG_PATH` to a readable global config file.
 
 ## 7. Quick Validation
 

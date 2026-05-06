@@ -14,7 +14,7 @@ import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
 
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.19";
+const SERVER_VERSION = "0.1.20";
 
 export interface RuntimeServer {
   server: McpServer;
@@ -29,12 +29,17 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     service: SERVER_NAME
   });
 
+  for (const warning of runtimeConfig.configWarnings) {
+    logger.warn(warning);
+  }
+
   logger.info("Runtime configuration loaded", {
     cwd: runtimeConfig.cwd,
     projectRoot: runtimeConfig.projectRoot,
     projectConfigPath: runtimeConfig.projectConfigPath,
     globalConfigPath: runtimeConfig.globalConfigPath,
-    pollMode: runtimeConfig.pollMode
+    pollMode: runtimeConfig.pollMode,
+    configWarningCount: runtimeConfig.configWarnings.length
   });
 
   const client = new LaviyaApiClient({

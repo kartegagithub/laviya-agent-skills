@@ -98,9 +98,10 @@ export type GlobalConfig = z.infer<typeof globalConfigSchema>;
 export interface LoadedGlobalConfig {
     config: GlobalConfig;
     path?: string;
+    warning?: string;
 }
 export declare const DEFAULT_GLOBAL_CONFIG: GlobalConfig;
-export declare function resolveGlobalConfigPath(): string;
+export declare function resolveGlobalConfigPath(env?: NodeJS.ProcessEnv): string;
 export declare function loadGlobalConfig(configPath?: string): Promise<LoadedGlobalConfig>;
 export {};
 //# sourceMappingURL=loadGlobalConfig.d.ts.map

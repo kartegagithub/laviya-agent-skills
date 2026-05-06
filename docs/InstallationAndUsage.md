@@ -37,6 +37,7 @@ Optional:
 - `LAVIYA_BASE_URL`
 - `LAVIYA_AGENT_UID`
 - `LAVIYA_LOG_LEVEL`
+- `LAVIYA_GLOBAL_CONFIG_PATH` (readable path override for global config file)
 
 PowerShell:
 
@@ -133,6 +134,8 @@ Then configure your MCP client (example):
 ```
 
 If an optional environment variable (for example `LAVIYA_BASE_URL` or `LAVIYA_AGENT_UID`) is not set on your machine, omit it from the MCP `env` block or provide a concrete value.
+If your runtime cannot access `%USERPROFILE%` / home directory (sandboxed environments), set `LAVIYA_GLOBAL_CONFIG_PATH` to a readable JSON file path.
+If `LAVIYA_AGENT_UID` is set, it is used as the initial agent context; runtime then follows the latest `AIAgentUID` returned by API responses automatically.
 
 Reference example: `mcp/examples/vscode/mcp.json`
 
@@ -147,7 +150,7 @@ codex mcp add laviya \
   --env LAVIYA_API_KEY=your-api-key \
   --env LAVIYA_BASE_URL=https://api.laviya.app \
   --env LAVIYA_LOG_LEVEL=info \
-  -- npx -y laviya-mcp-server@0.1.19
+  -- npx -y laviya-mcp-server@0.1.20
 ```
 
 Verify registration:
@@ -200,6 +203,10 @@ Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentF
 ```
 
 ```text
+Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"executionSummaryObject":{"stepRole":"Developer","task":{"taskId":5678,"runId":1234,"stepIndex":1},"outcome":"success","deliverables":["Implemented backend change"],"keyDecisions":["Reused existing orchestration helpers"],"assumptions":[],"risks":[],"handoff":{"forNextStep":"Run integration validation.","questions":[],"artifacts":["src/services/example.ts"]}},"isFailed":false}}.
+```
+
+```text
 Call MCP tool laviya_report_token_usage with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"tokenUsages":[{"model":"gpt-4.1-mini","inputTokens":220,"outputTokens":80,"totalTokens":300}]}}.
 ```
 
@@ -223,7 +230,7 @@ Equivalent `~/.codex/config.toml` shape:
 ```toml
 [mcp_servers.laviya]
 command = "npx"
-args = ["-y", "laviya-mcp-server@0.1.19"]
+args = ["-y", "laviya-mcp-server@0.1.20"]
 
 [mcp_servers.laviya.env]
 LAVIYA_API_KEY = "your-api-key"
@@ -245,7 +252,7 @@ Example:
     "laviya-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.19"],
+      "args": ["-y", "laviya-mcp-server@0.1.20"],
       "env": {
         "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -270,7 +277,7 @@ Recommended server block:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "laviya-mcp-server@0.1.19"],
+  "args": ["-y", "laviya-mcp-server@0.1.20"],
   "env": {
     "LAVIYA_API_KEY": "${env:LAVIYA_API_KEY}",
     "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -288,7 +295,7 @@ Register the same stdio MCP server in Claude MCP settings using `npx`:
   "mcpServers": {
     "laviya": {
       "command": "npx",
-      "args": ["-y", "laviya-mcp-server@0.1.19"],
+      "args": ["-y", "laviya-mcp-server@0.1.20"],
       "env": {
         "LAVIYA_API_KEY": "your-api-key",
         "LAVIYA_BASE_URL": "https://api.laviya.app",
@@ -338,4 +345,8 @@ Tool response format:
 - `Invalid environment configuration`: missing or invalid `LAVIYA_API_KEY`.
 - `Invalid project config`: invalid schema in `.laviya/project.json`.
 - MCP connection errors: verify your configured command (`npx` or `node .../dist/index.js`) and `args`.
+- `MCP startup failed ... initialize response` with permission errors (`EPERM`, `EACCES`, `os error 5`):
+  - ensure the runtime process can access Node/npm and the configured config paths
+  - set `LAVIYA_GLOBAL_CONFIG_PATH` to a readable file
+  - if using Codex sandbox, retry with escalation when process spawn is blocked
 

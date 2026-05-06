@@ -33,9 +33,11 @@ export class LaviyaApiError extends Error {
 }
 
 export class LaviyaApiClient {
-  private capturedAgentUid: string | undefined;
+  private activeAgentUid: string | undefined;
 
-  constructor(private readonly options: LaviyaApiClientOptions) {}
+  constructor(private readonly options: LaviyaApiClientOptions) {
+    this.activeAgentUid = options.agentUid;
+  }
 
   async getMyWork(params: {
     runId?: number;
@@ -44,7 +46,7 @@ export class LaviyaApiClient {
     includeFileBytes?: boolean;
     previousLogsLimit?: number;
   }): Promise<unknown> {
-    const response = await this.request({
+    return this.request({
       method: "GET",
       path: "/api/ai/GetMyWork",
       query: {
@@ -56,22 +58,16 @@ export class LaviyaApiClient {
         PreviousLogsLimit: params.previousLogsLimit
       }
     });
-
-    this.captureAgentUid(response);
-    return response;
   }
 
   async feedTask(params: { taskID: number }): Promise<unknown> {
-    const response = await this.request({
+    return this.request({
       method: "GET",
       path: "/api/ai/FeedTask",
       query: {
         TaskID: params.taskID
       }
     });
-
-    this.captureAgentUid(response);
-    return response;
   }
 
   async getLocalWorkStatus(params: { runId: number }): Promise<unknown> {
@@ -223,6 +219,7 @@ export class LaviyaApiClient {
         );
       }
 
+      this.captureAgentUid(parsedBody, options.path);
       return parsedBody;
     } catch (error: unknown) {
       if (isAbortError(error)) {
@@ -311,29 +308,36 @@ export class LaviyaApiClient {
     return Math.min(this.options.retry.maxDelayMs, exp + jitter);
   }
 
-  private captureAgentUid(payload: unknown): void {
+  private captureAgentUid(payload: unknown, sourcePath: string): void {
     const discoveredAgentUid = extractAgentUid(payload);
     if (!discoveredAgentUid) {
       return;
     }
 
-    if (this.options.agentUid && this.options.agentUid !== discoveredAgentUid) {
-      this.options.logger.warn(
-        "GetMyWork response contains a different AIAgentUID than configured LAVIYA_AGENT_UID. Keeping configured value."
-      );
+    if (this.activeAgentUid === discoveredAgentUid) {
       return;
     }
 
-    if (this.capturedAgentUid === discoveredAgentUid) {
+    const previousAgentUid = this.activeAgentUid;
+    this.activeAgentUid = discoveredAgentUid;
+
+    if (!previousAgentUid) {
+      this.options.logger.info("Captured AIAgentUID from API response for follow-up requests.", {
+        sourcePath,
+        agentUid: summarizeAgentUid(discoveredAgentUid)
+      });
       return;
     }
 
-    this.capturedAgentUid = discoveredAgentUid;
-    this.options.logger.info("Captured AIAgentUID from GetMyWork response for follow-up requests.");
+    this.options.logger.info("Detected AIAgentUID change from API response and switched active agent context.", {
+      sourcePath,
+      previousAgentUid: summarizeAgentUid(previousAgentUid),
+      activeAgentUid: summarizeAgentUid(discoveredAgentUid)
+    });
   }
 
   private resolveAgentUid(): string | undefined {
-    return this.options.agentUid ?? this.capturedAgentUid;
+    return this.activeAgentUid;
   }
 }
 
@@ -443,4 +447,13 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   }
 
   return value as Record<string, unknown>;
+}
+
+function summarizeAgentUid(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 12) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
 }

@@ -11,12 +11,13 @@ export class LaviyaApiError extends Error {
 }
 export class LaviyaApiClient {
     options;
-    capturedAgentUid;
+    activeAgentUid;
     constructor(options) {
         this.options = options;
+        this.activeAgentUid = options.agentUid;
     }
     async getMyWork(params) {
-        const response = await this.request({
+        return this.request({
             method: "GET",
             path: "/api/ai/GetMyWork",
             query: {
@@ -27,19 +28,15 @@ export class LaviyaApiClient {
                 PreviousLogsLimit: params.previousLogsLimit
             }
         });
-        this.captureAgentUid(response);
-        return response;
     }
     async feedTask(params) {
-        const response = await this.request({
+        return this.request({
             method: "GET",
             path: "/api/ai/FeedTask",
             query: {
                 TaskID: params.taskID
             }
         });
-        this.captureAgentUid(response);
-        return response;
     }
     async getLocalWorkStatus(params) {
         return this.request({
@@ -165,6 +162,7 @@ export class LaviyaApiClient {
             if (!response.ok) {
                 throw new LaviyaApiError(`Laviya API error ${response.status} on ${options.path}`, response.status, parsedBody);
             }
+            this.captureAgentUid(parsedBody, options.path);
             return parsedBody;
         }
         catch (error) {
@@ -239,23 +237,31 @@ export class LaviyaApiClient {
         const jitter = Math.floor(Math.random() * 250);
         return Math.min(this.options.retry.maxDelayMs, exp + jitter);
     }
-    captureAgentUid(payload) {
+    captureAgentUid(payload, sourcePath) {
         const discoveredAgentUid = extractAgentUid(payload);
         if (!discoveredAgentUid) {
             return;
         }
-        if (this.options.agentUid && this.options.agentUid !== discoveredAgentUid) {
-            this.options.logger.warn("GetMyWork response contains a different AIAgentUID than configured LAVIYA_AGENT_UID. Keeping configured value.");
+        if (this.activeAgentUid === discoveredAgentUid) {
             return;
         }
-        if (this.capturedAgentUid === discoveredAgentUid) {
+        const previousAgentUid = this.activeAgentUid;
+        this.activeAgentUid = discoveredAgentUid;
+        if (!previousAgentUid) {
+            this.options.logger.info("Captured AIAgentUID from API response for follow-up requests.", {
+                sourcePath,
+                agentUid: summarizeAgentUid(discoveredAgentUid)
+            });
             return;
         }
-        this.capturedAgentUid = discoveredAgentUid;
-        this.options.logger.info("Captured AIAgentUID from GetMyWork response for follow-up requests.");
+        this.options.logger.info("Detected AIAgentUID change from API response and switched active agent context.", {
+            sourcePath,
+            previousAgentUid: summarizeAgentUid(previousAgentUid),
+            activeAgentUid: summarizeAgentUid(discoveredAgentUid)
+        });
     }
     resolveAgentUid() {
-        return this.options.agentUid ?? this.capturedAgentUid;
+        return this.activeAgentUid;
     }
 }
 function isAbortError(error) {
@@ -341,5 +347,12 @@ function asRecord(value) {
         return undefined;
     }
     return value;
+}
+function summarizeAgentUid(value) {
+    const trimmed = value.trim();
+    if (trimmed.length <= 12) {
+        return trimmed;
+    }
+    return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
 }
 //# sourceMappingURL=laviyaApiClient.js.map

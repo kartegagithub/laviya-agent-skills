@@ -36,6 +36,7 @@ export interface RuntimeConfig {
     overridePath?: string;
     content: string;
   };
+  configWarnings: string[];
 }
 
 export interface RuntimeBootstrapOptions {
@@ -48,6 +49,7 @@ export async function buildRuntimeConfig(options: RuntimeBootstrapOptions = {}):
   const env = loadRuntimeEnv();
   const globalLoaded = await loadGlobalConfig(options.globalConfigPath);
   const projectLoaded = await loadProjectConfig(cwd);
+  const configWarnings = globalLoaded.warning ? [globalLoaded.warning] : [];
 
   const basePromptPath = await resolveRuntimeAssetPath(
     "../prompts/orchestrator.system.md",
@@ -95,7 +97,8 @@ export async function buildRuntimeConfig(options: RuntimeBootstrapOptions = {}):
       content: overridePrompt
         ? `${basePrompt}\n\n## Project Override\n${overridePrompt}`
         : basePrompt
-    }
+    },
+    configWarnings
   };
 }
 

@@ -32,6 +32,7 @@ export interface RuntimeConfig {
         overridePath?: string;
         content: string;
     };
+    configWarnings: string[];
 }
 export interface RuntimeBootstrapOptions {
     cwd?: string;

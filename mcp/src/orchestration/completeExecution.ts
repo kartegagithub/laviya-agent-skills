@@ -131,7 +131,8 @@ export const completeExecutionPayloadSchema = z
     aiAgentFlowRunID: z.number().int().positive(),
     aiAgentTaskExecutionID: z.number().int().positive().optional(),
     requestKey: z.string().min(1).optional(),
-    executionSummary: z.string().min(1),
+    executionSummary: z.string().min(1).optional(),
+    executionSummaryObject: z.unknown().optional(),
     errorMessage: z.string().optional().nullable(),
     isFailed: z.boolean(),
     logs: z.array(actionInputSchema).optional(),
@@ -143,6 +144,17 @@ export const completeExecutionPayloadSchema = z
   })
   .passthrough()
   .superRefine((payload, ctx) => {
+    const hasExecutionSummaryText = typeof payload.executionSummary === "string" && payload.executionSummary.trim().length > 0;
+    const hasExecutionSummaryObject = payload.executionSummaryObject !== undefined;
+
+    if (!hasExecutionSummaryText && !hasExecutionSummaryObject) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["executionSummary"],
+        message: "Provide executionSummary text or executionSummaryObject."
+      });
+    }
+
     const taskReferenceIDs = collectTaskReferenceIDs(payload.tasks);
     const normalizedTaskReferences = new Set<string>();
 
@@ -204,7 +216,8 @@ export async function completeExecution(
   logger: Logger,
   payload: CompleteExecutionPayload
 ): Promise<unknown> {
-  if (runtimeConfig.completion.requireExecutionSummary && !payload.executionSummary.trim()) {
+  const executionSummary = resolveExecutionSummary(payload);
+  if (runtimeConfig.completion.requireExecutionSummary && !executionSummary.trim()) {
     throw new Error("executionSummary is required by runtime configuration.");
   }
 
@@ -221,12 +234,14 @@ export async function completeExecution(
       payload.aiAgentFlowRunID,
       payload.taskID,
       payload.aiAgentTaskExecutionID,
-      payload.executionSummary,
+      executionSummary,
       payload.isFailed ? 1 : 0
     ]);
 
+  const { executionSummaryObject: _executionSummaryObject, ...restPayload } = payload;
   const normalizedPayload: CompleteExecutionPayload = {
-    ...payload,
+    ...restPayload,
+    executionSummary,
     requestKey,
     logs: runtimeConfig.completion.includeLogs ? payload.logs : undefined,
     tokenUsages: runtimeConfig.completion.includeTokenUsage ? payload.tokenUsages : undefined
@@ -241,4 +256,20 @@ export async function completeExecution(
   });
 
   return client.completeExecution(normalizedPayload, requestKey);
+}
+
+function resolveExecutionSummary(payload: CompleteExecutionPayload): string {
+  if (typeof payload.executionSummary === "string" && payload.executionSummary.trim().length > 0) {
+    return payload.executionSummary;
+  }
+
+  if (payload.executionSummaryObject === undefined) {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(payload.executionSummaryObject);
+  } catch {
+    throw new Error("executionSummaryObject must be JSON-serializable.");
+  }
 }

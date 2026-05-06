@@ -13,18 +13,22 @@ import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { createLogger } from "./utils/logger.js";
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.19";
+const SERVER_VERSION = "0.1.20";
 export async function createRuntimeServer(options = {}) {
     const runtimeConfig = await buildRuntimeConfig(options);
     const logger = createLogger(runtimeConfig.logLevel, {
         service: SERVER_NAME
     });
+    for (const warning of runtimeConfig.configWarnings) {
+        logger.warn(warning);
+    }
     logger.info("Runtime configuration loaded", {
         cwd: runtimeConfig.cwd,
         projectRoot: runtimeConfig.projectRoot,
         projectConfigPath: runtimeConfig.projectConfigPath,
         globalConfigPath: runtimeConfig.globalConfigPath,
-        pollMode: runtimeConfig.pollMode
+        pollMode: runtimeConfig.pollMode,
+        configWarningCount: runtimeConfig.configWarnings.length
     });
     const client = new LaviyaApiClient({
         baseUrl: runtimeConfig.baseUrl,

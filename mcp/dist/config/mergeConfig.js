@@ -9,6 +9,7 @@ export async function buildRuntimeConfig(options = {}) {
     const env = loadRuntimeEnv();
     const globalLoaded = await loadGlobalConfig(options.globalConfigPath);
     const projectLoaded = await loadProjectConfig(cwd);
+    const configWarnings = globalLoaded.warning ? [globalLoaded.warning] : [];
     const basePromptPath = await resolveRuntimeAssetPath("../prompts/orchestrator.system.md", "../../src/prompts/orchestrator.system.md");
     const overridePath = resolveOverridePath(projectLoaded.projectRoot, projectLoaded.config?.promptOverridePath);
     const basePrompt = await readFile(basePromptPath, "utf8");
@@ -49,7 +50,8 @@ export async function buildRuntimeConfig(options = {}) {
             content: overridePrompt
                 ? `${basePrompt}\n\n## Project Override\n${overridePrompt}`
                 : basePrompt
-        }
+        },
+        configWarnings
     };
 }
 function resolveOverridePath(projectRoot, configuredPath) {

@@ -23,7 +23,8 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    executionSummary: z.ZodString;
+    executionSummary: z.ZodOptional<z.ZodString>;
+    executionSummaryObject: z.ZodOptional<z.ZodUnknown>;
     errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isFailed: z.ZodBoolean;
     logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -79,7 +80,8 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    executionSummary: z.ZodString;
+    executionSummary: z.ZodOptional<z.ZodString>;
+    executionSummaryObject: z.ZodOptional<z.ZodUnknown>;
     errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isFailed: z.ZodBoolean;
     logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -135,7 +137,8 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    executionSummary: z.ZodString;
+    executionSummary: z.ZodOptional<z.ZodString>;
+    executionSummaryObject: z.ZodOptional<z.ZodUnknown>;
     errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isFailed: z.ZodBoolean;
     logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -191,7 +194,8 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    executionSummary: z.ZodString;
+    executionSummary: z.ZodOptional<z.ZodString>;
+    executionSummaryObject: z.ZodOptional<z.ZodUnknown>;
     errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isFailed: z.ZodBoolean;
     logs: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -247,7 +251,8 @@ export declare const completeExecutionPayloadSchema: z.ZodEffects<z.ZodObject<{
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    executionSummary: z.ZodString;
+    executionSummary: z.ZodOptional<z.ZodString>;
+    executionSummaryObject: z.ZodOptional<z.ZodUnknown>;
     errorMessage: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isFailed: z.ZodBoolean;
     logs: z.ZodOptional<z.ZodArray<z.ZodObject<{

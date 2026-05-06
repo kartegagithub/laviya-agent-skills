@@ -3,7 +3,7 @@ import { extractExecutionId } from "../orchestration/executionId.js";
 export function registerCompleteExecutionTool(deps) {
     deps.server.registerTool("laviya_complete_execution", {
         title: "Complete Execution",
-        description: "Complete the active execution with structured summary, optional generated tasks/wikis, and deterministic idempotency handling.",
+        description: "Complete the active execution with structured summary (executionSummary text or executionSummaryObject JSON), optional generated tasks/wikis, and deterministic idempotency handling.",
         inputSchema: {
             payload: completeExecutionPayloadSchema
         }
