@@ -161,10 +161,13 @@ export class LaviyaApiClient {
   private async requestOnce(options: RequestOptions, attempt: number): Promise<unknown> {
     const activeAgentUid = this.resolveAgentUid();
     const url = this.buildUrl(options.path, options.query, activeAgentUid);
+    const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       [this.options.auth.headerName]: this.options.apiKey
     };
+    if (serializedBody !== undefined) {
+      headers["Content-Type"] = "application/json; charset=utf-8";
+    }
 
     if (this.options.auth.sendBearerToken) {
       headers.Authorization = `Bearer ${this.options.apiKey}`;
@@ -192,7 +195,7 @@ export class LaviyaApiClient {
       const response = await fetch(url, {
         method: options.method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: serializedBody,
         signal: controller.signal
       });
 
@@ -263,13 +266,13 @@ export class LaviyaApiClient {
   }
 
   private async parseResponseBody(response: Response): Promise<unknown> {
-    const raw = await response.text();
+    const raw = await this.readResponseBodyText(response);
     if (!raw) {
       return {};
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("application/json")) {
+    if (isJsonContentType(contentType)) {
       try {
         return JSON.parse(raw);
       } catch {
@@ -278,6 +281,24 @@ export class LaviyaApiClient {
     }
 
     return { raw };
+  }
+
+  private async readResponseBodyText(response: Response): Promise<string> {
+    const bodyBuffer = await response.arrayBuffer();
+    if (bodyBuffer.byteLength === 0) {
+      return "";
+    }
+
+    const charset = extractCharset(response.headers.get("content-type"));
+    if (charset) {
+      try {
+        return new TextDecoder(charset).decode(bodyBuffer);
+      } catch {
+        this.options.logger.warn("Unsupported response charset. Falling back to UTF-8 decode.", { charset });
+      }
+    }
+
+    return new TextDecoder("utf-8").decode(bodyBuffer);
   }
 
   private shouldRetry(options: RequestOptions, error: unknown, attempt: number): boolean {
@@ -456,4 +477,28 @@ function summarizeAgentUid(value: string): string {
   }
 
   return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
+}
+
+function extractCharset(contentType: string | null): string | undefined {
+  if (!contentType) {
+    return undefined;
+  }
+
+  const charsetMatch = /charset\s*=\s*([^;]+)/i.exec(contentType);
+  const rawCharset = charsetMatch?.[1];
+  if (!rawCharset) {
+    return undefined;
+  }
+
+  const normalized = rawCharset.trim().replace(/^"(.+)"$/, "$1").toLowerCase();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function isJsonContentType(contentType: string): boolean {
+  const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
+  if (!mediaType) {
+    return false;
+  }
+
+  return mediaType === "application/json" || mediaType.endsWith("+json");
 }

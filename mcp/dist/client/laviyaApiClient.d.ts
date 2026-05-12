@@ -44,6 +44,7 @@ export declare class LaviyaApiClient {
     private requestOnce;
     private buildUrl;
     private parseResponseBody;
+    private readResponseBodyText;
     private shouldRetry;
     private computeBackoff;
     private captureAgentUid;

@@ -120,10 +120,13 @@ export class LaviyaApiClient {
     async requestOnce(options, attempt) {
         const activeAgentUid = this.resolveAgentUid();
         const url = this.buildUrl(options.path, options.query, activeAgentUid);
+        const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
         const headers = {
-            "Content-Type": "application/json",
             [this.options.auth.headerName]: this.options.apiKey
         };
+        if (serializedBody !== undefined) {
+            headers["Content-Type"] = "application/json; charset=utf-8";
+        }
         if (this.options.auth.sendBearerToken) {
             headers.Authorization = `Bearer ${this.options.apiKey}`;
         }
@@ -145,7 +148,7 @@ export class LaviyaApiClient {
             const response = await fetch(url, {
                 method: options.method,
                 headers,
-                body: options.body ? JSON.stringify(options.body) : undefined,
+                body: serializedBody,
                 signal: controller.signal
             });
             let parsedBody;
@@ -199,12 +202,12 @@ export class LaviyaApiClient {
         return url;
     }
     async parseResponseBody(response) {
-        const raw = await response.text();
+        const raw = await this.readResponseBodyText(response);
         if (!raw) {
             return {};
         }
         const contentType = response.headers.get("content-type") ?? "";
-        if (contentType.includes("application/json")) {
+        if (isJsonContentType(contentType)) {
             try {
                 return JSON.parse(raw);
             }
@@ -213,6 +216,22 @@ export class LaviyaApiClient {
             }
         }
         return { raw };
+    }
+    async readResponseBodyText(response) {
+        const bodyBuffer = await response.arrayBuffer();
+        if (bodyBuffer.byteLength === 0) {
+            return "";
+        }
+        const charset = extractCharset(response.headers.get("content-type"));
+        if (charset) {
+            try {
+                return new TextDecoder(charset).decode(bodyBuffer);
+            }
+            catch {
+                this.options.logger.warn("Unsupported response charset. Falling back to UTF-8 decode.", { charset });
+            }
+        }
+        return new TextDecoder("utf-8").decode(bodyBuffer);
     }
     shouldRetry(options, error, attempt) {
         if (attempt >= this.options.retry.maxAttempts) {
@@ -354,5 +373,24 @@ function summarizeAgentUid(value) {
         return trimmed;
     }
     return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
+}
+function extractCharset(contentType) {
+    if (!contentType) {
+        return undefined;
+    }
+    const charsetMatch = /charset\s*=\s*([^;]+)/i.exec(contentType);
+    const rawCharset = charsetMatch?.[1];
+    if (!rawCharset) {
+        return undefined;
+    }
+    const normalized = rawCharset.trim().replace(/^"(.+)"$/, "$1").toLowerCase();
+    return normalized.length > 0 ? normalized : undefined;
+}
+function isJsonContentType(contentType) {
+    const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
+    if (!mediaType) {
+        return false;
+    }
+    return mediaType === "application/json" || mediaType.endsWith("+json");
 }
 //# sourceMappingURL=laviyaApiClient.js.map
