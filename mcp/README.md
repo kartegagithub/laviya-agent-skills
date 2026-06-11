@@ -37,6 +37,7 @@ Global shared runtime responsibilities:
 - Runtime validation of configs and tool inputs.
 - Base orchestration prompt and schemas.
 - Token usage reporting plumbing.
+- Global completion defaults (`includeTokenUsage`).
 
 Project-local responsibilities:
 
@@ -46,7 +47,7 @@ Project-local responsibilities:
 - `runPinning`.
 - Prompt override path.
 - Repo-specific rule/coding reference paths (accepted for compatibility, not loaded by runtime).
-- Completion toggles (logs/token usage behavior).
+- Completion behavior overrides (logs/token usage behavior).
 
 # 4. Folder Structures
 
@@ -116,6 +117,9 @@ Global config example:
     "maxDelayMs": 5000,
     "jitter": true,
     "retryOnHttpStatus": [408, 409, 425, 429, 500, 502, 503, 504]
+  },
+  "completion": {
+    "includeTokenUsage": true
   }
 }
 ```
@@ -135,6 +139,9 @@ interface GlobalConfig {
     maxDelayMs: number;
     jitter: boolean;
     retryOnHttpStatus: number[];
+  };
+  completion?: {
+    includeTokenUsage?: boolean;
   };
 }
 ```
@@ -249,8 +256,8 @@ Legacy global `auth` objects are accepted temporarily for migration, but ignored
 Merge order in runtime:
 
 - Env overrides global config for `baseUrl` and `logLevel`.
-- Global config provides runtime defaults.
-- Project config supplies project-scoped behavior and IDs.
+- Global config provides runtime defaults (including `completion` defaults).
+- Project config supplies project-scoped behavior and IDs, and overrides any global `completion` settings.
 
 # 8. Runtime Behavior
 

@@ -28,15 +28,15 @@ declare const projectConfigSchema: z.ZodObject<{
         includeLogs: z.ZodDefault<z.ZodBoolean>;
         includeTokenUsage: z.ZodDefault<z.ZodBoolean>;
     }, "strict", z.ZodTypeAny, {
+        includeTokenUsage: boolean;
         requireExecutionSummary: boolean;
         autoFailOnMissingSummary: boolean;
         includeLogs: boolean;
-        includeTokenUsage: boolean;
     }, {
+        includeTokenUsage?: boolean | undefined;
         requireExecutionSummary?: boolean | undefined;
         autoFailOnMissingSummary?: boolean | undefined;
         includeLogs?: boolean | undefined;
-        includeTokenUsage?: boolean | undefined;
     }>>;
     codingRules: z.ZodOptional<z.ZodObject<{
         cursorRulePath: z.ZodOptional<z.ZodString>;
@@ -55,18 +55,18 @@ declare const projectConfigSchema: z.ZodObject<{
     projectId: number;
     agentProfile: string;
     pollMode: "pull" | "long-poll";
+    completion?: {
+        includeTokenUsage: boolean;
+        requireExecutionSummary: boolean;
+        autoFailOnMissingSummary: boolean;
+        includeLogs: boolean;
+    } | undefined;
     projectName?: string | undefined;
     runPinning?: {
         enabled: boolean;
         runId?: number | undefined;
     } | undefined;
     promptOverridePath?: string | undefined;
-    completion?: {
-        requireExecutionSummary: boolean;
-        autoFailOnMissingSummary: boolean;
-        includeLogs: boolean;
-        includeTokenUsage: boolean;
-    } | undefined;
     codingRules?: {
         cursorRulePath?: string | undefined;
         vscodeSettingsPath?: string | undefined;
@@ -75,6 +75,12 @@ declare const projectConfigSchema: z.ZodObject<{
 }, {
     projectId: number;
     agentProfile: string;
+    completion?: {
+        includeTokenUsage?: boolean | undefined;
+        requireExecutionSummary?: boolean | undefined;
+        autoFailOnMissingSummary?: boolean | undefined;
+        includeLogs?: boolean | undefined;
+    } | undefined;
     projectName?: string | undefined;
     pollMode?: "pull" | "long-poll" | undefined;
     runPinning?: {
@@ -82,12 +88,6 @@ declare const projectConfigSchema: z.ZodObject<{
         enabled?: boolean | undefined;
     } | undefined;
     promptOverridePath?: string | undefined;
-    completion?: {
-        requireExecutionSummary?: boolean | undefined;
-        autoFailOnMissingSummary?: boolean | undefined;
-        includeLogs?: boolean | undefined;
-        includeTokenUsage?: boolean | undefined;
-    } | undefined;
     codingRules?: {
         cursorRulePath?: string | undefined;
         vscodeSettingsPath?: string | undefined;

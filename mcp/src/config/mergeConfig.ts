@@ -81,7 +81,7 @@ export async function buildRuntimeConfig(options: RuntimeBootstrapOptions = {}):
     requireExecutionSummary: true,
     autoFailOnMissingSummary: true,
     includeLogs: true,
-    includeTokenUsage: false
+    includeTokenUsage: true
   };
 
   return {
@@ -105,6 +105,7 @@ export async function buildRuntimeConfig(options: RuntimeBootstrapOptions = {}):
     },
     completion: {
       ...completionDefaults,
+      ...globalLoaded.config.completion,
       ...projectLoaded.config?.completion
     },
     prompt: {

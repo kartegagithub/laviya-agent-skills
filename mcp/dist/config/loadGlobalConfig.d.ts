@@ -56,6 +56,13 @@ declare const globalConfigSchema: z.ZodObject<{
         jitter?: boolean | undefined;
         retryOnHttpStatus?: number[] | undefined;
     }>>;
+    completion: z.ZodOptional<z.ZodObject<{
+        includeTokenUsage: z.ZodBoolean;
+    }, "strict", z.ZodTypeAny, {
+        includeTokenUsage: boolean;
+    }, {
+        includeTokenUsage: boolean;
+    }>>;
 }, "strict", z.ZodTypeAny, {
     baseUrl: string;
     defaultPollIntervalSeconds: number;
@@ -74,6 +81,9 @@ declare const globalConfigSchema: z.ZodObject<{
         headerName: z.ZodOptional<z.ZodString>;
         sendBearerToken: z.ZodOptional<z.ZodBoolean>;
     }, z.ZodTypeAny, "passthrough"> | undefined;
+    completion?: {
+        includeTokenUsage: boolean;
+    } | undefined;
 }, {
     baseUrl?: string | undefined;
     defaultPollIntervalSeconds?: number | undefined;
@@ -91,6 +101,9 @@ declare const globalConfigSchema: z.ZodObject<{
         maxDelayMs?: number | undefined;
         jitter?: boolean | undefined;
         retryOnHttpStatus?: number[] | undefined;
+    } | undefined;
+    completion?: {
+        includeTokenUsage: boolean;
     } | undefined;
 }>;
 export type RetryPolicyConfig = z.infer<typeof retryPolicySchema>;

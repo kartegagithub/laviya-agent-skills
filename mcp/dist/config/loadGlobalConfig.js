@@ -39,7 +39,13 @@ const globalConfigSchema = z.object({
         maxDelayMs: 5_000,
         jitter: true,
         retryOnHttpStatus: [408, 409, 425, 429, 500, 502, 503, 504]
+    }),
+    completion: z
+        .object({
+        includeTokenUsage: z.boolean()
     })
+        .strict()
+        .optional()
 }).strict();
 export const DEFAULT_GLOBAL_CONFIG = globalConfigSchema.parse({});
 export function resolveGlobalConfigPath(env = process.env) {

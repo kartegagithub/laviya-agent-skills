@@ -1,4 +1,4 @@
-﻿# End-User Installation and Usage Guide
+# End-User Installation and Usage Guide
 
 This guide is for users who want to install and use `laviya-mcp-server`.
 
@@ -82,6 +82,9 @@ Example:
     "maxDelayMs": 5000,
     "jitter": true,
     "retryOnHttpStatus": [408, 409, 425, 429, 500, 502, 503, 504]
+  },
+  "completion": {
+    "includeTokenUsage": true
   }
 }
 ```

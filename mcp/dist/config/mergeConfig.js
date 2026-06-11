@@ -27,7 +27,7 @@ export async function buildRuntimeConfig(options = {}) {
         requireExecutionSummary: true,
         autoFailOnMissingSummary: true,
         includeLogs: true,
-        includeTokenUsage: false
+        includeTokenUsage: true
     };
     return {
         apiKey: env.apiKey,
@@ -50,6 +50,7 @@ export async function buildRuntimeConfig(options = {}) {
         },
         completion: {
             ...completionDefaults,
+            ...globalLoaded.config.completion,
             ...projectLoaded.config?.completion
         },
         prompt: {
