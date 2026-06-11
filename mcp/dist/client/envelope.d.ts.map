@@ -1,0 +1,1 @@
+{"version":3,"file":"envelope.d.ts","sourceRoot":"","sources":["../../src/client/envelope.ts"],"names":[],"mappings":"AAEA,MAAM,WAAW,cAAe,SAAQ,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC;IAC7D,SAAS,EAAE,OAAO,CAAC;CACpB;AAED,wBAAgB,mBAAmB,CAAC,OAAO,EAAE,OAAO,EAAE,UAAU,EAAE,MAAM,GAAG,cAAc,CAmCxF"}

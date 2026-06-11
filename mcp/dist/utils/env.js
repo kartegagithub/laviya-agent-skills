@@ -1,0 +1,40 @@
+import { z } from "zod";
+import { isSecureBaseUrl } from "./baseUrl.js";
+export const logLevels = ["debug", "info", "warn", "error"];
+function emptyStringToUndefined(value) {
+    if (typeof value !== "string") {
+        return value;
+    }
+    return value.trim().length === 0 ? undefined : value;
+}
+const envSchema = z.object({
+    LAVIYA_API_KEY: z.string().min(1, "LAVIYA_API_KEY is required"),
+    LAVIYA_BASE_URL: z.preprocess(emptyStringToUndefined, z
+        .string()
+        .url()
+        .refine(isSecureBaseUrl, {
+        message: "LAVIYA_BASE_URL must use HTTPS and must not contain credentials. HTTP is allowed only for localhost, 127.0.0.1, or ::1."
+    })
+        .optional()),
+    LAVIYA_AGENT_UID: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
+    LAVIYA_LOG_LEVEL: z.preprocess(emptyStringToUndefined, z.enum(logLevels).optional())
+});
+export function loadRuntimeEnv(env = process.env) {
+    const parsed = envSchema.safeParse({
+        LAVIYA_API_KEY: env.LAVIYA_API_KEY,
+        LAVIYA_BASE_URL: env.LAVIYA_BASE_URL,
+        LAVIYA_AGENT_UID: env.LAVIYA_AGENT_UID,
+        LAVIYA_LOG_LEVEL: env.LAVIYA_LOG_LEVEL
+    });
+    if (!parsed.success) {
+        const errors = parsed.error.issues.map((issue) => issue.message).join("; ");
+        throw new Error(`Invalid environment configuration: ${errors}`);
+    }
+    return {
+        apiKey: parsed.data.LAVIYA_API_KEY,
+        baseUrl: parsed.data.LAVIYA_BASE_URL,
+        agentUid: parsed.data.LAVIYA_AGENT_UID,
+        logLevel: parsed.data.LAVIYA_LOG_LEVEL
+    };
+}
+//# sourceMappingURL=env.js.map

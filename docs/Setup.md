@@ -140,5 +140,7 @@ Core MCP tools available in this runtime:
 - `laviya_start_execution`
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
-
+- `laviya_help`
+- `laviya_diagnostics`
+  
 Tool outputs are API envelope JSON text: `{ HasFailed, Messages, Data }`.
