@@ -1,5 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
+import { executeTool } from "../mcp/result.js";
+import {
+  idempotentMutationAnnotations,
+  toolResultOutputSchema
+} from "../mcp/toolMetadata.js";
 import { extractExecutionId } from "../orchestration/executionId.js";
 import { LeaseManager } from "../orchestration/leaseManager.js";
 import { startExecution, startExecutionInputSchema } from "../orchestration/startExecution.js";
@@ -23,10 +28,12 @@ export function registerStartExecutionTool(deps: StartExecutionToolDeps): void {
         runId: startExecutionInputSchema.shape.runId,
         taskId: startExecutionInputSchema.shape.taskId,
         executionId: startExecutionInputSchema.shape.executionId
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: idempotentMutationAnnotations
     },
-    async (input) => {
-      try {
+    async (input) =>
+      executeTool("laviya_start_execution", deps.logger, async () => {
         const parsed = startExecutionInputSchema.parse(input);
         const result = await startExecution(deps.client, deps.logger, parsed);
         const executionId = extractExecutionId(result) ?? parsed.executionId;
@@ -43,13 +50,7 @@ export function registerStartExecutionTool(deps: StartExecutionToolDeps): void {
           });
         }
 
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_start_execution failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
-    }
+        return result;
+      })
   );
 }

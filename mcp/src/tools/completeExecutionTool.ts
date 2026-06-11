@@ -1,9 +1,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { RuntimeConfig } from "../config/mergeConfig.js";
+import { executeTool } from "../mcp/result.js";
+import {
+  idempotentMutationAnnotations,
+  toolResultOutputSchema
+} from "../mcp/toolMetadata.js";
 import { completeExecution, completeExecutionPayloadSchema } from "../orchestration/completeExecution.js";
 import { extractExecutionId } from "../orchestration/executionId.js";
 import { LeaseManager } from "../orchestration/leaseManager.js";
+import type { ExecutionPolicyManager } from "../orchestration/executionPolicyManager.js";
 import type { Logger } from "../utils/logger.js";
 
 export interface CompleteExecutionToolDeps {
@@ -11,6 +17,7 @@ export interface CompleteExecutionToolDeps {
   client: LaviyaApiClient;
   runtimeConfig: RuntimeConfig;
   leaseManager: LeaseManager;
+  executionPolicyManager: ExecutionPolicyManager;
   logger: Logger;
 }
 
@@ -23,18 +30,26 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
         "Complete the active execution with structured summary (executionSummary text or executionSummaryObject JSON), optional generated tasks/wikis, and deterministic idempotency handling.",
       inputSchema: {
         payload: completeExecutionPayloadSchema
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: idempotentMutationAnnotations
     },
-    async (input) => {
-      try {
+    async (input) =>
+      executeTool("laviya_complete_execution", deps.logger, async () => {
         let payload = completeExecutionPayloadSchema.parse(input.payload);
-        const leaseContext = deps.leaseManager.getActiveContext();
+        deps.executionPolicyManager.validateCompletion(
+          payload.aiAgentFlowRunID,
+          payload.taskID,
+          payload.executionEvidence
+        );
+        const leaseContext = deps.leaseManager.find({
+          runId: payload.aiAgentFlowRunID,
+          taskId: payload.taskID,
+          executionId: payload.aiAgentTaskExecutionID
+        });
 
         if (!payload.aiAgentTaskExecutionID && leaseContext) {
-          const sameWorkItem =
-            leaseContext.runId === payload.aiAgentFlowRunID && leaseContext.taskId === payload.taskID;
-
-          if (sameWorkItem && leaseContext.executionId) {
+          if (leaseContext.executionId) {
             payload = {
               ...payload,
               aiAgentTaskExecutionID: leaseContext.executionId
@@ -43,13 +58,6 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
               runId: payload.aiAgentFlowRunID,
               taskId: payload.taskID,
               executionId: leaseContext.executionId
-            });
-          } else if (!sameWorkItem) {
-            deps.logger.warn("CompleteExecution payload does not match active lease context.", {
-              payloadRunId: payload.aiAgentFlowRunID,
-              payloadTaskId: payload.taskID,
-              activeRunId: leaseContext.runId,
-              activeTaskId: leaseContext.taskId
             });
           } else {
             deps.logger.warn("Active lease context does not contain executionId for CompleteExecution.", {
@@ -87,18 +95,23 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
           });
         }
 
-        // Stop lease refresh before completion to avoid concurrent StartExecution calls
-        // while CompleteExecution is in-flight.
-        deps.leaseManager.stop();
-        const result = await completeExecution(deps.client, deps.runtimeConfig, deps.logger, payload);
+        const completionContext = {
+          runId: payload.aiAgentFlowRunID,
+          taskId: payload.taskID,
+          executionId: payload.aiAgentTaskExecutionID
+        };
+        const paused = deps.leaseManager.pauseForCompletion(completionContext);
 
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_complete_execution failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
-    }
+        try {
+          const result = await completeExecution(deps.client, deps.runtimeConfig, deps.logger, payload);
+          deps.leaseManager.complete(completionContext);
+          return result;
+        } catch (error: unknown) {
+          if (paused) {
+            deps.leaseManager.resumeAfterCompletionFailure(completionContext);
+          }
+          throw error;
+        }
+      })
   );
 }

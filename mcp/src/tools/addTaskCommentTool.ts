@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
+import { executeTool } from "../mcp/result.js";
+import { mutatingToolAnnotations, toolResultOutputSchema } from "../mcp/toolMetadata.js";
 import { addTaskComment, addTaskCommentPayloadSchema } from "../orchestration/addTaskComment.js";
 import type { Logger } from "../utils/logger.js";
 
@@ -18,19 +20,14 @@ export function registerAddTaskCommentTool(deps: AddTaskCommentToolDeps): void {
         "Append self-managed agent work output to a task as a comment using only taskID and description content.",
       inputSchema: {
         payload: addTaskCommentPayloadSchema
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: mutatingToolAnnotations
     },
-    async (input) => {
-      try {
+    async (input) =>
+      executeTool("laviya_add_task_comment", deps.logger, async () => {
         const payload = addTaskCommentPayloadSchema.parse(input.payload);
-        const result = await addTaskComment(deps.client, deps.logger, payload);
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_add_task_comment failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
-    }
+        return addTaskComment(deps.client, deps.logger, payload);
+      })
   );
 }

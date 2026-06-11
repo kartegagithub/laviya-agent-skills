@@ -16,6 +16,16 @@ const projectConfigSchema = z.object({
       enabled: z.boolean().default(false),
       runId: z.number().int().positive().optional()
     })
+    .strict()
+    .superRefine((value, ctx) => {
+      if (value.enabled && !value.runId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["runId"],
+          message: "runId is required when runPinning.enabled is true."
+        });
+      }
+    })
     .optional(),
   promptOverridePath: z.string().min(1).optional(),
   completion: z
@@ -25,6 +35,7 @@ const projectConfigSchema = z.object({
       includeLogs: z.boolean().default(true),
       includeTokenUsage: z.boolean().default(false)
     })
+    .strict()
     .optional(),
   codingRules: z
     .object({
@@ -32,8 +43,9 @@ const projectConfigSchema = z.object({
       vscodeSettingsPath: z.string().min(1).optional(),
       codingConventionsPath: z.string().min(1).optional()
     })
+    .strict()
     .optional()
-});
+}).strict();
 
 export type PollMode = z.infer<typeof pollModeSchema>;
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;

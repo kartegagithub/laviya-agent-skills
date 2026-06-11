@@ -1,6 +1,18 @@
 import { setTimeout as delay } from "node:timers/promises";
-import type { GlobalConfig } from "../config/loadGlobalConfig.js";
+import type { RetryPolicyConfig } from "../config/loadGlobalConfig.js";
+import { assertSecureBaseUrl } from "../utils/baseUrl.js";
 import type { Logger } from "../utils/logger.js";
+import {
+  redactSecretValue,
+  redactSensitiveText,
+  summarizeIdentifier
+} from "../utils/redaction.js";
+import { parseLaviyaEnvelope } from "./envelope.js";
+import {
+  LaviyaApiError,
+  LaviyaBusinessError,
+  LaviyaProtocolError
+} from "./errors.js";
 
 interface RequestOptions {
   method: "GET" | "POST";
@@ -9,34 +21,32 @@ interface RequestOptions {
   body?: unknown;
   idempotencyKey?: string;
   timeoutSeconds?: number;
+  contextRunId?: number;
+  retryMode: "safe" | "idempotent" | "never";
 }
+
+const MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024;
+const MAX_RESPONSE_BODY_BYTES = 25 * 1024 * 1024;
 
 export interface LaviyaApiClientOptions {
   baseUrl: string;
   apiKey: string;
   agentUid?: string;
-  auth: GlobalConfig["auth"];
-  retry: GlobalConfig["retry"];
+  retry: RetryPolicyConfig;
   requestTimeoutSeconds: number;
   logger: Logger;
 }
 
-export class LaviyaApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number,
-    public readonly body?: unknown
-  ) {
-    super(message);
-    this.name = "LaviyaApiError";
-  }
-}
-
 export class LaviyaApiClient {
-  private activeAgentUid: string | undefined;
+  private readonly agentUidByRun = new Map<number, string>();
+  private readonly initialAgentUid: string | undefined;
+  private readonly activeControllers = new Set<AbortController>();
+  private readonly shutdownController = new AbortController();
+  private shuttingDown = false;
 
   constructor(private readonly options: LaviyaApiClientOptions) {
-    this.activeAgentUid = options.agentUid;
+    assertSecureBaseUrl(options.baseUrl);
+    this.initialAgentUid = options.agentUid;
   }
 
   async getMyWork(params: {
@@ -48,6 +58,7 @@ export class LaviyaApiClient {
   }): Promise<unknown> {
     return this.request({
       method: "GET",
+      retryMode: "safe",
       path: "/api/ai/GetMyWork",
       query: {
         RunID: params.runId,
@@ -56,13 +67,15 @@ export class LaviyaApiClient {
         IncludeFileBytes:
           params.includeFileBytes === undefined ? undefined : params.includeFileBytes ? "true" : "false",
         PreviousLogsLimit: params.previousLogsLimit
-      }
+      },
+      contextRunId: params.runId
     });
   }
 
   async feedTask(params: { taskID: number }): Promise<unknown> {
     return this.request({
       method: "GET",
+      retryMode: "safe",
       path: "/api/ai/FeedTask",
       query: {
         TaskID: params.taskID
@@ -73,36 +86,43 @@ export class LaviyaApiClient {
   async getLocalWorkStatus(params: { runId: number }): Promise<unknown> {
     return this.request({
       method: "GET",
+      retryMode: "safe",
       path: "/api/ai/GetLocalWorkStatus",
       query: {
         RunID: params.runId
-      }
+      },
+      contextRunId: params.runId
     });
   }
 
   async cancelLocalWork(payload: unknown): Promise<unknown> {
     return this.request({
       method: "POST",
+      retryMode: "never",
       path: "/api/ai/CancelLocalWork",
-      body: payload
+      body: payload,
+      contextRunId: extractRunId(payload)
     });
   }
 
   async startExecution(params: { runId: number; taskId: number; executionId?: number }): Promise<unknown> {
     return this.request({
       method: "GET",
+      retryMode: "safe",
       path: "/api/ai/StartExecution",
       query: {
         AIAgentFlowRunID: params.runId,
         TaskID: params.taskId,
         AIAgentTaskExecutionID: params.executionId
-      }
+      },
+      contextRunId: params.runId
     });
   }
 
   async addTaskComment(payload: unknown): Promise<unknown> {
     return this.request({
       method: "POST",
+      retryMode: "never",
       path: "/api/ai/AddTaskComment",
       body: payload
     });
@@ -111,23 +131,44 @@ export class LaviyaApiClient {
   async completeExecution(payload: unknown, idempotencyKey: string): Promise<unknown> {
     return this.request({
       method: "POST",
+      retryMode: "idempotent",
       path: "/api/ai/CompleteExecution",
       body: payload,
       idempotencyKey,
-      timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
+      timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds),
+      contextRunId: extractRunId(payload)
     });
   }
 
   async reportTokenUsage(payload: unknown, idempotencyKey?: string): Promise<unknown> {
     return this.request({
       method: "POST",
+      retryMode: idempotencyKey ? "idempotent" : "never",
       path: "/api/ai/ReportTokenUsage",
       body: payload,
-      idempotencyKey
+      idempotencyKey,
+      contextRunId: extractRunId(payload)
     });
   }
 
+  shutdown(): void {
+    if (this.shuttingDown) {
+      return;
+    }
+
+    this.shuttingDown = true;
+    this.shutdownController.abort();
+    for (const controller of this.activeControllers) {
+      controller.abort();
+    }
+    this.activeControllers.clear();
+  }
+
   private async request(options: RequestOptions): Promise<unknown> {
+    if (this.shuttingDown) {
+      throw new LaviyaApiError("Laviya API client is shutting down.");
+    }
+
     const maxAttempts = this.options.retry.maxAttempts;
     let attempt = 1;
     let lastError: unknown;
@@ -142,7 +183,7 @@ export class LaviyaApiClient {
           throw error;
         }
 
-        const wait = this.computeBackoff(attempt);
+        const wait = this.computeBackoff(attempt, error);
         const errorContext = buildErrorContext(error);
         this.options.logger.warn("Laviya API request failed, retrying", {
           path: options.path,
@@ -150,7 +191,14 @@ export class LaviyaApiClient {
           waitMs: wait,
           ...errorContext
         });
-        await delay(wait);
+        try {
+          await delay(wait, undefined, { signal: this.shutdownController.signal });
+        } catch (error: unknown) {
+          if (isAbortError(error) && this.shuttingDown) {
+            throw new LaviyaApiError("Laviya API retry cancelled during shutdown.");
+          }
+          throw error;
+        }
         attempt += 1;
       }
     }
@@ -159,22 +207,17 @@ export class LaviyaApiClient {
   }
 
   private async requestOnce(options: RequestOptions, attempt: number): Promise<unknown> {
-    const activeAgentUid = this.resolveAgentUid();
+    const activeAgentUid = this.resolveAgentUid(options.contextRunId);
     const url = this.buildUrl(options.path, options.query, activeAgentUid);
     const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
-    const headers: Record<string, string> = {
-      [this.options.auth.headerName]: this.options.apiKey
-    };
+    if (serializedBody && Buffer.byteLength(serializedBody, "utf8") > MAX_REQUEST_BODY_BYTES) {
+      throw new LaviyaProtocolError(
+        `Request body exceeds the ${MAX_REQUEST_BODY_BYTES} byte limit on ${options.path}.`
+      );
+    }
+    const headers: Record<string, string> = {};
     if (serializedBody !== undefined) {
       headers["Content-Type"] = "application/json; charset=utf-8";
-    }
-
-    if (this.options.auth.sendBearerToken) {
-      headers.Authorization = `Bearer ${this.options.apiKey}`;
-    }
-
-    if (activeAgentUid) {
-      headers["X-Agent-UID"] = activeAgentUid;
     }
 
     if (options.idempotencyKey) {
@@ -182,6 +225,7 @@ export class LaviyaApiClient {
     }
 
     const controller = new AbortController();
+    this.activeControllers.add(controller);
     const timeoutSeconds = resolveTimeoutSeconds(options, this.options.requestTimeoutSeconds);
     const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1_000);
 
@@ -196,13 +240,27 @@ export class LaviyaApiClient {
         method: options.method,
         headers,
         body: serializedBody,
-        signal: controller.signal
+        signal: controller.signal,
+        redirect: "manual"
       });
+
+      if (isRedirectStatus(response.status)) {
+        throw new LaviyaApiError(
+          `Redirect response ${response.status} refused on ${options.path}`,
+          response.status
+        );
+      }
 
       let parsedBody: unknown;
       try {
-        parsedBody = await this.parseResponseBody(response);
+        parsedBody = redactSecretValue(
+          await this.parseResponseBody(response),
+          this.options.apiKey
+        );
       } catch (error: unknown) {
+        if (error instanceof LaviyaProtocolError) {
+          throw error;
+        }
         const normalizedStatus = response.status >= 400 ? response.status : undefined;
         throw new LaviyaApiError(
           `Failed to read response body on ${options.path} (HTTP ${response.status})`,
@@ -218,12 +276,14 @@ export class LaviyaApiClient {
         throw new LaviyaApiError(
           `Laviya API error ${response.status} on ${options.path}`,
           response.status,
-          parsedBody
+          parsedBody,
+          parseRetryAfterMs(response.headers.get("retry-after"))
         );
       }
 
-      this.captureAgentUid(parsedBody, options.path);
-      return parsedBody;
+      const envelope = parseLaviyaEnvelope(parsedBody, options.path);
+      this.captureAgentUid(envelope, options.path, options.contextRunId);
+      return envelope;
     } catch (error: unknown) {
       if (isAbortError(error)) {
         throw new LaviyaApiError(`Request timeout after ${timeoutSeconds}s on ${options.path}`);
@@ -234,6 +294,7 @@ export class LaviyaApiClient {
       throw error;
     } finally {
       clearTimeout(timeout);
+      this.activeControllers.delete(controller);
     }
   }
 
@@ -276,15 +337,30 @@ export class LaviyaApiClient {
       try {
         return JSON.parse(raw);
       } catch {
-        return { raw };
+        throw new LaviyaProtocolError("Laviya API returned malformed JSON.", { raw });
       }
     }
 
-    return { raw };
+    throw new LaviyaProtocolError("Laviya API returned a non-JSON response.", {
+      contentType,
+      raw
+    });
   }
 
   private async readResponseBodyText(response: Response): Promise<string> {
+    const contentLength = Number(response.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > MAX_RESPONSE_BODY_BYTES) {
+      throw new LaviyaProtocolError(
+        `Response body exceeds the ${MAX_RESPONSE_BODY_BYTES} byte limit.`
+      );
+    }
+
     const bodyBuffer = await response.arrayBuffer();
+    if (bodyBuffer.byteLength > MAX_RESPONSE_BODY_BYTES) {
+      throw new LaviyaProtocolError(
+        `Response body exceeds the ${MAX_RESPONSE_BODY_BYTES} byte limit.`
+      );
+    }
     if (bodyBuffer.byteLength === 0) {
       return "";
     }
@@ -306,11 +382,15 @@ export class LaviyaApiClient {
       return false;
     }
 
-    if (error instanceof LaviyaApiError) {
-      if (options.path === "/api/ai/CompleteExecution" || options.path === "/api/ai/AddTaskComment") {
-        return false;
-      }
+    if (error instanceof LaviyaBusinessError || error instanceof LaviyaProtocolError) {
+      return false;
+    }
 
+    if (options.retryMode === "never") {
+      return false;
+    }
+
+    if (error instanceof LaviyaApiError) {
       if (!error.status) {
         return true;
       }
@@ -320,7 +400,11 @@ export class LaviyaApiClient {
     return true;
   }
 
-  private computeBackoff(attempt: number): number {
+  private computeBackoff(attempt: number, error: unknown): number {
+    if (error instanceof LaviyaApiError && error.retryAfterMs !== undefined) {
+      return Math.min(this.options.retry.maxDelayMs, error.retryAfterMs);
+    }
+
     const exp = Math.min(this.options.retry.maxDelayMs, this.options.retry.baseDelayMs * 2 ** (attempt - 1));
     if (!this.options.retry.jitter) {
       return exp;
@@ -329,22 +413,31 @@ export class LaviyaApiClient {
     return Math.min(this.options.retry.maxDelayMs, exp + jitter);
   }
 
-  private captureAgentUid(payload: unknown, sourcePath: string): void {
+  private captureAgentUid(payload: unknown, sourcePath: string, contextRunId?: number): void {
     const discoveredAgentUid = extractAgentUid(payload);
     if (!discoveredAgentUid) {
       return;
     }
 
-    if (this.activeAgentUid === discoveredAgentUid) {
+    const runId = contextRunId ?? extractRunId(payload);
+    if (!runId) {
+      this.options.logger.warn("Ignored AIAgentUID from response because no run context was available.", {
+        sourcePath,
+        agentUid: summarizeAgentUid(discoveredAgentUid)
+      });
       return;
     }
 
-    const previousAgentUid = this.activeAgentUid;
-    this.activeAgentUid = discoveredAgentUid;
+    const previousAgentUid = this.agentUidByRun.get(runId);
+    if (previousAgentUid === discoveredAgentUid) {
+      return;
+    }
+    this.agentUidByRun.set(runId, discoveredAgentUid);
 
     if (!previousAgentUid) {
-      this.options.logger.info("Captured AIAgentUID from API response for follow-up requests.", {
+      this.options.logger.info("Captured AIAgentUID for run context.", {
         sourcePath,
+        runId,
         agentUid: summarizeAgentUid(discoveredAgentUid)
       });
       return;
@@ -352,13 +445,14 @@ export class LaviyaApiClient {
 
     this.options.logger.info("Detected AIAgentUID change from API response and switched active agent context.", {
       sourcePath,
+      runId,
       previousAgentUid: summarizeAgentUid(previousAgentUid),
       activeAgentUid: summarizeAgentUid(discoveredAgentUid)
     });
   }
 
-  private resolveAgentUid(): string | undefined {
-    return this.activeAgentUid;
+  private resolveAgentUid(runId?: number): string | undefined {
+    return (runId ? this.agentUidByRun.get(runId) : undefined) ?? this.initialAgentUid;
   }
 }
 
@@ -406,15 +500,42 @@ function extractAgentUid(payload: unknown): string | undefined {
   return undefined;
 }
 
+function extractRunId(payload: unknown): number | undefined {
+  const root = asRecord(payload);
+  const candidates: unknown[] = [payload];
+  if (root) {
+    candidates.push(root.Data, root.data);
+  }
+
+  for (const candidate of candidates) {
+    const record = asRecord(candidate);
+    if (!record) {
+      continue;
+    }
+
+    const runId =
+      toPositiveInteger(record.aiAgentFlowRunID) ??
+      toPositiveInteger(record.AIAgentFlowRunID) ??
+      toPositiveInteger(record.runID) ??
+      toPositiveInteger(record.RunID) ??
+      toPositiveInteger(record.runId);
+    if (runId) {
+      return runId;
+    }
+  }
+
+  return undefined;
+}
+
 function buildErrorContext(error: unknown): Record<string, unknown> {
   if (!(error instanceof Error)) {
     return {
-      error: String(error)
+      error: redactSensitiveText(String(error))
     };
   }
 
   const context: Record<string, unknown> = {
-    error: error.message,
+    error: redactSensitiveText(error.message),
     errorName: error.name
   };
 
@@ -427,7 +548,7 @@ function buildErrorContext(error: unknown): Record<string, unknown> {
   if (cause) {
     const causeMessage = toNonEmptyString(cause.message);
     if (causeMessage) {
-      context.cause = causeMessage;
+      context.cause = redactSensitiveText(causeMessage);
     }
 
     const causeCode = extractCode(cause);
@@ -462,6 +583,17 @@ function toNonEmptyString(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function toPositiveInteger(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+  }
+  return undefined;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return undefined;
@@ -471,12 +603,11 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 function summarizeAgentUid(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length <= 12) {
-    return trimmed;
-  }
+  return summarizeIdentifier(value);
+}
 
-  return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
+function isRedirectStatus(status: number): boolean {
+  return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
 }
 
 function extractCharset(contentType: string | null): string | undefined {
@@ -501,4 +632,22 @@ function isJsonContentType(contentType: string): boolean {
   }
 
   return mediaType === "application/json" || mediaType.endsWith("+json");
+}
+
+function parseRetryAfterMs(value: string | null): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.round(seconds * 1_000);
+  }
+
+  const date = Date.parse(value);
+  if (!Number.isNaN(date)) {
+    return Math.max(0, date - Date.now());
+  }
+
+  return undefined;
 }

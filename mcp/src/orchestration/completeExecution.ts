@@ -1,8 +1,15 @@
 import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { RuntimeConfig } from "../config/mergeConfig.js";
+import {
+  parseExecutionSummaryText,
+  parseStructuredExecutionSummary,
+  type ExecutionSummary
+} from "../contracts/executionSummary.js";
+import { tokenUsageSchema } from "../contracts/tokenUsage.js";
+import { executionEvidenceSchema } from "../contracts/executionPolicy.js";
 import type { Logger } from "../utils/logger.js";
-import { generateDeterministicRequestKey } from "../utils/requestKey.js";
+import { generateCanonicalRequestKey } from "../utils/canonicalJson.js";
 
 const taskTypeValues = [0, 10, 20, 30, 40, 50, 60, 70, 80] as const;
 
@@ -12,17 +19,7 @@ const actionInputSchema = z.object({
   message: z.string().optional(),
   level: z.string().min(1).optional(),
   duration: z.number().int().min(0).optional()
-}).passthrough();
-
-const tokenUsageInputSchema = z.object({
-  model: z.string().min(1).optional(),
-  inputTokens: z.number().int().min(0).optional(),
-  outputTokens: z.number().int().min(0).optional(),
-  totalTokens: z.number().int().min(0).optional(),
-  cost: z.number().min(0).optional(),
-  currency: z.string().min(1).optional(),
-  providerRequestID: z.string().optional()
-}).passthrough();
+}).strict();
 
 type GeneratedTaskInput = {
   title: string;
@@ -47,8 +44,8 @@ const generatedTaskInputSchema: z.ZodType<GeneratedTaskInput> = z.lazy(() =>
       .refine((value) => taskTypeValues.includes(value as (typeof taskTypeValues)[number]), "Invalid taskTypeID"),
     estimatedEffort: z.number().min(0),
     referenceID: z.string().min(1).optional(),
-    subTasks: z.array(generatedTaskInputSchema).optional()
-  }).passthrough()
+    subTasks: z.array(generatedTaskInputSchema).max(50).optional()
+  }).strict()
 );
 
 type GeneratedWikiInput = {
@@ -62,9 +59,9 @@ const generatedWikiInputSchema: z.ZodType<GeneratedWikiInput> = z.lazy(() =>
   z.object({
     name: z.string().min(1),
     description: z.string().optional(),
-    subWikis: z.array(generatedWikiInputSchema).optional(),
-    relatedTaskReferenceIDs: z.array(z.string().min(1)).optional()
-  }).passthrough()
+    subWikis: z.array(generatedWikiInputSchema).max(50).optional(),
+    relatedTaskReferenceIDs: z.array(z.string().min(1)).max(100).optional()
+  }).strict()
 );
 
 function normalizeReferenceID(referenceID: string): string {
@@ -135,14 +132,15 @@ export const completeExecutionPayloadSchema = z
     executionSummaryObject: z.unknown().optional(),
     errorMessage: z.string().optional().nullable(),
     isFailed: z.boolean(),
-    logs: z.array(actionInputSchema).optional(),
-    tokenUsages: z.array(tokenUsageInputSchema).optional(),
-    tasks: z.array(generatedTaskInputSchema).optional(),
-    wikis: z.array(generatedWikiInputSchema).optional(),
-    lessons: z.array(generatedWikiInputSchema).optional(),
-    technicalAnalysis: generatedWikiInputSchema.optional()
+    logs: z.array(actionInputSchema).max(1_000).optional(),
+    tokenUsages: z.array(tokenUsageSchema).max(100).optional(),
+    tasks: z.array(generatedTaskInputSchema).max(100).optional(),
+    wikis: z.array(generatedWikiInputSchema).max(100).optional(),
+    lessons: z.array(generatedWikiInputSchema).max(100).optional(),
+    technicalAnalysis: generatedWikiInputSchema.optional(),
+    executionEvidence: executionEvidenceSchema.optional()
   })
-  .passthrough()
+  .strict()
   .superRefine((payload, ctx) => {
     const hasExecutionSummaryText = typeof payload.executionSummary === "string" && payload.executionSummary.trim().length > 0;
     const hasExecutionSummaryObject = payload.executionSummaryObject !== undefined;
@@ -154,6 +152,16 @@ export const completeExecutionPayloadSchema = z
         message: "Provide executionSummary text or executionSummaryObject."
       });
     }
+
+    validateTreeDepth(payload.tasks, "subTasks", ["tasks"], ctx);
+    validateTreeDepth(payload.wikis, "subWikis", ["wikis"], ctx);
+    validateTreeDepth(payload.lessons, "subWikis", ["lessons"], ctx);
+    validateTreeDepth(
+      payload.technicalAnalysis ? [payload.technicalAnalysis] : undefined,
+      "subWikis",
+      ["technicalAnalysis"],
+      ctx
+    );
 
     const taskReferenceIDs = collectTaskReferenceIDs(payload.tasks);
     const normalizedTaskReferences = new Set<string>();
@@ -216,6 +224,14 @@ export async function completeExecution(
   logger: Logger,
   payload: CompleteExecutionPayload
 ): Promise<unknown> {
+  const structuredSummary =
+    parseStructuredExecutionSummary(payload.executionSummaryObject) ??
+    parseExecutionSummaryText(payload.executionSummary);
+  if (structuredSummary) {
+    validateSummaryConsistency(structuredSummary, payload);
+    validatePolicySummaryConsistency(structuredSummary, payload);
+  }
+
   const executionSummary = resolveExecutionSummary(payload);
   if (runtimeConfig.completion.requireExecutionSummary && !executionSummary.trim()) {
     throw new Error("executionSummary is required by runtime configuration.");
@@ -228,23 +244,23 @@ export async function completeExecution(
     });
   }
 
-  const requestKey =
-    payload.requestKey ??
-    generateDeterministicRequestKey([
-      payload.aiAgentFlowRunID,
-      payload.taskID,
-      payload.aiAgentTaskExecutionID,
-      executionSummary,
-      payload.isFailed ? 1 : 0
-    ]);
-
-  const { executionSummaryObject: _executionSummaryObject, ...restPayload } = payload;
-  const normalizedPayload: CompleteExecutionPayload = {
+  const {
+    executionSummaryObject: _executionSummaryObject,
+    requestKey: suppliedRequestKey,
+    ...restPayload
+  } = payload;
+  const payloadWithoutRequestKey: CompleteExecutionPayload = {
     ...restPayload,
     executionSummary,
-    requestKey,
     logs: runtimeConfig.completion.includeLogs ? payload.logs : undefined,
     tokenUsages: runtimeConfig.completion.includeTokenUsage ? payload.tokenUsages : undefined
+  };
+  const requestKey =
+    suppliedRequestKey ??
+    generateCanonicalRequestKey("CompleteExecution", payloadWithoutRequestKey);
+  const normalizedPayload: CompleteExecutionPayload = {
+    ...payloadWithoutRequestKey,
+    requestKey
   };
 
   logger.info("Completing execution", {
@@ -256,6 +272,52 @@ export async function completeExecution(
   });
 
   return client.completeExecution(normalizedPayload, requestKey);
+}
+
+function validatePolicySummaryConsistency(
+  summary: ExecutionSummary,
+  payload: CompleteExecutionPayload
+): void {
+  if (!summary.policyCompliance || !payload.executionEvidence) {
+    return;
+  }
+
+  if (!summary.policyCompliance.compliant) {
+    throw new Error(
+      "Execution summary policyCompliance.compliant must be true for successful policy validation."
+    );
+  }
+
+  if (
+    summary.policyCompliance.workspaceChanged !==
+    payload.executionEvidence.workspaceChanged
+  ) {
+    throw new Error(
+      "Execution summary policyCompliance.workspaceChanged must match executionEvidence."
+    );
+  }
+
+  const summaryCapabilities = [...summary.policyCompliance.performedCapabilities].sort();
+  const evidenceCapabilities = [...payload.executionEvidence.performedCapabilities].sort();
+  if (JSON.stringify(summaryCapabilities) !== JSON.stringify(evidenceCapabilities)) {
+    throw new Error(
+      "Execution summary policyCompliance.performedCapabilities must match executionEvidence."
+    );
+  }
+}
+
+function validateSummaryConsistency(
+  summary: ExecutionSummary,
+  payload: CompleteExecutionPayload
+): void {
+  if (summary.task.taskId !== payload.taskID || summary.task.runId !== payload.aiAgentFlowRunID) {
+    throw new Error("Execution summary task identifiers must match the completion payload.");
+  }
+
+  const expectedOutcome = payload.isFailed ? "failed" : "success";
+  if (summary.outcome !== expectedOutcome) {
+    throw new Error(`Execution summary outcome must be "${expectedOutcome}" for this completion.`);
+  }
 }
 
 function resolveExecutionSummary(payload: CompleteExecutionPayload): string {
@@ -271,5 +333,38 @@ function resolveExecutionSummary(payload: CompleteExecutionPayload): string {
     return JSON.stringify(payload.executionSummaryObject);
   } catch {
     throw new Error("executionSummaryObject must be JSON-serializable.");
+  }
+}
+
+function validateTreeDepth<T extends Record<string, unknown>>(
+  items: T[] | undefined,
+  childKey: string,
+  path: Array<string | number>,
+  ctx: z.RefinementCtx,
+  depth = 1
+): void {
+  if (!items) {
+    return;
+  }
+  if (depth > 10) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path,
+      message: "Nested generated content cannot exceed 10 levels."
+    });
+    return;
+  }
+
+  for (const [index, item] of items.entries()) {
+    const children = item[childKey];
+    if (Array.isArray(children)) {
+      validateTreeDepth(
+        children as T[],
+        childKey,
+        [...path, index, childKey],
+        ctx,
+        depth + 1
+      );
+    }
   }
 }

@@ -327,9 +327,12 @@ Typical lifecycle:
 2. Optional monitoring/control: use `laviya_get_local_work_status` / `laviya_cancel_local_work`.
 3. Optional self-managed delivery reporting: call `laviya_add_task_comment` when your own agent finishes work outside the orchestration lifecycle and only needs to publish its output to a task comment.
 4. Call `laviya_get_my_work` to fetch work.
+   - Read `Data.ExecutionPolicy` before taking any repository action.
+   - `analysis` and `review` modes are read-only and must produce findings/handoff rather than implementation.
 5. Call `laviya_start_execution` to begin execution.
 6. Call `laviya_complete_execution` to finalize the task.
-7. Call `laviya_report_token_usage` when token reporting is required.
+   - For enforced read-only policies, include truthful `executionEvidence` and matching `ExecutionSummary.policyCompliance`.
+7. Call `laviya_report_token_usage` only when measured token data is available.
 
 Tool response format:
 

@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
+import { executeTool } from "../mcp/result.js";
+import { readOnlyToolAnnotations, toolResultOutputSchema } from "../mcp/toolMetadata.js";
 import { getLocalWorkStatus, getLocalWorkStatusInputSchema } from "../orchestration/getLocalWorkStatus.js";
 import type { Logger } from "../utils/logger.js";
 
@@ -17,19 +19,14 @@ export function registerGetLocalWorkStatusTool(deps: GetLocalWorkStatusToolDeps)
       description: "Read runtime status, last execution, and artifact counters for a local-direct run.",
       inputSchema: {
         runId: getLocalWorkStatusInputSchema.shape.runId
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: readOnlyToolAnnotations
     },
-    async (input) => {
-      try {
+    async (input) =>
+      executeTool("laviya_get_local_work_status", deps.logger, async () => {
         const parsed = getLocalWorkStatusInputSchema.parse(input);
-        const result = await getLocalWorkStatus(deps.client, deps.logger, parsed);
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_get_local_work_status failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
-    }
+        return getLocalWorkStatus(deps.client, deps.logger, parsed);
+      })
   );
 }

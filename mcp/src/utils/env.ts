@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSecureBaseUrl } from "./baseUrl.js";
 
 export const logLevels = ["debug", "info", "warn", "error"] as const;
 export type LogLevel = (typeof logLevels)[number];
@@ -13,7 +14,17 @@ function emptyStringToUndefined(value: unknown): unknown {
 
 const envSchema = z.object({
   LAVIYA_API_KEY: z.string().min(1, "LAVIYA_API_KEY is required"),
-  LAVIYA_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  LAVIYA_BASE_URL: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string()
+      .url()
+      .refine(isSecureBaseUrl, {
+        message:
+          "LAVIYA_BASE_URL must use HTTPS and must not contain credentials. HTTP is allowed only for localhost, 127.0.0.1, or ::1."
+      })
+      .optional()
+  ),
   LAVIYA_AGENT_UID: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   LAVIYA_LOG_LEVEL: z.preprocess(emptyStringToUndefined, z.enum(logLevels).optional())
 });

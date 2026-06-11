@@ -49,6 +49,24 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "policyCompliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "compliant", "workspaceChanged", "performedCapabilities", "notes"],
+      "properties": {
+        "mode": { "type": "string", "minLength": 1 },
+        "compliant": { "type": "boolean" },
+        "workspaceChanged": { "type": "boolean" },
+        "performedCapabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
     "handoff": {
       "type": "object",
       "additionalProperties": false,

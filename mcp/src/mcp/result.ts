@@ -1,0 +1,100 @@
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { LaviyaApiError, LaviyaBusinessError, LaviyaProtocolError } from "../client/errors.js";
+import type { Logger } from "../utils/logger.js";
+
+export async function executeTool(
+  toolName: string,
+  logger: Logger,
+  operation: () => Promise<unknown>,
+  options: { minify?: boolean } = {}
+): Promise<CallToolResult> {
+  try {
+    return successToolResult(await operation(), options.minify);
+  } catch (error: unknown) {
+    logger.error(`${toolName} failed`, errorLogContext(error));
+    return errorToolResult(error);
+  }
+}
+
+export function successToolResult(payload: unknown, minify = false): CallToolResult {
+  const result = normalizeStructuredValue(payload);
+  return {
+    content: [{ type: "text", text: serialize(payload, minify) }],
+    structuredContent: { result }
+  };
+}
+
+export function errorToolResult(error: unknown): CallToolResult {
+  const normalized = normalizeToolError(error);
+  return {
+    content: [{ type: "text", text: normalized.message }],
+    structuredContent: {
+      error: normalized
+    },
+    isError: true
+  };
+}
+
+interface NormalizedToolError extends Record<string, unknown> {
+  type: "business" | "protocol" | "transport" | "runtime";
+  message: string;
+  status?: number;
+  codes?: string[];
+}
+
+function normalizeToolError(error: unknown): NormalizedToolError {
+  if (error instanceof LaviyaBusinessError) {
+    return {
+      type: "business",
+      message: error.message,
+      codes: error.codes
+    };
+  }
+
+  if (error instanceof LaviyaProtocolError) {
+    return {
+      type: "protocol",
+      message: error.message
+    };
+  }
+
+  if (error instanceof LaviyaApiError) {
+    return {
+      type: "transport",
+      message: error.message,
+      ...(error.status === undefined ? {} : { status: error.status })
+    };
+  }
+
+  return {
+    type: "runtime",
+    message: error instanceof Error ? error.message : String(error)
+  };
+}
+
+function errorLogContext(error: unknown): Record<string, unknown> {
+  const normalized = normalizeToolError(error);
+  return {
+    errorType: normalized.type,
+    error: normalized.message,
+    ...(normalized.status === undefined ? {} : { status: normalized.status }),
+    ...(normalized.codes === undefined ? {} : { codes: normalized.codes })
+  };
+}
+
+function normalizeStructuredValue(payload: unknown): unknown {
+  if (payload === undefined) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(payload));
+  } catch {
+    return String(payload);
+  }
+}
+
+function serialize(payload: unknown, minify: boolean): string {
+  const serialized = minify ? JSON.stringify(payload) : JSON.stringify(payload, null, 2);
+  return serialized ?? "null";
+}

@@ -1,4 +1,5 @@
 import type { LogLevel } from "./env.js";
+import { redactLogValue, redactSensitiveText } from "./redaction.js";
 
 type LogContext = Record<string, unknown>;
 
@@ -43,9 +44,9 @@ export class Logger {
     const payload = {
       ts: new Date().toISOString(),
       level,
-      message,
-      ...this.staticContext,
-      ...context
+      message: redactSensitiveText(message),
+      ...(redactLogValue(this.staticContext) as LogContext),
+      ...(redactLogValue(context) as LogContext)
     };
 
     // MCP stdio transport uses stdout for protocol frames.

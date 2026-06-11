@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { RuntimeConfig } from "../config/mergeConfig.js";
 import type { Logger } from "../utils/logger.js";
+import type { ExecutionPolicyManager } from "./executionPolicyManager.js";
 
 export const getMyWorkInputSchema = z.object({
   runId: z.number().int().positive().optional(),
@@ -15,6 +16,7 @@ export type GetMyWorkInput = z.infer<typeof getMyWorkInputSchema>;
 export async function getMyWork(
   client: LaviyaApiClient,
   runtimeConfig: RuntimeConfig,
+  executionPolicyManager: ExecutionPolicyManager,
   logger: Logger,
   input: GetMyWorkInput
 ): Promise<unknown> {
@@ -31,11 +33,13 @@ export async function getMyWork(
     pollMode: runtimeConfig.pollMode
   });
 
-  return client.getMyWork({
+  const result = await client.getMyWork({
     runId,
     projectId,
     agentProfile,
     includeFileBytes: input.includeFileBytes,
     previousLogsLimit: input.previousLogsLimit
   });
+  executionPolicyManager.captureFromWorkItem(result);
+  return result;
 }

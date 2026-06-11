@@ -1,17 +1,8 @@
 import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { Logger } from "../utils/logger.js";
-import { generateDeterministicRequestKey } from "../utils/requestKey.js";
-
-const tokenUsageSchema = z.object({
-  model: z.string().min(1).optional(),
-  inputTokens: z.number().int().min(0).optional(),
-  outputTokens: z.number().int().min(0).optional(),
-  totalTokens: z.number().int().min(0).optional(),
-  cost: z.number().min(0).optional(),
-  currency: z.string().min(1).optional(),
-  providerRequestID: z.string().optional()
-});
+import { generateCanonicalRequestKey } from "../utils/canonicalJson.js";
+import { tokenUsageSchema } from "../contracts/tokenUsage.js";
 
 export const reportTokenUsagePayloadSchema = z.object({
   taskID: z.number().int().positive(),
@@ -19,7 +10,7 @@ export const reportTokenUsagePayloadSchema = z.object({
   aiAgentTaskExecutionID: z.number().int().positive().optional(),
   tokenUsages: z.array(tokenUsageSchema).min(1),
   requestKey: z.string().min(1).optional()
-});
+}).strict();
 
 export type ReportTokenUsagePayload = z.infer<typeof reportTokenUsagePayloadSchema>;
 
@@ -28,14 +19,14 @@ export async function reportTokenUsage(
   logger: Logger,
   payload: ReportTokenUsagePayload
 ): Promise<unknown> {
+  const { requestKey: suppliedRequestKey, ...payloadWithoutRequestKey } = payload;
   const requestKey =
-    payload.requestKey ??
-    generateDeterministicRequestKey([
-      payload.aiAgentFlowRunID,
-      payload.taskID,
-      payload.aiAgentTaskExecutionID,
-      JSON.stringify(payload.tokenUsages)
-    ]);
+    suppliedRequestKey ??
+    generateCanonicalRequestKey("ReportTokenUsage", payloadWithoutRequestKey);
+  const normalizedPayload = {
+    ...payloadWithoutRequestKey,
+    requestKey
+  };
 
   logger.info("Reporting token usage", {
     runID: payload.aiAgentFlowRunID,
@@ -43,5 +34,5 @@ export async function reportTokenUsage(
     count: payload.tokenUsages.length
   });
 
-  return client.reportTokenUsage(payload, requestKey);
+  return client.reportTokenUsage(normalizedPayload, requestKey);
 }

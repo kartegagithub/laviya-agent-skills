@@ -42,10 +42,10 @@ Project-local responsibilities:
 
 - `projectId`, optional `projectName`.
 - `agentProfile`.
-- `pollMode`.
+- `pollMode` compatibility metadata (`long-poll` currently behaves as host-driven pull).
 - `runPinning`.
 - Prompt override path.
-- Repo-specific rule/coding reference paths.
+- Repo-specific rule/coding reference paths (accepted for compatibility, not loaded by runtime).
 - Completion toggles (logs/token usage behavior).
 
 # 4. Folder Structures
@@ -110,11 +110,6 @@ Global config example:
   "defaultLeaseRefreshSeconds": 30,
   "requestTimeoutSeconds": 30,
   "logLevel": "info",
-  "auth": {
-    "mode": "apiKeyAndBearer",
-    "headerName": "X-API-Key",
-    "sendBearerToken": true
-  },
   "retry": {
     "maxAttempts": 3,
     "baseDelayMs": 500,
@@ -134,11 +129,6 @@ interface GlobalConfig {
   defaultLeaseRefreshSeconds: number;
   requestTimeoutSeconds: number;
   logLevel: "debug" | "info" | "warn" | "error";
-  auth: {
-    mode: "apiKey" | "apiKeyAndBearer";
-    headerName: string;
-    sendBearerToken: boolean;
-  };
   retry: {
     maxAttempts: number;
     baseDelayMs: number;
@@ -246,9 +236,16 @@ export LAVIYA_AGENT_UID="optional-agent-uid"
 export LAVIYA_LOG_LEVEL="info"
 ```
 
-`LAVIYA_AGENT_UID` is used as the initial agent context only. Runtime automatically follows the latest `AIAgentUID` returned by API responses during flow execution.
+`LAVIYA_AGENT_UID` is used as the initial agent context. Discovered `AIAgentUID` values are isolated by
+run so parallel executions cannot overwrite each other's agent context.
 
 Secrets must remain in environment variables, not repo config files.  
+The runtime sends `apiKey` and, when available, `agentUID` only as query parameters expected by the
+Laviya AI orchestration endpoints. It does not send `Authorization`, `X-API-Key`, or `X-Agent-UID`
+headers. Request redirects are refused so query credentials cannot be forwarded to another origin.
+Production base URLs must use HTTPS; HTTP is accepted only for loopback development addresses.
+Legacy global `auth` objects are accepted temporarily for migration, but ignored with a warning.
+
 Merge order in runtime:
 
 - Env overrides global config for `baseUrl` and `logLevel`.
@@ -264,18 +261,26 @@ Runtime responsibilities implemented in code:
 - Discover nearest project config from current working directory.
 - Load base prompt, then append optional project override prompt.
 - Expose resolved prompt text through MCP prompt/resource endpoints.
-- Initialize API client with retries, timeout, query-based auth (`apiKey`, `agentUID`) and idempotency.
-- Generate deterministic request keys for completion and token reporting.
-- Refresh execution lease on interval with fallback behavior.
-- Enforce execution summary presence when configured.
-- Enforce token reporting as measured input only.
+- Initialize API client with retries, timeout, query-only auth (`apiKey`, `agentUID`) and idempotency.
+- Redact API keys and summarize agent identifiers in structured logs and error contexts.
+- Refuse HTTP redirects and unsafe non-loopback HTTP base URLs.
+- Parse the backend envelope centrally and map `HasFailed: true` to MCP `isError: true`.
+- Return successful tool output as text plus `structuredContent`.
+- Generate canonical full-payload request keys for completion and token reporting.
+- Track leases independently by run/task/execution, without overlapping refresh calls.
+- Pause only the completing lease and resume it when completion fails.
+- Validate structured execution summaries and completion identity/outcome consistency.
+- Capture backend `ExecutionPolicy` per run/task and enforce read-only completion evidence before API submission.
+- Keep token reporting optional; validate measured values only when supplied.
 - Emit structured JSON logs with level filtering.
-- Expose diagnostics context (`cwd`, config paths, poll mode) on startup.
+- Expose secret-free runtime state through `laviya_diagnostics`.
+- Abort active API calls and close leases/transport during graceful shutdown.
 
 # 9. MCP Server Design
 
 MCP tools exposed:
 
+- `laviya_help`
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
@@ -284,6 +289,10 @@ MCP tools exposed:
 - `laviya_start_execution`
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
+- `laviya_diagnostics`
+
+Call `laviya_help` without arguments to receive every tool's purpose and a valid
+example call. Pass `toolName` to return help for a single tool.
 
 MCP prompt/resource exposed:
 
@@ -301,12 +310,12 @@ Tool contracts:
   - Input: `runId`
   - Behavior: reads run status, latest execution status, and generated artifact counters.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`).
-  - Error strategy: input validation + structured error logging.
+  - Error strategy: input validation and MCP `isError` result.
 - `laviya_cancel_local_work`
   - Input: `{ payload: { runID, reason? } }`
   - Behavior: cancels local-direct run and active execution leases.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with final status snapshot.
-  - Error strategy: payload validation + structured error logging.
+  - Error strategy: payload validation and MCP `isError` result.
 - `laviya_add_task_comment`
   - Input: `{ payload: { taskID, description } }`
   - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle.
@@ -314,26 +323,32 @@ Tool contracts:
   - Error strategy: payload validation + backend business rule propagation. Automatic retry is intentionally disabled to avoid duplicate comments.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
-  - Behavior: resolves defaults from runtime/project config, polls work, and supports lite payload defaults.
+  - Behavior: resolves defaults from runtime/project config, polls work, captures the step `ExecutionPolicy`, and supports lite payload defaults.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) as text; minified by default with optional field omission.
-  - Error strategy: validates input, logs error, throws tool error.
+  - Error strategy: validation, backend envelope parsing, and MCP `isError` result.
 - `laviya_start_execution`
   - Input: `runId`, `taskId`, `executionId?`
-  - Behavior: starts execution and starts local lease refresh timer.
+  - Behavior: starts execution and registers an independently keyed local lease.
   - Output: start execution API payload.
   - Error strategy: input validation + structured error logging.
 - `laviya_complete_execution`
   - Input: `{ payload: <full completion payload> }` (no HTTP `Data` envelope).
   - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `executionSummary`, `isFailed`).
-  - Behavior: validates payload, generates idempotency key if missing, enforces completion policy, stops lease manager.
+  - Behavior: validates payload/summary and policy evidence, generates a canonical idempotency key, pauses the matching
+    lease, and removes it only after successful completion.
   - Output: completion API response.
   - Error strategy: fail fast on invalid payload or summary policy violation.
 - `laviya_report_token_usage`
   - Input: `{ payload: <token usage payload> }` (no HTTP `Data` envelope).
   - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `tokenUsages`).
-  - Behavior: validates non-empty usage list and posts report with deterministic key.
+  - Behavior: optional standalone reporting; validates supplied measured usage and posts with a
+    canonical deterministic key.
   - Output: token report response.
   - Error strategy: validation + structured errors.
+- `laviya_diagnostics`
+  - Input: none.
+  - Behavior: returns version, config sources, API host, warnings, and active lease summaries without secrets.
+  - Annotation: read-only and idempotent.
 
 # 10. Prompt Design
 
@@ -346,6 +361,9 @@ Prompt design principles:
 - Keep lifecycle mechanics in runtime code, not prompt text.
 - Require MCP tools; forbid raw arbitrary HTTP from agent.
 - Require respecting `PreviousWorks` and orchestration context fields.
+- Treat backend `ExecutionPolicy` as a binding capability boundary.
+- Forbid workspace writes and implementation during `analysis` and `review` modes.
+- Require matching `executionEvidence` and `ExecutionSummary.policyCompliance` for enforced read-only steps.
 - Require honoring work-item language fields (`AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`) for user-facing outputs.
 - Require structured JSON `ExecutionSummary`.
 - Require explicit success/failure completion and clear handoff.
@@ -426,9 +444,10 @@ Recommendations:
 - Validate all config/tool inputs at runtime.
 - Maintain backward-compatible tool contracts across minor releases.
 - Use local dev flow: `npm run dev` with staged backend.
-- Add unit tests for config merge and request key generation.
-- Add integration tests for MCP tools against staging.
-- Automate releases and changelog generation.
+- Run `npm run typecheck`, `npm test`, `npm run build`, and `npm pack --dry-run` before release.
+- Keep the GitHub Actions MCP gate and dependency audit passing.
+- Add staging API contract tests in addition to the local MCP integration suite.
+- Automate changelog generation.
 - Keep support runbooks for diagnostics and common failures.
 
 # 14. Scaffolding Files

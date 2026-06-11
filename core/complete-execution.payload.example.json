@@ -3,8 +3,20 @@
   "aiAgentFlowRunID": 456,
   "aiAgentTaskExecutionID": 789,
   "requestKey": "6d4e5e8d-73f2-45a1-96e9-2d7be9df4d7f",
-  "executionSummary": "{\"stepRole\":\"Developer\",\"task\":{\"taskId\":123,\"runId\":456,\"stepIndex\":2},\"outcome\":\"success\",\"deliverables\":[\"Implemented service method\",\"Generated follow-up tasks, wiki notes, and technical analysis\"],\"keyDecisions\":[\"Used existing repository abstraction\",\"Split follow-up outputs into task, wiki, and analysis artifacts\"],\"assumptions\":[\"Database migration already exists\"],\"risks\":[\"Downstream API contract may still change\"],\"handoff\":{\"forNextStep\":\"Verify integration behavior, validate rollback notes, and confirm auth edge cases\",\"questions\":[\"Should validation reject empty names?\"],\"artifacts\":[\"src/services/taskService.ts\",\"POST /api/tasks\",\"Authentication Failure Analysis\"]}}",
+  "executionSummary": "{\"stepRole\":\"Developer\",\"task\":{\"taskId\":123,\"runId\":456,\"stepIndex\":2},\"outcome\":\"success\",\"deliverables\":[\"Implemented service method\",\"Generated follow-up tasks, wiki notes, and technical analysis\"],\"keyDecisions\":[\"Used existing repository abstraction\",\"Split follow-up outputs into task, wiki, and analysis artifacts\"],\"assumptions\":[\"Database migration already exists\"],\"risks\":[\"Downstream API contract may still change\"],\"policyCompliance\":{\"mode\":\"implementation\",\"compliant\":true,\"workspaceChanged\":true,\"performedCapabilities\":[\"read_workspace\",\"write_workspace\",\"execute_read_only_command\"],\"notes\":[]},\"handoff\":{\"forNextStep\":\"Verify integration behavior, validate rollback notes, and confirm auth edge cases\",\"questions\":[\"Should validation reject empty names?\"],\"artifacts\":[\"src/services/taskService.ts\",\"POST /api/tasks\",\"Authentication Failure Analysis\"]}}",
   "isFailed": false,
+  "executionEvidence": {
+    "performedCapabilities": [
+      "read_workspace",
+      "write_workspace",
+      "execute_read_only_command"
+    ],
+    "workspaceChanged": true,
+    "changedFiles": [
+      "src/services/taskService.ts"
+    ],
+    "enforcementLevel": "observed"
+  },
   "errorMessage": null,
   "logs": [
     {

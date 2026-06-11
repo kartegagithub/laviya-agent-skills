@@ -5,7 +5,7 @@
   "$defs": {
     "generatedTaskInput": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "required": ["title", "complexity", "priority", "taskTypeID", "estimatedEffort"],
       "properties": {
         "title": { "type": "string", "minLength": 1 },
@@ -32,7 +32,7 @@
     },
     "generatedWikiInput": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "required": ["name"],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
@@ -52,7 +52,7 @@
     }
   },
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": ["taskID", "aiAgentFlowRunID", "isFailed"],
   "properties": {
     "taskID": { "type": "integer", "minimum": 1 },
@@ -74,11 +74,28 @@
     },
     "errorMessage": { "type": ["string", "null"] },
     "isFailed": { "type": "boolean" },
+    "executionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performedCapabilities", "workspaceChanged", "changedFiles"],
+      "properties": {
+        "performedCapabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "workspaceChanged": { "type": "boolean" },
+        "changedFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "enforcementLevel": { "type": "string", "minLength": 1 }
+      }
+    },
     "logs": {
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "properties": {
           "actionType": { "type": "string" },
           "actionDetails": { "type": "string" },
@@ -92,7 +109,13 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
+        "anyOf": [
+          { "required": ["inputTokens"] },
+          { "required": ["outputTokens"] },
+          { "required": ["totalTokens"] },
+          { "required": ["cost", "currency"] }
+        ],
         "properties": {
           "model": { "type": "string" },
           "inputTokens": { "type": "integer", "minimum": 0 },

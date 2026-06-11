@@ -7,7 +7,8 @@
   "properties": {
     "baseUrl": {
       "type": "string",
-      "format": "uri"
+      "format": "uri",
+      "description": "HTTPS Laviya API base URL. HTTP is allowed only for localhost development."
     },
     "defaultPollIntervalSeconds": {
       "type": "integer",
@@ -34,22 +35,9 @@
     },
     "auth": {
       "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "mode": {
-          "type": "string",
-          "enum": ["apiKey", "apiKeyAndBearer"],
-          "default": "apiKeyAndBearer"
-        },
-        "headerName": {
-          "type": "string",
-          "default": "X-API-Key"
-        },
-        "sendBearerToken": {
-          "type": "boolean",
-          "default": true
-        }
-      }
+      "deprecated": true,
+      "description": "Deprecated compatibility field. Ignored because the runtime uses query-only authentication.",
+      "additionalProperties": true
     },
     "retry": {
       "type": "object",

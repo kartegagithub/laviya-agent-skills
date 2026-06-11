@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LaviyaApiClient } from "./client/laviyaApiClient.js";
 import { buildRuntimeConfig, type RuntimeBootstrapOptions, type RuntimeConfig } from "./config/mergeConfig.js";
 import { LeaseManager } from "./orchestration/leaseManager.js";
+import { ExecutionPolicyManager } from "./orchestration/executionPolicyManager.js";
 import { registerAddTaskCommentTool } from "./tools/addTaskCommentTool.js";
 import { registerCancelLocalWorkTool } from "./tools/cancelLocalWorkTool.js";
 import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
@@ -11,16 +12,18 @@ import { registerGetLocalWorkStatusTool } from "./tools/getLocalWorkStatusTool.j
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
 import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
+import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
+import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
+import { SERVER_VERSION } from "./version.js";
 
 const SERVER_NAME = "laviya-orchestrator-runtime";
-const SERVER_VERSION = "0.1.20";
 
 export interface RuntimeServer {
   server: McpServer;
   runtimeConfig: RuntimeConfig;
   logger: Logger;
-  shutdown: () => void;
+  shutdown: () => Promise<void>;
 }
 
 export async function createRuntimeServer(options: RuntimeBootstrapOptions = {}): Promise<RuntimeServer> {
@@ -46,7 +49,6 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     baseUrl: runtimeConfig.baseUrl,
     apiKey: runtimeConfig.apiKey,
     agentUid: runtimeConfig.agentUid,
-    auth: runtimeConfig.auth,
     retry: runtimeConfig.retry,
     requestTimeoutSeconds: runtimeConfig.requestTimeoutSeconds,
     logger: logger.child({ component: "api-client" })
@@ -57,6 +59,7 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     logger.child({ component: "lease-manager" }),
     runtimeConfig.leaseRefreshSeconds
   );
+  const executionPolicyManager = new ExecutionPolicyManager();
 
   const server = new McpServer({
     name: SERVER_NAME,
@@ -84,6 +87,7 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
   registerCancelLocalWorkTool({
     server,
     client,
+    leaseManager,
     logger: logger.child({ tool: "laviya_cancel_local_work" })
   });
 
@@ -97,6 +101,7 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     runtimeConfig,
+    executionPolicyManager,
     logger: logger.child({ tool: "laviya_get_my_work" })
   });
 
@@ -112,6 +117,7 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     client,
     runtimeConfig,
     leaseManager,
+    executionPolicyManager,
     logger: logger.child({ tool: "laviya_complete_execution" })
   });
 
@@ -121,12 +127,34 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     logger: logger.child({ tool: "laviya_report_token_usage" })
   });
 
+  registerDiagnosticsTool({
+    server,
+    runtimeConfig,
+    leaseManager,
+    logger: logger.child({ tool: "laviya_diagnostics" }),
+    serverVersion: SERVER_VERSION
+  });
+
+  registerHelpTool({
+    server,
+    logger: logger.child({ tool: "laviya_help" })
+  });
+
+  let shutdownPromise: Promise<void> | undefined;
+
   return {
     server,
     runtimeConfig,
     logger,
     shutdown: () => {
-      leaseManager.stop();
+      shutdownPromise ??= (async () => {
+        logger.info("Shutting down MCP runtime");
+        leaseManager.stopAll();
+        client.shutdown();
+        await server.close();
+        logger.info("MCP runtime shutdown complete");
+      })();
+      return shutdownPromise;
     }
   };
 }

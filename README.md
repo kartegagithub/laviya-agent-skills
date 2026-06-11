@@ -84,6 +84,7 @@ The MCP runtime follows a global-runtime plus project-local-config model:
 
 Current MCP tool set includes both orchestration and local-direct task feed flows:
 
+- `laviya_help`
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
@@ -92,7 +93,12 @@ Current MCP tool set includes both orchestration and local-direct task feed flow
 - `laviya_start_execution`
 - `laviya_complete_execution`
 - `laviya_report_token_usage`
+- `laviya_diagnostics`
 
 All tools return API envelope JSON text in the shape: `{ HasFailed, Messages, Data }`.
+
+Work items may include a backend-defined `ExecutionPolicy`. Analysis and review
+policies are read-only: agents must not implement changes, and enforced policies
+require matching completion `executionEvidence` and summary `policyCompliance`.
 
 For full architecture details and file-level scaffolding, refer to `mcp/README.md`.

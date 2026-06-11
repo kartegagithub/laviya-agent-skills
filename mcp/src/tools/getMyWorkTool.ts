@@ -2,13 +2,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { RuntimeConfig } from "../config/mergeConfig.js";
+import { executeTool } from "../mcp/result.js";
+import { readOnlyToolAnnotations, toolResultOutputSchema } from "../mcp/toolMetadata.js";
 import { getMyWork, getMyWorkInputSchema } from "../orchestration/getMyWork.js";
+import type { ExecutionPolicyManager } from "../orchestration/executionPolicyManager.js";
 import type { Logger } from "../utils/logger.js";
 
 export interface GetMyWorkToolDeps {
   server: McpServer;
   client: LaviyaApiClient;
   runtimeConfig: RuntimeConfig;
+  executionPolicyManager: ExecutionPolicyManager;
   logger: Logger;
 }
 
@@ -34,28 +38,30 @@ export function registerGetMyWorkTool(deps: GetMyWorkToolDeps): void {
         includeFileBytes: getMyWorkToolInputSchema.shape.includeFileBytes,
         previousLogsLimit: getMyWorkToolInputSchema.shape.previousLogsLimit,
         output: getMyWorkToolInputSchema.shape.output
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: readOnlyToolAnnotations
     },
     async (input) => {
-      try {
-        const parsed = getMyWorkToolInputSchema.parse(input);
-        const output = parsed.output ?? { minify: true, omitFields: [] };
-        const result = await getMyWork(deps.client, deps.runtimeConfig, deps.logger, parsed);
-        const filtered = applyFieldOmissions(result, output.omitFields);
-        return { content: [{ type: "text", text: serializePayload(filtered, output.minify) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_get_my_work failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
+      const parsed = getMyWorkToolInputSchema.parse(input);
+      const output = parsed.output ?? { minify: true, omitFields: [] };
+      return executeTool(
+        "laviya_get_my_work",
+        deps.logger,
+        async () => {
+          const result = await getMyWork(
+            deps.client,
+            deps.runtimeConfig,
+            deps.executionPolicyManager,
+            deps.logger,
+            parsed
+          );
+          return applyFieldOmissions(result, output.omitFields);
+        },
+        { minify: output.minify }
+      );
     }
   );
-}
-
-function serializePayload(payload: unknown, minify: boolean): string {
-  const serialized = minify ? JSON.stringify(payload) : JSON.stringify(payload, null, 2);
-  return serialized ?? "null";
 }
 
 function applyFieldOmissions(payload: unknown, omitFields: string[]): unknown {

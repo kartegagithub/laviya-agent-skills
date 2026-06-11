@@ -1,5 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
+import { executeTool } from "../mcp/result.js";
+import {
+  idempotentMutationAnnotations,
+  toolResultOutputSchema
+} from "../mcp/toolMetadata.js";
 import { reportTokenUsage, reportTokenUsagePayloadSchema } from "../orchestration/reportTokenUsage.js";
 import type { Logger } from "../utils/logger.js";
 
@@ -18,19 +23,14 @@ export function registerReportTokenUsageTool(deps: ReportTokenUsageToolDeps): vo
         "Report measured token usage for the current execution. Runtime blocks empty reports and generates deterministic idempotency key.",
       inputSchema: {
         payload: reportTokenUsagePayloadSchema
-      }
+      },
+      outputSchema: toolResultOutputSchema,
+      annotations: idempotentMutationAnnotations
     },
-    async (input) => {
-      try {
+    async (input) =>
+      executeTool("laviya_report_token_usage", deps.logger, async () => {
         const payload = reportTokenUsagePayloadSchema.parse(input.payload);
-        const result = await reportTokenUsage(deps.client, deps.logger, payload);
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (error: unknown) {
-        deps.logger.error("laviya_report_token_usage failed", {
-          error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-      }
-    }
+        return reportTokenUsage(deps.client, deps.logger, payload);
+      })
   );
 }

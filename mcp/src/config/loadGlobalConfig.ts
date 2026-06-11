@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { z } from "zod";
+import { isSecureBaseUrl } from "../utils/baseUrl.js";
 import { readJsonFileIfExists } from "../utils/json.js";
 
 const retryPolicySchema = z.object({
@@ -9,21 +10,34 @@ const retryPolicySchema = z.object({
   maxDelayMs: z.number().int().min(100).max(120_000).default(5_000),
   jitter: z.boolean().default(true),
   retryOnHttpStatus: z.array(z.number().int().min(100).max(599)).default([408, 409, 425, 429, 500, 502, 503, 504])
+}).strict();
+
+const baseUrlSchema = z.string().url().superRefine((value, ctx) => {
+  if (isSecureBaseUrl(value)) {
+    return;
+  }
+
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message:
+      "baseUrl must use HTTPS and must not contain credentials. HTTP is allowed only for localhost, 127.0.0.1, or ::1."
+  });
 });
 
 const globalConfigSchema = z.object({
-  baseUrl: z.string().url().default("https://api.laviya.app"),
+  baseUrl: baseUrlSchema.default("https://api.laviya.app"),
   defaultPollIntervalSeconds: z.number().int().min(1).max(300).default(15),
   defaultLeaseRefreshSeconds: z.number().int().min(5).max(300).default(30),
   requestTimeoutSeconds: z.number().int().min(3).max(300).default(30),
   logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
   auth: z
     .object({
-      mode: z.enum(["apiKey", "apiKeyAndBearer"]).default("apiKeyAndBearer"),
-      headerName: z.string().min(1).default("X-API-Key"),
-      sendBearerToken: z.boolean().default(true)
+      mode: z.enum(["apiKey", "apiKeyAndBearer"]).optional(),
+      headerName: z.string().min(1).optional(),
+      sendBearerToken: z.boolean().optional()
     })
-    .default({ mode: "apiKeyAndBearer", headerName: "X-API-Key", sendBearerToken: true }),
+    .passthrough()
+    .optional(),
   retry: retryPolicySchema.default({
     maxAttempts: 3,
     baseDelayMs: 500,
@@ -31,7 +45,7 @@ const globalConfigSchema = z.object({
     jitter: true,
     retryOnHttpStatus: [408, 409, 425, 429, 500, 502, 503, 504]
   })
-});
+}).strict();
 
 export type RetryPolicyConfig = z.infer<typeof retryPolicySchema>;
 export type GlobalConfig = z.infer<typeof globalConfigSchema>;
@@ -88,15 +102,28 @@ export async function loadGlobalConfig(configPath?: string): Promise<LoadedGloba
     throw new Error(`Invalid global config at ${resolvedPath}: ${reasons}`);
   }
 
+  const warnings: string[] = [];
+  if (asRecord(raw)?.auth !== undefined) {
+    warnings.push(
+      "Global config auth settings are deprecated and ignored; the runtime uses query-only authentication."
+    );
+  }
+
   return {
     config: {
       ...DEFAULT_GLOBAL_CONFIG,
       ...parsed.data,
-      auth: { ...DEFAULT_GLOBAL_CONFIG.auth, ...parsed.data.auth },
       retry: { ...DEFAULT_GLOBAL_CONFIG.retry, ...parsed.data.retry }
     },
-    path: resolvedPath
+    path: resolvedPath,
+    warning: warnings.length > 0 ? warnings.join(" ") : undefined
   };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function toNonEmptyString(value: string | undefined): string | undefined {
