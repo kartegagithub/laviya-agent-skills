@@ -38,6 +38,7 @@ export declare class LaviyaApiClient {
     addTaskComment(payload: unknown): Promise<unknown>;
     completeExecution(payload: unknown, idempotencyKey: string): Promise<unknown>;
     reportTokenUsage(payload: unknown, idempotencyKey?: string): Promise<unknown>;
+    reportRuntimeHeartbeat(payload: unknown): Promise<unknown>;
     shutdown(): void;
     private request;
     private requestOnce;

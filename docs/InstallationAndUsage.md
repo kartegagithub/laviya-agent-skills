@@ -171,7 +171,7 @@ Calling MCP tools from Codex chat:
 Example prompts:
 
 - Important: MCP tool input is not raw HTTP body. Do not send `{"Data": {...}}` to MCP tools.
-- For `laviya_complete_execution` and `laviya_report_token_usage`, send `{ "payload": { ... } }` with camelCase keys such as `taskID`, `aiAgentFlowRunID`, `executionSummary`, `isFailed`.
+- For `laviya_complete_execution`, send `{ "payload": { ... } }` with `taskID`, `aiAgentFlowRunID`, `aiAgentTaskExecutionID`, and `finalOutput`. For `laviya_report_token_usage`, use the same wrapper and camelCase tool-schema keys.
 
 ```text
 Call MCP tool laviya_get_my_work with {} and return raw JSON.
@@ -202,11 +202,11 @@ Call MCP tool laviya_add_task_comment with {"payload":{"taskID":5678,"descriptio
 ```
 
 ```text
-Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"requestKey":"8b42b153-4767-401f-974d-f81f6700f54a","executionSummary":"{\"stepRole\":\"Developer\",\"task\":{\"taskId\":5678,\"runId\":1234,\"stepIndex\":1},\"outcome\":\"success\",\"deliverables\":[\"Implemented backend change\"],\"keyDecisions\":[\"Reused existing orchestration helpers\"],\"assumptions\":[],\"risks\":[],\"handoff\":{\"forNextStep\":\"Run integration validation.\",\"questions\":[],\"artifacts\":[\"src/services/example.ts\"]}}","isFailed":false}}.
+Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"requestKey":"8b42b153-4767-401f-974d-f81f6700f54a","agentType":"codex","finalOutput":"<LAVIYA_RESULT>{\"contractVersion\":\"1.0\",\"outputType\":\"implementation_result\",\"agentReportedStatus\":\"completed\",\"payload\":{\"summary\":\"Implemented backend change.\",\"changedFiles\":[{\"path\":\"src/services/example.ts\",\"change\":\"Implemented validation.\"}],\"tests\":{\"executed\":true,\"passed\":true,\"details\":\"Tests passed.\"},\"remainingIssues\":[]},\"attachments\":[],\"agentNotes\":[]}</LAVIYA_RESULT>"}}.
 ```
 
 ```text
-Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"executionSummaryObject":{"stepRole":"Developer","task":{"taskId":5678,"runId":1234,"stepIndex":1},"outcome":"success","deliverables":["Implemented backend change"],"keyDecisions":["Reused existing orchestration helpers"],"assumptions":[],"risks":[],"handoff":{"forNextStep":"Run integration validation.","questions":[],"artifacts":["src/services/example.ts"]}},"isFailed":false}}.
+The `finalOutput` canonical result must match the work item's `ExpectedOutputType`. Do not send `executionSummaryObject`, `isFailed`, or domain routing fields.
 ```
 
 ```text
@@ -334,7 +334,7 @@ Typical lifecycle:
    - `analysis` and `review` modes are read-only and must produce findings/handoff rather than implementation.
 5. Call `laviya_start_execution` to begin execution.
 6. Call `laviya_complete_execution` to finalize the task.
-   - For enforced read-only policies, include truthful `executionEvidence` and matching `ExecutionSummary.policyCompliance`.
+   - For enforced read-only policies, include truthful canonical `executionEvidence`.
 7. Call `laviya_report_token_usage` only when measured token data is available.
 
 Tool response format:
@@ -355,4 +355,3 @@ Tool response format:
   - ensure the runtime process can access Node/npm and the configured config paths
   - set `LAVIYA_GLOBAL_CONFIG_PATH` to a readable file
   - if using Codex sandbox, retry with escalation when process spawn is blocked
-

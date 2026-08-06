@@ -79,11 +79,11 @@ const toolHelpCatalog = [
     },
     {
         name: "laviya_complete_execution",
-        purpose: "Complete an execution with a validated summary and optional generated artifacts.",
+        purpose: "Submit one final output; Laviya canonicalizes, evaluates, and routes it server-side.",
         notes: [
-            "Provide executionSummary text or executionSummaryObject.",
-            "Token usage is optional and must never block completion.",
-            "requestKey and aiAgentTaskExecutionID can be resolved by the runtime."
+            "Provide exactly one JSON result or LAVIYA_RESULT block in finalOutput.",
+            "aiAgentTaskExecutionID is required and must match the active lease.",
+            "Do not choose wiki, task, comment, artifact, status, or next-step destinations."
         ],
         example: {
             name: "laviya_complete_execution",
@@ -91,34 +91,8 @@ const toolHelpCatalog = [
                 payload: {
                     taskID: 123,
                     aiAgentFlowRunID: 456,
-                    isFailed: false,
-                    executionSummaryObject: {
-                        stepRole: "implementation",
-                        task: { taskId: 123, runId: 456, stepIndex: 0 },
-                        outcome: "success",
-                        deliverables: ["Implemented and tested the requested change."],
-                        keyDecisions: [],
-                        assumptions: [],
-                        risks: [],
-                        policyCompliance: {
-                            mode: "implementation",
-                            compliant: true,
-                            workspaceChanged: true,
-                            performedCapabilities: ["read_workspace", "write_workspace"],
-                            notes: []
-                        },
-                        handoff: {
-                            forNextStep: "",
-                            questions: [],
-                            artifacts: []
-                        }
-                    },
-                    executionEvidence: {
-                        performedCapabilities: ["read_workspace", "write_workspace"],
-                        workspaceChanged: true,
-                        changedFiles: ["src/example.ts"],
-                        enforcementLevel: "observed"
-                    }
+                    aiAgentTaskExecutionID: 789,
+                    finalOutput: "<LAVIYA_RESULT>{\"contractVersion\":\"1.0\",\"outputType\":\"implementation_result\",\"agentReportedStatus\":\"completed\",\"payload\":{\"summary\":\"Implemented and tested.\",\"changedFiles\":[],\"tests\":{\"executed\":true,\"passed\":true},\"remainingIssues\":[]}}</LAVIYA_RESULT>"
                 }
             }
         }
@@ -139,6 +113,8 @@ const toolHelpCatalog = [
                     aiAgentTaskExecutionID: 789,
                     tokenUsages: [
                         {
+                            measurement: "exact",
+                            measurementSource: "provider-response",
                             model: "provider-model-name",
                             inputTokens: 1200,
                             outputTokens: 300,

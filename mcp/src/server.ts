@@ -72,30 +72,16 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     logger: logger.child({ component: "prompt-assets" })
   });
 
-  registerFeedTaskTool({
-    server,
-    client,
-    logger: logger.child({ tool: "laviya_feed_task" })
-  });
+  const configuredProfile = runtimeConfig.projectConfig?.agentProfile?.trim().toLowerCase();
+  const exposeManagementTools = !configuredProfile || configuredProfile.includes("orchestrator") || configuredProfile.includes("manager");
 
-  registerGetLocalWorkStatusTool({
-    server,
-    client,
-    logger: logger.child({ tool: "laviya_get_local_work_status" })
-  });
-
-  registerCancelLocalWorkTool({
-    server,
-    client,
-    leaseManager,
-    logger: logger.child({ tool: "laviya_cancel_local_work" })
-  });
-
-  registerAddTaskCommentTool({
-    server,
-    client,
-    logger: logger.child({ tool: "laviya_add_task_comment" })
-  });
+  if (exposeManagementTools) {
+    registerFeedTaskTool({ server, client, logger: logger.child({ tool: "laviya_feed_task" }) });
+    registerGetLocalWorkStatusTool({ server, client, logger: logger.child({ tool: "laviya_get_local_work_status" }) });
+    registerCancelLocalWorkTool({ server, client, leaseManager, logger: logger.child({ tool: "laviya_cancel_local_work" }) });
+    registerAddTaskCommentTool({ server, client, logger: logger.child({ tool: "laviya_add_task_comment" }) });
+    registerReportTokenUsageTool({ server, client, logger: logger.child({ tool: "laviya_report_token_usage" }) });
+  }
 
   registerGetMyWorkTool({
     server,
@@ -119,12 +105,6 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     leaseManager,
     executionPolicyManager,
     logger: logger.child({ tool: "laviya_complete_execution" })
-  });
-
-  registerReportTokenUsageTool({
-    server,
-    client,
-    logger: logger.child({ tool: "laviya_report_token_usage" })
   });
 
   registerDiagnosticsTool({

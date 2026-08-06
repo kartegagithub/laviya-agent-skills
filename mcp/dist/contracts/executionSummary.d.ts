@@ -29,14 +29,14 @@ export declare const executionSummarySchema: z.ZodObject<{
         mode: string;
         performedCapabilities: string[];
         workspaceChanged: boolean;
-        compliant: boolean;
         notes: string[];
+        compliant: boolean;
     }, {
         mode: string;
         performedCapabilities: string[];
         workspaceChanged: boolean;
-        compliant: boolean;
         notes: string[];
+        compliant: boolean;
     }>>;
     handoff: z.ZodObject<{
         forNextStep: z.ZodString;
@@ -58,7 +58,7 @@ export declare const executionSummarySchema: z.ZodObject<{
         taskId: number;
         stepIndex: number;
     };
-    outcome: "success" | "failed";
+    outcome: "failed" | "success";
     deliverables: string[];
     keyDecisions: string[];
     assumptions: string[];
@@ -72,8 +72,8 @@ export declare const executionSummarySchema: z.ZodObject<{
         mode: string;
         performedCapabilities: string[];
         workspaceChanged: boolean;
-        compliant: boolean;
         notes: string[];
+        compliant: boolean;
     } | undefined;
 }, {
     stepRole: string;
@@ -82,7 +82,7 @@ export declare const executionSummarySchema: z.ZodObject<{
         taskId: number;
         stepIndex: number;
     };
-    outcome: "success" | "failed";
+    outcome: "failed" | "success";
     deliverables: string[];
     keyDecisions: string[];
     assumptions: string[];
@@ -96,8 +96,8 @@ export declare const executionSummarySchema: z.ZodObject<{
         mode: string;
         performedCapabilities: string[];
         workspaceChanged: boolean;
-        compliant: boolean;
         notes: string[];
+        compliant: boolean;
     } | undefined;
 }>;
 export type ExecutionSummary = z.infer<typeof executionSummarySchema>;

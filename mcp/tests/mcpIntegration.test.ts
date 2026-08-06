@@ -78,7 +78,7 @@ test("MCP runtime initializes and exposes tools, prompts, resources, and diagnos
       helpTools.some(
         (tool) =>
           tool.name === "laviya_complete_execution" &&
-          JSON.stringify(tool).includes("Token usage is optional")
+          JSON.stringify(tool).includes("LAVIYA_RESULT")
       )
     );
 

@@ -15,6 +15,7 @@ interface LeaseEntry {
   state: LeaseState;
   timer?: unknown;
   generation: number;
+  startedAt: number;
 }
 
 export interface LeaseScheduler {
@@ -61,6 +62,7 @@ export class LeaseManager {
       context: { ...context },
       state: "active",
       generation: 1
+      ,startedAt: Date.now()
     };
     this.entries.set(key, entry);
     this.schedule(entry);
@@ -185,6 +187,19 @@ export class LeaseManager {
 
     try {
       await this.client.startExecution(entry.context);
+      if (entry.context.executionId) {
+        await this.client.reportRuntimeHeartbeat({
+          taskID: entry.context.taskId,
+          aiAgentFlowRunID: entry.context.runId,
+          aiAgentTaskExecutionID: entry.context.executionId,
+          processState: "running",
+          runtimePhase: "agent_started",
+          processID: process.pid,
+          workspaceChanged: false,
+          elapsedSeconds: Math.max(0, Math.floor((Date.now() - entry.startedAt) / 1_000)),
+          sessionState: "connected"
+        });
+      }
       this.logger.debug("Execution lease refreshed", logContext(entry.context));
     } catch (error: unknown) {
       this.logger.error("Execution lease refresh failed", {

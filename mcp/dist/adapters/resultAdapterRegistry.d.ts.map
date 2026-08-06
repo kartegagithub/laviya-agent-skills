@@ -1,0 +1,1 @@
+{"version":3,"file":"resultAdapterRegistry.d.ts","sourceRoot":"","sources":["../../src/adapters/resultAdapterRegistry.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,sBAAsB,EAAiB,oBAAoB,EAAE,MAAM,oBAAoB,CAAC;AAEtG,qBAAa,qBAAqB;IAChC,OAAO,CAAC,QAAQ,CAAC,QAAQ,CAIvB;IAEF,YAAY,CAAC,SAAS,EAAE,MAAM,EAAE,OAAO,GAAE,oBAAyB,GAAG,sBAAsB;CAK5F"}

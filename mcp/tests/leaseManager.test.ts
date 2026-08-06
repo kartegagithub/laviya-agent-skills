@@ -54,7 +54,8 @@ test("does not overlap refresh calls for the same lease", async () => {
         resolveRefresh = resolve;
       });
       return { HasFailed: false };
-    }
+    },
+    reportRuntimeHeartbeat: async () => ({ HasFailed: false })
   } as unknown as LaviyaApiClient;
   const manager = new LeaseManager(client, createLogger("error"), 30, scheduler);
 
@@ -72,7 +73,8 @@ test("does not overlap refresh calls for the same lease", async () => {
 
 function createManager(scheduler: ManualScheduler): LeaseManager {
   const client = {
-    startExecution: async () => ({ HasFailed: false })
+    startExecution: async () => ({ HasFailed: false }),
+    reportRuntimeHeartbeat: async () => ({ HasFailed: false })
   } as unknown as LaviyaApiClient;
   return new LeaseManager(client, createLogger("error"), 30, scheduler);
 }

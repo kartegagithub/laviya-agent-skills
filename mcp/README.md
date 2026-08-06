@@ -339,15 +339,16 @@ Tool contracts:
   - Output: start execution API payload.
   - Error strategy: input validation + structured error logging.
 - `laviya_complete_execution`
-  - Input: `{ payload: <full completion payload> }` (no HTTP `Data` envelope).
-  - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `executionSummary`, `isFailed`).
-  - Behavior: validates payload/summary and policy evidence, generates a canonical idempotency key, pauses the matching
+  - Input: `{ payload: { taskID, aiAgentFlowRunID, aiAgentTaskExecutionID, finalOutput, requestKey?, agentType?, agentVersion? } }` (no HTTP `Data` envelope).
+  - `finalOutput` contains exactly one contract `1.0` result matching the work item's `ExpectedOutputType`; `<LAVIYA_RESULT>...</LAVIYA_RESULT>` is the preferred format.
+  - Removed legacy keys such as `executionSummary`, `isFailed`, `logs`, `tasks`, `wikis`, `technicalAnalysis`, `lessons`, and `tokenUsages` are rejected.
+  - Behavior: extracts, normalizes, deterministically repairs and validates the canonical result, generates a canonical idempotency key, pauses the matching
     lease, and removes it only after successful completion.
   - Output: completion API response.
   - Error strategy: fail fast on invalid payload or summary policy violation.
 - `laviya_report_token_usage`
   - Input: `{ payload: <token usage payload> }` (no HTTP `Data` envelope).
-  - Required payload key casing follows tool schema (for example `taskID`, `aiAgentFlowRunID`, `tokenUsages`).
+  - Every usage item declares `measurement` as `exact`, `estimated`, or `unavailable`; exact data requires `measurementSource`, estimated data requires `estimationModelVersion`, and unavailable data contains no token/cost values.
   - Behavior: optional standalone reporting; validates supplied measured usage and posts with a
     canonical deterministic key.
   - Output: token report response.
@@ -370,10 +371,10 @@ Prompt design principles:
 - Require respecting `PreviousWorks` and orchestration context fields.
 - Treat backend `ExecutionPolicy` as a binding capability boundary.
 - Forbid workspace writes and implementation during `analysis` and `review` modes.
-- Require matching `executionEvidence` and `ExecutionSummary.policyCompliance` for enforced read-only steps.
+- Require truthful canonical `executionEvidence` for enforced read-only steps.
 - Require honoring work-item language fields (`AgentWorkLanguageIsoCode` / `AgentWorkLanguageCultureCode`) for user-facing outputs.
-- Require structured JSON `ExecutionSummary`.
-- Require explicit success/failure completion and clear handoff.
+- Require one schema-valid canonical result for the expected output type.
+- Treat `agentReportedStatus` as an agent claim; Laviya calculates final status and routing server-side.
 - Forbid invented token usage and invented API outputs.
 
 Project override mechanism:

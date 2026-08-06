@@ -6,8 +6,7 @@ import {
   idempotentMutationAnnotations,
   toolResultOutputSchema
 } from "../mcp/toolMetadata.js";
-import { completeExecution, completeExecutionPayloadSchema } from "../orchestration/completeExecution.js";
-import { extractExecutionId } from "../orchestration/executionId.js";
+import { completeExecution, completeExecutionPayloadSchema, prepareCompletion } from "../orchestration/completeExecution.js";
 import { LeaseManager } from "../orchestration/leaseManager.js";
 import type { ExecutionPolicyManager } from "../orchestration/executionPolicyManager.js";
 import type { Logger } from "../utils/logger.js";
@@ -27,7 +26,7 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
     {
       title: "Complete Execution",
       description:
-        "Complete the active execution with structured summary (executionSummary text or executionSummaryObject JSON), optional generated tasks/wikis, and deterministic idempotency handling.",
+        "Submit one final output containing a canonical LAVIYA_RESULT. Laviya validates, evaluates, and routes the result server-side.",
       inputSchema: {
         payload: completeExecutionPayloadSchema
       },
@@ -36,63 +35,23 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
     },
     async (input) =>
       executeTool("laviya_complete_execution", deps.logger, async () => {
-        let payload = completeExecutionPayloadSchema.parse(input.payload);
-        deps.executionPolicyManager.validateCompletion(
-          payload.aiAgentFlowRunID,
-          payload.taskID,
-          payload.executionEvidence
-        );
+        const payload = completeExecutionPayloadSchema.parse(input.payload);
+        const prepared = prepareCompletion(payload);
+        if (prepared.canonicalization) {
+          deps.executionPolicyManager.validateCompletion(
+            payload.aiAgentFlowRunID,
+            payload.taskID,
+            prepared.canonicalization.canonicalResult.executionEvidence
+          );
+        }
         const leaseContext = deps.leaseManager.find({
           runId: payload.aiAgentFlowRunID,
           taskId: payload.taskID,
           executionId: payload.aiAgentTaskExecutionID
         });
 
-        if (!payload.aiAgentTaskExecutionID && leaseContext) {
-          if (leaseContext.executionId) {
-            payload = {
-              ...payload,
-              aiAgentTaskExecutionID: leaseContext.executionId
-            };
-            deps.logger.info("Filled aiAgentTaskExecutionID from active lease context.", {
-              runId: payload.aiAgentFlowRunID,
-              taskId: payload.taskID,
-              executionId: leaseContext.executionId
-            });
-          } else {
-            deps.logger.warn("Active lease context does not contain executionId for CompleteExecution.", {
-              runId: payload.aiAgentFlowRunID,
-              taskId: payload.taskID
-            });
-          }
-        }
-
-        if (!payload.aiAgentTaskExecutionID) {
-          deps.logger.info("Resolving aiAgentTaskExecutionID via StartExecution before completion.", {
-            runId: payload.aiAgentFlowRunID,
-            taskId: payload.taskID
-          });
-
-          const startExecutionResult = await deps.client.startExecution({
-            runId: payload.aiAgentFlowRunID,
-            taskId: payload.taskID
-          });
-          const resolvedExecutionId = extractExecutionId(startExecutionResult);
-
-          if (!resolvedExecutionId) {
-            throw new Error("Unable to resolve aiAgentTaskExecutionID from StartExecution response.");
-          }
-
-          payload = {
-            ...payload,
-            aiAgentTaskExecutionID: resolvedExecutionId
-          };
-
-          deps.logger.info("Resolved aiAgentTaskExecutionID via StartExecution.", {
-            runId: payload.aiAgentFlowRunID,
-            taskId: payload.taskID,
-            executionId: resolvedExecutionId
-          });
+        if (!leaseContext || leaseContext.executionId !== payload.aiAgentTaskExecutionID) {
+          throw new Error("The supplied aiAgentTaskExecutionID does not match an active execution lease.");
         }
 
         const completionContext = {
@@ -103,7 +62,7 @@ export function registerCompleteExecutionTool(deps: CompleteExecutionToolDeps): 
         const paused = deps.leaseManager.pauseForCompletion(completionContext);
 
         try {
-          const result = await completeExecution(deps.client, deps.runtimeConfig, deps.logger, payload);
+          const result = await completeExecution(deps.client, deps.runtimeConfig, deps.logger, payload, prepared);
           deps.leaseManager.complete(completionContext);
           return result;
         } catch (error: unknown) {

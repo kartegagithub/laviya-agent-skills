@@ -1,5 +1,8 @@
 import { z } from "zod";
 export declare const tokenUsageSchema: z.ZodEffects<z.ZodObject<{
+    measurement: z.ZodEnum<["exact", "estimated", "unavailable"]>;
+    measurementSource: z.ZodOptional<z.ZodString>;
+    estimationModelVersion: z.ZodOptional<z.ZodString>;
     model: z.ZodOptional<z.ZodString>;
     inputTokens: z.ZodOptional<z.ZodNumber>;
     outputTokens: z.ZodOptional<z.ZodNumber>;
@@ -8,6 +11,9 @@ export declare const tokenUsageSchema: z.ZodEffects<z.ZodObject<{
     currency: z.ZodOptional<z.ZodString>;
     providerRequestID: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
+    measurement: "exact" | "estimated" | "unavailable";
+    measurementSource?: string | undefined;
+    estimationModelVersion?: string | undefined;
     model?: string | undefined;
     inputTokens?: number | undefined;
     outputTokens?: number | undefined;
@@ -16,6 +22,9 @@ export declare const tokenUsageSchema: z.ZodEffects<z.ZodObject<{
     currency?: string | undefined;
     providerRequestID?: string | undefined;
 }, {
+    measurement: "exact" | "estimated" | "unavailable";
+    measurementSource?: string | undefined;
+    estimationModelVersion?: string | undefined;
     model?: string | undefined;
     inputTokens?: number | undefined;
     outputTokens?: number | undefined;
@@ -24,6 +33,9 @@ export declare const tokenUsageSchema: z.ZodEffects<z.ZodObject<{
     currency?: string | undefined;
     providerRequestID?: string | undefined;
 }>, {
+    measurement: "exact" | "estimated" | "unavailable";
+    measurementSource?: string | undefined;
+    estimationModelVersion?: string | undefined;
     model?: string | undefined;
     inputTokens?: number | undefined;
     outputTokens?: number | undefined;
@@ -32,6 +44,9 @@ export declare const tokenUsageSchema: z.ZodEffects<z.ZodObject<{
     currency?: string | undefined;
     providerRequestID?: string | undefined;
 }, {
+    measurement: "exact" | "estimated" | "unavailable";
+    measurementSource?: string | undefined;
+    estimationModelVersion?: string | undefined;
     model?: string | undefined;
     inputTokens?: number | undefined;
     outputTokens?: number | undefined;

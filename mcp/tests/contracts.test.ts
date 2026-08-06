@@ -38,9 +38,13 @@ test("validates the structured execution summary contract", () => {
   );
 });
 
-test("completion rejects summary identity and outcome mismatches", async () => {
+test("completion sends a canonical result and rejects invalid output", async () => {
+  let sent: unknown;
   const client = {
-    completeExecution: async () => ({ HasFailed: false })
+    completeExecution: async (payload: unknown) => {
+      sent = payload;
+      return { HasFailed: false };
+    }
   } as unknown as LaviyaApiClient;
   const runtimeConfig = {
     completion: {
@@ -51,67 +55,51 @@ test("completion rejects summary identity and outcome mismatches", async () => {
     }
   } as RuntimeConfig;
 
-  const wrongOutcome = completeExecutionPayloadSchema.parse({
+  const payload = completeExecutionPayloadSchema.parse({
     taskID: 10,
     aiAgentFlowRunID: 20,
-    isFailed: true,
-    executionSummaryObject: validSummary
-  });
-  await assert.rejects(
-    completeExecution(client, runtimeConfig, createLogger("error"), wrongOutcome),
-    /outcome must be "failed"/
-  );
-
-  const wrongTask = completeExecutionPayloadSchema.parse({
-    taskID: 11,
-    aiAgentFlowRunID: 20,
-    isFailed: false,
-    executionSummaryObject: validSummary
-  });
-  await assert.rejects(
-    completeExecution(client, runtimeConfig, createLogger("error"), wrongTask),
-    /task identifiers must match/
-  );
-
-  const nonCompliantPolicy = completeExecutionPayloadSchema.parse({
-    taskID: 10,
-    aiAgentFlowRunID: 20,
-    isFailed: false,
-    executionSummaryObject: {
-      ...validSummary,
-      policyCompliance: {
-        mode: "analysis",
-        compliant: false,
-        workspaceChanged: false,
-        performedCapabilities: ["read_workspace"],
-        notes: ["Policy violation detected."]
+    aiAgentTaskExecutionID: 30,
+    finalOutput: JSON.stringify({
+      contractVersion: "1.0",
+      outputType: "analysis_document",
+      agentReportedStatus: "completed",
+      payload: {
+        title: "Analysis",
+        summary: "Summary",
+        sections: [{ title: "Finding", content: "Content" }]
       }
-    },
-    executionEvidence: {
-      performedCapabilities: ["read_workspace"],
-      workspaceChanged: false,
-      changedFiles: []
-    }
+    })
   });
-  await assert.rejects(
-    completeExecution(client, runtimeConfig, createLogger("error"), nonCompliantPolicy),
-    /compliant must be true/
+  await completeExecution(client, runtimeConfig, createLogger("error"), payload);
+  const sentRecord = sent as Record<string, unknown>;
+  assert.equal((sentRecord.canonicalResult as Record<string, unknown>).outputType, "analysis_document");
+  assert.equal(sentRecord.aiAgentTaskExecutionID, 30);
+
+  assert.throws(
+    () => completeExecutionPayloadSchema.parse({ taskID: 10, aiAgentFlowRunID: 20, finalOutput: "{}" }),
+    /aiAgentTaskExecutionID/
   );
+
+  const invalidResultPayload = completeExecutionPayloadSchema.parse({
+    taskID: 10,
+    aiAgentFlowRunID: 20,
+    aiAgentTaskExecutionID: 30,
+    finalOutput: "not-json"
+  });
+  await completeExecution(client, runtimeConfig, createLogger("error"), invalidResultPayload);
+  const invalidSent = sent as Record<string, unknown>;
+  assert.equal(invalidSent.rawOutput, "not-json");
+  assert.match(String(invalidSent.processingError), /E_RESULT_JSON_INVALID/);
+  assert.equal(invalidSent.canonicalResult, undefined);
 });
 
-test("token usage remains optional but validates records when supplied", () => {
-  const withoutUsage = completeExecutionPayloadSchema.parse({
-    taskID: 10,
-    aiAgentFlowRunID: 20,
-    isFailed: false,
-    executionSummary: "Completed."
-  });
-  assert.equal(withoutUsage.tokenUsages, undefined);
-
-  assert.throws(() => tokenUsageSchema.parse({ model: "unknown" }), /at least one measured/);
+test("token usage validates measured records independently from completion", () => {
+  assert.throws(() => tokenUsageSchema.parse({ measurement: "exact", model: "unknown", measurementSource: "provider" }), /at least one measured/);
   assert.throws(
     () =>
       tokenUsageSchema.parse({
+        measurement: "exact",
+        measurementSource: "provider",
         inputTokens: 10,
         outputTokens: 5,
         totalTokens: 20
@@ -120,16 +108,21 @@ test("token usage remains optional but validates records when supplied", () => {
   );
   assert.deepEqual(
     tokenUsageSchema.parse({
+      measurement: "exact",
+      measurementSource: "provider",
       inputTokens: 10,
       outputTokens: 5,
       totalTokens: 15
     }),
     {
+      measurement: "exact",
+      measurementSource: "provider",
       inputTokens: 10,
       outputTokens: 5,
       totalTokens: 15
     }
   );
+  assert.deepEqual(tokenUsageSchema.parse({ measurement: "unavailable" }), { measurement: "unavailable" });
 });
 
 test("enforces captured read-only execution policy", () => {

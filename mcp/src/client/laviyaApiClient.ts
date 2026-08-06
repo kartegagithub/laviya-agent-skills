@@ -151,6 +151,16 @@ export class LaviyaApiClient {
     });
   }
 
+  async reportRuntimeHeartbeat(payload: unknown): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "safe",
+      path: "/api/ai/ReportRuntimeHeartbeat",
+      body: payload,
+      contextRunId: extractRunId(payload)
+    });
+  }
+
   shutdown(): void {
     if (this.shuttingDown) {
       return;

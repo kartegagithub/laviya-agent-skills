@@ -104,6 +104,15 @@ export class LaviyaApiClient {
             contextRunId: extractRunId(payload)
         });
     }
+    async reportRuntimeHeartbeat(payload) {
+        return this.request({
+            method: "POST",
+            retryMode: "safe",
+            path: "/api/ai/ReportRuntimeHeartbeat",
+            body: payload,
+            contextRunId: extractRunId(payload)
+        });
+    }
     shutdown() {
         if (this.shuttingDown) {
             return;

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laviya.com/schemas/ai/canonical-result/1.0",
+  "title": "Laviya Canonical Agent Result",
+  "oneOf": [
+    { "$ref": "#/$defs/analysisDocument" },
+    { "$ref": "#/$defs/implementationResult" },
+    { "$ref": "#/$defs/codeReviewResult" },
+    { "$ref": "#/$defs/testResult" },
+    { "$ref": "#/$defs/taskBreakdown" }
+  ],
+  "$defs": {
+    "baseProperties": {
+      "contractVersion": { "const": "1.0" },
+      "agentReportedStatus": { "enum": ["completed", "failed"] },
+      "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+      "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "uri"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "uri": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "content"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 200000 }
+      }
+    },
+    "analysisDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "outputType", "agentReportedStatus", "payload"],
+      "properties": {
+        "$base": { "$ref": "#/$defs/baseProperties" },
+        "contractVersion": { "const": "1.0" },
+        "outputType": { "const": "analysis_document" },
+        "agentReportedStatus": { "enum": ["completed", "failed"] },
+        "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+        "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["title", "summary", "sections"],
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+            "summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "sections": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/$defs/section" } }
+          }
+        }
+      }
+    },
+    "implementationResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "outputType", "agentReportedStatus", "payload"],
+      "properties": {
+        "contractVersion": { "const": "1.0" }, "outputType": { "const": "implementation_result" },
+        "agentReportedStatus": { "enum": ["completed", "failed"] },
+        "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+        "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["summary", "changedFiles", "tests", "remainingIssues"],
+          "properties": {
+            "summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "changedFiles": { "type": "array", "maxItems": 1000, "items": { "type": "object", "additionalProperties": false, "required": ["path", "change"], "properties": { "path": { "type": "string", "minLength": 1, "maxLength": 2048 }, "change": { "type": "string", "minLength": 1, "maxLength": 4000 } } },
+            "tests": { "type": "object", "additionalProperties": false, "required": ["executed", "passed"], "properties": { "executed": { "type": "boolean" }, "passed": { "type": ["boolean", "null"] }, "details": { "type": "string", "maxLength": 20000 } } },
+            "remainingIssues": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } }
+          }
+        }
+      }
+    },
+    "codeReviewResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "outputType", "agentReportedStatus", "payload"],
+      "properties": {
+        "contractVersion": { "const": "1.0" }, "outputType": { "const": "code_review_result" },
+        "agentReportedStatus": { "enum": ["completed", "failed"] },
+        "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+        "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+        "payload": { "type": "object", "additionalProperties": false, "required": ["decision", "summary", "findings"], "properties": { "decision": { "enum": ["approved", "changes_required"] }, "summary": { "type": "string", "minLength": 1, "maxLength": 4000 }, "findings": { "type": "array", "maxItems": 500, "items": { "type": "object", "additionalProperties": false, "required": ["severity", "issue", "recommendation"], "properties": { "severity": { "enum": ["critical", "high", "medium", "low"] }, "file": { "type": "string", "minLength": 1, "maxLength": 2048 }, "issue": { "type": "string", "minLength": 1, "maxLength": 20000 }, "recommendation": { "type": "string", "minLength": 1, "maxLength": 20000 } } } } } }
+      }
+    },
+    "testResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "outputType", "agentReportedStatus", "payload"],
+      "properties": {
+        "contractVersion": { "const": "1.0" }, "outputType": { "const": "test_result" },
+        "agentReportedStatus": { "enum": ["completed", "failed"] },
+        "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+        "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+        "payload": { "type": "object", "additionalProperties": false, "required": ["summary", "executed", "passed", "failed", "skipped", "criticalFailures"], "properties": { "summary": { "type": "string", "minLength": 1, "maxLength": 4000 }, "executed": { "type": "integer", "minimum": 0 }, "passed": { "type": "integer", "minimum": 0 }, "failed": { "type": "integer", "minimum": 0 }, "skipped": { "type": "integer", "minimum": 0 }, "details": { "type": "string", "maxLength": 100000 }, "criticalFailures": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 20000 } } } }
+      }
+    },
+    "taskItem": {
+      "type": "object", "additionalProperties": false, "required": ["title"],
+      "properties": { "title": { "type": "string", "minLength": 1, "maxLength": 255 }, "description": { "type": "string", "maxLength": 20000 }, "complexity": { "type": "integer", "minimum": 0, "maximum": 3 }, "priority": { "type": "integer", "minimum": 0, "maximum": 3 }, "estimatedEffort": { "type": "number", "minimum": 0, "maximum": 100000 }, "children": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/taskItem" } } }
+    },
+    "taskBreakdown": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "outputType", "agentReportedStatus", "payload"],
+      "properties": {
+        "contractVersion": { "const": "1.0" }, "outputType": { "const": "task_breakdown" },
+        "agentReportedStatus": { "enum": ["completed", "failed"] },
+        "attachments": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/attachment" } },
+        "agentNotes": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+        "payload": { "type": "object", "additionalProperties": false, "required": ["summary", "tasks"], "properties": { "summary": { "type": "string", "minLength": 1, "maxLength": 4000 }, "tasks": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/$defs/taskItem" } } } }
+      }
+    }
+  }
+}
+

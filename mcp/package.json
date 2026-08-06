@@ -30,7 +30,7 @@
   "scripts": {
     "build": "node scripts/clean.mjs && tsc -p tsconfig.json && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p tsconfig.tests.json",
-    "test": "tsx --test tests/apiClient.test.ts tests/configSecurity.test.ts tests/contracts.test.ts tests/envelope.test.ts tests/idempotency.test.ts tests/leaseManager.test.ts tests/mcpIntegration.test.ts tests/mcpResult.test.ts tests/redaction.test.ts",
+    "test": "tsx --test tests/apiClient.test.ts tests/canonicalResult.test.ts tests/configSecurity.test.ts tests/contracts.test.ts tests/envelope.test.ts tests/idempotency.test.ts tests/leaseManager.test.ts tests/mcpIntegration.test.ts tests/mcpResult.test.ts tests/redaction.test.ts tests/resultAdapter.test.ts",
     "verify:versions": "node scripts/verify-versions.mjs",
     "verify:assets": "node scripts/verify-assets.mjs",
     "smoke:package": "node scripts/package-smoke.mjs",
