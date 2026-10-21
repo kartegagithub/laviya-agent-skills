@@ -9,7 +9,8 @@ This cycle is user-driven and runs outside Laviya orchestration. Do not call `la
 
 Laviya tools used:
 
-- `laviya_diagnostics`: confirm the MCP runtime, API host and project config.
+- `laviya_diagnostics`: confirm the MCP runtime and API host.
+- `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
 - `laviya_create_tasks`: create the approved to-do items; returns `referenceID -> TaskID / CustomTaskID`.
 - `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status).
 - `laviya_complete_task_work`: record the measured time as AI effort, move the task to Ready for deploy and add the completion comment.
@@ -28,8 +29,9 @@ Everything is written on behalf of the api key owner and carries Laviya's AI mar
 
 ## 1. Preflight
 
-1. Call `laviya_diagnostics`. Stop and tell the user if the MCP runtime is not reachable. Ask for the Laviya project ID when `.laviya/project.json` has no `projectId`.
+1. Call `laviya_diagnostics`. Stop and tell the user if the MCP runtime is not reachable.
 2. Load the work list and assign item keys if missing.
+3. Ask the user which Laviya project the tasks belong to. Call `laviya_list_projects` (with `search` when the user names a project) and let the user pick by name; never assume a project from configuration or an earlier list. Every work list can target a different project.
 
 ## 2. Verify done and to-do items (read-only)
 
@@ -39,7 +41,7 @@ For every item, inspect the codebase (code, tests, configuration, git history) a
 - `Partial`: started but incomplete. State exactly what is missing; the missing part becomes the to-do.
 - `To do`: not started.
 
-Present one table: key, item, state, evidence, and for each `To do` / `Partial` item the proposed Laviya task: title, short description, type, priority, complexity, estimated effort in hours and parent item. Show names, not numbers:
+Present the chosen project (name and task prefix) and one table: key, item, state, evidence, and for each `To do` / `Partial` item the proposed Laviya task: title, short description, type, priority, complexity, estimated effort in hours and parent item. Show names, not numbers:
 
 - type (`taskTypeID`): Task 0, Bug 10, ChangeRequest 20, Improvement 30, Debt 40, Suggestion 50, Meeting 60, Story 70, Epic 80
 - priority: NoPriority 0, Low 1, Medium 2, High 3
@@ -49,11 +51,11 @@ Do not write anything to Laviya or the code in this step.
 
 ## 3. Approval
 
-Ask the user to approve the proposed task list. They may remove, add or edit items. Continue only after explicit approval of the exact list; approval covers only the items in that list.
+Ask the user to approve the proposed task list and the target project. They may remove, add or edit items or change the project. Continue only after explicit approval of the exact list; approval covers only the items in that list.
 
 ## 4. Create Laviya tasks
 
-1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "tasks": [...] } }`.
+1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <chosen project ID>, "tasks": [...] } }`.
    - `referenceID` = item key. Put parents before children; use `parentReferenceID` for children and `parentTaskID` for a parent that already exists in Laviya.
    - Send `estimatedEffortHours`; descriptions are plain text.
 2. All items are created together or none. If the call fails, fix the cause shown in the error (for example a status or progress payment requirement) and call again; resending the same list never creates duplicates, it returns the tasks that already exist (`IsReplay: true`). When `IsReplay` is true on the first call for this list, tell the user these tasks already existed; to create the same list again on purpose, pass a new `requestKey`.

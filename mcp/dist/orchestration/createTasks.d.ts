@@ -1,11 +1,10 @@
 import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
-import type { RuntimeConfig } from "../config/mergeConfig.js";
 import type { Logger } from "../utils/logger.js";
 export declare const MAX_CREATE_TASKS_BATCH_SIZE = 50;
 export declare const createTasksPayloadSchema: z.ZodObject<{
     approvedByUser: z.ZodLiteral<true>;
-    projectID: z.ZodOptional<z.ZodNumber>;
+    projectID: z.ZodNumber;
     methodologyStatusID: z.ZodOptional<z.ZodNumber>;
     progressPaymentID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
@@ -53,8 +52,8 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
     }[];
     approvedByUser: true;
+    projectID: number;
     requestKey?: string | undefined;
-    projectID?: number | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
 }, {
@@ -70,12 +69,12 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
     }[];
     approvedByUser: true;
+    projectID: number;
     requestKey?: string | undefined;
-    projectID?: number | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
 }>;
 export type CreateTasksPayload = z.infer<typeof createTasksPayloadSchema>;
-export declare function createTasks(client: LaviyaApiClient, runtimeConfig: RuntimeConfig, logger: Logger, payload: CreateTasksPayload): Promise<unknown>;
+export declare function createTasks(client: LaviyaApiClient, logger: Logger, payload: CreateTasksPayload): Promise<unknown>;
 export declare function readData(envelope: unknown): unknown;
 //# sourceMappingURL=createTasks.d.ts.map

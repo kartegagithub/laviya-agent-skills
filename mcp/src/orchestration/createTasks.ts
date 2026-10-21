@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
-import type { RuntimeConfig } from "../config/mergeConfig.js";
 import { generateCanonicalRequestKey } from "../utils/canonicalJson.js";
 import type { Logger } from "../utils/logger.js";
 
@@ -35,7 +34,8 @@ const createTaskItemSchema = z.object({
 
 export const createTasksPayloadSchema = z.object({
   approvedByUser: z.literal(true),
-  projectID: z.number().int().positive().optional().describe("Defaults to the project config projectId."),
+  projectID: z.number().int().positive()
+    .describe("Laviya project the user chose for this list (see laviya_list_projects). Never assumed from configuration."),
   methodologyStatusID: z.number().int().positive().optional()
     .describe("Task-creatable status of the project. Defaults to Backlog, Planned, Processing, ..."),
   progressPaymentID: z.number().int().positive().optional(),
@@ -49,15 +49,10 @@ type CreateTaskItem = z.infer<typeof createTaskItemSchema>;
 
 export async function createTasks(
   client: LaviyaApiClient,
-  runtimeConfig: RuntimeConfig,
   logger: Logger,
   payload: CreateTasksPayload
 ): Promise<unknown> {
-  const projectID = payload.projectID ?? runtimeConfig.projectConfig?.projectId;
-  if (!projectID) {
-    throw new Error("projectID is required when the project config does not define projectId.");
-  }
-
+  const projectID = payload.projectID;
   const tasks = payload.tasks.map((item, index) => toRequestItem(item, index));
   validateTaskReferences(tasks);
 

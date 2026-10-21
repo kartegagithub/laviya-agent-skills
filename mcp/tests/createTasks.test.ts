@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { LaviyaApiClient } from "../src/client/laviyaApiClient.js";
-import type { RuntimeConfig } from "../src/config/mergeConfig.js";
 import { createTasks, createTasksPayloadSchema, type CreateTasksPayload } from "../src/orchestration/createTasks.js";
+import { listProjects } from "../src/orchestration/listProjects.js";
 import { createLogger } from "../src/utils/logger.js";
 
 const retry = {
@@ -12,8 +12,6 @@ const retry = {
   jitter: false,
   retryOnHttpStatus: [500, 503]
 };
-
-const runtimeConfig = { projectConfig: { projectId: 3 } } as unknown as RuntimeConfig;
 
 interface CapturedRequest {
   url: URL;
@@ -56,14 +54,15 @@ test("posts the approved list to api/ai/CreateTasks with a deterministic request
   try {
     const payload = parse({
       approvedByUser: true,
+      projectID: 3,
       tasks: [
         { referenceID: "W-01", title: "Add export endpoint", description: "Return List<Row>.", priority: 2, estimatedEffortHours: 1.5 },
         { referenceID: "W-02", title: "Cover export endpoint", parentReferenceID: "w-01", taskTypeID: 10 },
         { title: "Update docs", parentTaskID: 42 }
       ]
     });
-    const result = await createTasks(createClient(), runtimeConfig, createLogger("error"), payload);
-    await createTasks(createClient(), runtimeConfig, createLogger("error"), payload);
+    const result = await createTasks(createClient(), createLogger("error"), payload);
+    await createTasks(createClient(), createLogger("error"), payload);
 
     assert.deepEqual(result, createdData);
     assert.equal(requests.length, 2);
@@ -81,8 +80,9 @@ test("posts the approved list to api/ai/CreateTasks with a deterministic request
     assert.equal(first?.headers.get("Idempotency-Key"), first?.body.requestKey);
     assert.equal(second?.body.requestKey, first?.body.requestKey, "the same approved list must reuse its key");
 
-    const otherList = await createTasks(createClient(), runtimeConfig, createLogger("error"), parse({
+    const otherList = await createTasks(createClient(), createLogger("error"), parse({
       approvedByUser: true,
+      projectID: 3,
       tasks: [{ referenceID: "W-01", title: "Something else" }]
     }));
     assert.deepEqual(otherList, createdData);
@@ -100,8 +100,9 @@ test("retries a failed attempt with the same request key and returns the replaye
   );
 
   try {
-    const result = await createTasks(createClient(), runtimeConfig, createLogger("error"), parse({
+    const result = await createTasks(createClient(), createLogger("error"), parse({
       approvedByUser: true,
+      projectID: 3,
       requestKey: "approved-list-7",
       tasks: [{ referenceID: "W-01", title: "Add export endpoint" }]
     }));
@@ -121,7 +122,7 @@ test("does not retry business rejections and shows the backend reason", async ()
 
   try {
     await assert.rejects(
-      createTasks(createClient(), runtimeConfig, createLogger("error"), parse({ approvedByUser: true, tasks: [{ title: "One" }] })),
+      createTasks(createClient(), createLogger("error"), parse({ approvedByUser: true, projectID: 3, tasks: [{ title: "One" }] })),
       /422 on \/api\/ai\/CreateTasks: RequestKey was already used with a different request\./
     );
     assert.equal(requests.length, 1);
@@ -137,20 +138,16 @@ test("rejects invalid task lists before calling Laviya", async () => {
     const client = createClient();
     const logger = createLogger("error");
     await assert.rejects(
-      createTasks(client, runtimeConfig, logger, parse({ approvedByUser: true, tasks: [{ referenceID: "a", title: "One" }, { referenceID: "A", title: "Two" }] })),
+      createTasks(client, logger, parse({ approvedByUser: true, projectID: 3, tasks: [{ referenceID: "a", title: "One" }, { referenceID: "A", title: "Two" }] })),
       /duplicated/
     );
     await assert.rejects(
-      createTasks(client, runtimeConfig, logger, parse({ approvedByUser: true, tasks: [{ title: "Child", parentReferenceID: "later" }, { referenceID: "later", title: "Parent" }] })),
+      createTasks(client, logger, parse({ approvedByUser: true, projectID: 3, tasks: [{ title: "Child", parentReferenceID: "later" }, { referenceID: "later", title: "Parent" }] })),
       /earlier item/
     );
     await assert.rejects(
-      createTasks(client, runtimeConfig, logger, parse({ approvedByUser: true, tasks: [{ referenceID: "a", title: "One" }, { title: "Two", parentReferenceID: "a", parentTaskID: 4 }] })),
+      createTasks(client, logger, parse({ approvedByUser: true, projectID: 3, tasks: [{ referenceID: "a", title: "One" }, { title: "Two", parentReferenceID: "a", parentTaskID: 4 }] })),
       /both parentTaskID and parentReferenceID/
-    );
-    await assert.rejects(
-      createTasks(client, {} as RuntimeConfig, logger, parse({ approvedByUser: true, tasks: [{ title: "One" }] })),
-      /projectID is required/
     );
     assert.equal(requests.length, 0);
   } finally {
@@ -158,10 +155,27 @@ test("rejects invalid task lists before calling Laviya", async () => {
   }
 
   assert.equal(createTasksPayloadSchema.safeParse({ tasks: [{ title: "One" }] }).success, false);
+  assert.equal(createTasksPayloadSchema.safeParse({ approvedByUser: true, tasks: [{ title: "One" }] }).success, false, "projectID is required");
   assert.equal(createTasksPayloadSchema.safeParse({ approvedByUser: false, tasks: [{ title: "One" }] }).success, false);
   assert.equal(createTasksPayloadSchema.safeParse({ approvedByUser: true, tasks: [] }).success, false);
   assert.equal(createTasksPayloadSchema.safeParse({ approvedByUser: true, tasks: [{ title: "One", taskTypeID: 5 }] }).success, false);
   assert.equal(createTasksPayloadSchema.safeParse({ approvedByUser: true, tasks: [{ title: "One", estimatedEffort: 4 }] }).success, false);
+});
+
+test("lists accessible projects through api/ai/GetProjects", async () => {
+  const projects = [{ ID: 3, Name: "Laviya Backend", TaskPrefix: "LVY", SpaceName: "Product" }];
+  const { requests, restore } = installFetch(() => jsonResponse({ HasFailed: false, Data: projects }));
+
+  try {
+    assert.deepEqual(await listProjects(createClient(), createLogger("error"), { search: "backend" }), projects);
+    assert.deepEqual(await listProjects(createClient(), createLogger("error"), {}), projects);
+    assert.equal(requests[0]?.url.pathname, "/api/ai/GetProjects");
+    assert.equal(requests[0]?.url.searchParams.get("Search"), "backend");
+    assert.equal(requests[0]?.url.searchParams.get("apiKey"), "test-api-key");
+    assert.equal(requests[1]?.url.searchParams.has("Search"), false);
+  } finally {
+    restore();
+  }
 });
 
 function parse(payload: unknown): CreateTasksPayload {

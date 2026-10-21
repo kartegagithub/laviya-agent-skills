@@ -104,6 +104,16 @@ export class LaviyaApiClient {
             contextRunId: extractRunId(payload)
         });
     }
+    async getProjects(params) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetProjects",
+            query: {
+                Search: params.search
+            }
+        });
+    }
     async createTasks(payload, idempotencyKey) {
         return this.request({
             method: "POST",

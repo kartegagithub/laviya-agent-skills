@@ -8,6 +8,7 @@ import { registerCancelLocalWorkTool } from "./tools/cancelLocalWorkTool.js";
 import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
 import { registerCreateTasksTool } from "./tools/createTasksTool.js";
+import { registerListProjectsTool } from "./tools/listProjectsTool.js";
 import { registerFeedTaskTool } from "./tools/feedTaskTool.js";
 import { registerGetLocalWorkStatusTool } from "./tools/getLocalWorkStatusTool.js";
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
@@ -87,10 +88,14 @@ export async function createRuntimeServer(options = {}) {
     });
     // Registered for every agent profile: the delivery cycle (create approved tasks, report completion) is user-driven,
     // not orchestration management.
+    registerListProjectsTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_list_projects" })
+    });
     registerCreateTasksTool({
         server,
         client,
-        runtimeConfig,
         logger: logger.child({ tool: "laviya_create_tasks" })
     });
     registerStartTaskWorkTool({

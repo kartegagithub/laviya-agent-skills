@@ -42,6 +42,7 @@ test("MCP runtime initializes and exposes tools, prompts, resources, and diagnos
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_diagnostics"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_complete_execution"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_create_tasks"));
+    assert.ok(tools.tools.some((tool) => tool.name === "laviya_list_projects"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_start_task_work"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_complete_task_work"));
 

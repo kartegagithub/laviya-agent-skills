@@ -292,6 +292,7 @@ MCP tools exposed:
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_list_projects`
 - `laviya_create_tasks`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
@@ -331,10 +332,14 @@ Tool contracts:
   - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with created task comment metadata.
   - Error strategy: payload validation + backend business rule propagation. Automatic retry is intentionally disabled to avoid duplicate comments.
+- `laviya_list_projects`
+  - Input: `search?` (part of the name or exact task prefix)
+  - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
+  - Output: `[{ ID, Name, TaskPrefix, SpaceName }]`. Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID?, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
-    `projectID` defaults to project config `projectId`; the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
+    `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
     `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`IsReplay: true`); the same key with a different list is rejected,
     and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.

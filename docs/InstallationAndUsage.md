@@ -210,7 +210,11 @@ Call MCP tool laviya_complete_task_work with {"payload":{"taskID":1234,"sessionI
 ```
 
 ```text
-Call MCP tool laviya_create_tasks with {"payload":{"approvedByUser":true,"tasks":[{"referenceID":"api","title":"Add export endpoint","priority":2,"complexity":2,"estimatedEffortHours":4},{"referenceID":"api-tests","title":"Cover export endpoint with tests","parentReferenceID":"api"}]}}.
+Call MCP tool laviya_list_projects with {"search":"mobile"}.
+```
+
+```text
+Call MCP tool laviya_create_tasks with {"payload":{"approvedByUser":true,"projectID":3,"tasks":[{"referenceID":"api","title":"Add export endpoint","priority":2,"complexity":2,"estimatedEffortHours":4},{"referenceID":"api-tests","title":"Cover export endpoint with tests","parentReferenceID":"api"}]}}.
 ```
 
 ```text
@@ -334,6 +338,7 @@ For the user-driven delivery cycle (verify a work list, create approved Laviya t
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_list_projects`
 - `laviya_create_tasks`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`

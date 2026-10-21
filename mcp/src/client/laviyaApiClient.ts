@@ -151,6 +151,17 @@ export class LaviyaApiClient {
     });
   }
 
+  async getProjects(params: { search?: string }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetProjects",
+      query: {
+        Search: params.search
+      }
+    });
+  }
+
   async createTasks(payload: unknown, idempotencyKey: string): Promise<unknown> {
     return this.request({
       method: "POST",

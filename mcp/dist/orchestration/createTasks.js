@@ -28,7 +28,8 @@ const createTaskItemSchema = z.object({
 }).strict();
 export const createTasksPayloadSchema = z.object({
     approvedByUser: z.literal(true),
-    projectID: z.number().int().positive().optional().describe("Defaults to the project config projectId."),
+    projectID: z.number().int().positive()
+        .describe("Laviya project the user chose for this list (see laviya_list_projects). Never assumed from configuration."),
     methodologyStatusID: z.number().int().positive().optional()
         .describe("Task-creatable status of the project. Defaults to Backlog, Planned, Processing, ..."),
     progressPaymentID: z.number().int().positive().optional(),
@@ -36,11 +37,8 @@ export const createTasksPayloadSchema = z.object({
         .describe("Idempotency key. Defaults to a hash of the list, so resending the same list returns the same tasks."),
     tasks: z.array(createTaskItemSchema).min(1).max(MAX_CREATE_TASKS_BATCH_SIZE)
 }).strict();
-export async function createTasks(client, runtimeConfig, logger, payload) {
-    const projectID = payload.projectID ?? runtimeConfig.projectConfig?.projectId;
-    if (!projectID) {
-        throw new Error("projectID is required when the project config does not define projectId.");
-    }
+export async function createTasks(client, logger, payload) {
+    const projectID = payload.projectID;
     const tasks = payload.tasks.map((item, index) => toRequestItem(item, index));
     validateTaskReferences(tasks);
     const body = {
