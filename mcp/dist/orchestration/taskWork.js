@@ -7,7 +7,7 @@ export const startTaskWorkPayloadSchema = z.object({
 export const completeTaskWorkPayloadSchema = z.object({
     taskID: z.number().int().positive(),
     sessionID: z.number().int().positive()
-        .describe("SessionID returned by laviya_start_task_work; the call completes or resumes exactly that session."),
+        .describe("sessionID returned by laviya_start_task_work; the call completes or resumes exactly that session."),
     comment: z.string().trim().min(1).optional().describe("Plain-text completion note added as a task comment."),
     targetStatus: z.string().trim().min(1).optional()
         .describe("Status name, case/space insensitive. Default: the project's Ready for deploy status."),

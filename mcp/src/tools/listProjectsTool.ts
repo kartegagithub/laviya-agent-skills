@@ -17,7 +17,7 @@ export function registerListProjectsTool(deps: ListProjectsToolDeps): void {
     {
       title: "List Projects",
       description:
-        "List the Laviya projects the api key owner can access (ID, Name, TaskPrefix, SpaceName), optionally filtered by name or task prefix. " +
+        "List the Laviya projects the api key owner can access (id, name, taskPrefix, spaceName), optionally filtered by name or task prefix. " +
         "Use it to let the user choose by name which project laviya_create_tasks should create tasks in.",
       inputSchema: {
         search: listProjectsInputSchema.shape.search

@@ -103,6 +103,6 @@ All tools return API envelope JSON text in the shape: `{ HasFailed, Messages, Da
 
 Work items may include a backend-defined `ExecutionPolicy`. Analysis and review
 policies are read-only: agents must not implement changes, and enforced policies
-require matching completion `executionEvidence` and summary `policyCompliance`.
+require a truthful completion `executionEvidence`.
 
 For full architecture details and file-level scaffolding, refer to `mcp/README.md`.

@@ -143,8 +143,8 @@ const toolHelpCatalog = [
             "The status defaults to the project's first task-creatable status (Backlog first).",
             "taskTypeID: 0 Task, 10 Bug, 20 ChangeRequest, 30 Improvement, 40 Debt, 50 Suggestion, 60 Meeting, 70 Story, 80 Epic. priority: 0 NoPriority, 1 Low, 2 Medium, 3 High. complexity: 0 Easy, 1 Normal, 2 Hard, 3 Expert.",
             "Use parentReferenceID to nest an item under an earlier item of the same call, or parentTaskID for an existing task of the project.",
-            "All items are created together or none. Resending the same list returns the already created tasks (IsReplay), so retrying after an error never duplicates them.",
-            "IsReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey."
+            "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
+            "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey."
         ],
         example: {
             name: "laviya_create_tasks",
@@ -165,7 +165,7 @@ const toolHelpCatalog = [
         purpose: "Start the server-measured AI working time on a task right before implementing it (outside orchestration).",
         notes: [
             "The task moves to the project's Processing status. Calling it again returns the open session and keeps the first start time.",
-            "Keep the returned SessionID and pass it as sessionID to laviya_complete_task_work."
+            "Keep the returned sessionID and pass it to laviya_complete_task_work."
         ],
         example: {
             name: "laviya_start_task_work",

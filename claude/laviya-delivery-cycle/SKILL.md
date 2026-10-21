@@ -11,7 +11,7 @@ Laviya tools used:
 
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
-- `laviya_create_tasks`: create the approved to-do items; returns `referenceID -> TaskID / CustomTaskID`.
+- `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`.
 - `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status).
 - `laviya_complete_task_work`: record the measured time as AI effort, move the task to Ready for deploy and add the completion comment.
 
@@ -58,20 +58,20 @@ Ask the user to approve the proposed task list and the target project. They may 
 1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <chosen project ID>, "tasks": [...] } }`.
    - `referenceID` = item key. Put parents before children; use `parentReferenceID` for children and `parentTaskID` for a parent that already exists in Laviya.
    - Send `estimatedEffortHours`; descriptions are plain text.
-2. All items are created together or none. If the call fails, fix the cause shown in the error (for example a status or progress payment requirement) and call again; resending the same list never creates duplicates, it returns the tasks that already exist (`IsReplay: true`). When `IsReplay` is true on the first call for this list, tell the user these tasks already existed; to create the same list again on purpose, pass a new `requestKey`.
-3. Write every returned `TaskID` / `CustomTaskID` into the work list right away and show the user the key -> Laviya ID table.
+2. All items are created together or none. If the call fails, fix the cause shown in the error (for example a status or progress payment requirement) and call again; resending the same list never creates duplicates, it returns the tasks that already exist (`isReplay: true`). When `isReplay` is true on the first call for this list, tell the user these tasks already existed; to create the same list again on purpose, pass a new `requestKey`.
+3. Write every returned `taskID` / `customTaskID` into the work list right away and show the user the key -> Laviya ID table.
 
 ## 5. Work through the items
 
 Take the to-do items one at a time, in order (children before closing their parent):
 
-1. Call `laviya_start_task_work` with `{ "payload": { "taskID": <id> } }` right before starting the item and keep the returned `SessionID`. Mark the item `In progress` in the work list.
+1. Call `laviya_start_task_work` with `{ "payload": { "taskID": <id> } }` right before starting the item and keep the returned `sessionID`. Mark the item `In progress` in the work list.
 2. Implement the item following the repository conventions.
 3. Verify it: build, tests, or the checks the repository uses. Never claim a check that was not run.
-4. When the item is complete and verified, call `laviya_complete_task_work` with `{ "payload": { "taskID": <id>, "sessionID": <SessionID>, "comment": "<completion note>" } }`.
+4. When the item is complete and verified, call `laviya_complete_task_work` with `{ "payload": { "taskID": <id>, "sessionID": <sessionID>, "comment": "<completion note>" } }`.
    - The comment says what changed, the main files, how it was verified (with results), and anything left for deploy or review.
    - Laviya measures the time between start and complete and records it as AI effort; never send or estimate hours yourself.
-   - The task moves to the project's Ready for deploy status. Pass `targetStatus` only when the user names another status, and tell the user if the returned `TargetStatus` is not Ready for deploy.
+   - The task moves to the project's Ready for deploy status. Pass `targetStatus` only when the user names another status, and tell the user if the returned `targetStatus.name` is not Ready for deploy.
    - If the call fails, call it again with the same `taskID` and `sessionID` (the comment or `targetStatus` may be corrected): steps that are already done are not repeated.
 5. Mark the item `Ready for deploy` in the work list and give the user a one-line progress update.
 6. If an item cannot be completed (blocked, failing verification, needs a decision), do not call `laviya_complete_task_work`. Explain the blocker and continue with the next independent item only if the user agrees; the open work session resumes when you start the item again.
