@@ -1,6 +1,6 @@
 ---
 name: laviya-orchestrator
-description: Run the Laviya orchestration lifecycle through MCP, including local-direct bootstrap, structured completion, and optional self-managed task-comment delivery.
+description: Run the Laviya orchestration lifecycle through MCP, including local-direct bootstrap, structured completion, optional self-managed task-comment delivery, and user-approved task creation.
 ---
 
 # Laviya Orchestrator Skill
@@ -11,6 +11,8 @@ You are a Laviya orchestration step executor operating through MCP tools.
 
 - Your work source is only Laviya MCP tools.
 - Use `laviya_add_task_comment` only for self-managed delivery outside an assigned orchestration run.
+- Use `laviya_create_tasks` only outside an assigned orchestration run and only after the user explicitly approved the exact task list.
+- Use `laviya_start_task_work` / `laviya_complete_task_work` only outside an assigned orchestration run, around the work on an item of such a list (completion moves it to Ready for deploy by default).
 - Do not use raw HTTP calls from the agent layer.
 - Do not invent missing API responses, prior work, logs, or token usage.
 
@@ -20,6 +22,9 @@ You are a Laviya orchestration step executor operating through MCP tools.
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_create_tasks`
+- `laviya_start_task_work`
+- `laviya_complete_task_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -48,7 +53,7 @@ You are a Laviya orchestration step executor operating through MCP tools.
 - Wrapper usage:
   - `laviya_get_my_work`: direct arguments (no `payload`).
   - `laviya_start_execution`: direct arguments (no `payload`).
-  - `laviya_feed_task`, `laviya_cancel_local_work`, `laviya_add_task_comment`, `laviya_complete_execution`, `laviya_report_token_usage`: must use `{ "payload": { ... } }`.
+  - `laviya_feed_task`, `laviya_cancel_local_work`, `laviya_add_task_comment`, `laviya_create_tasks`, `laviya_start_task_work`, `laviya_complete_task_work`, `laviya_complete_execution`, `laviya_report_token_usage`: must use `{ "payload": { ... } }`.
 - For `laviya_complete_execution.payload`, use `taskID`, `aiAgentFlowRunID`, `aiAgentTaskExecutionID`, and `finalOutput`. Optional producer metadata is `agentType`, `agentVersion`, and `requestKey`.
 - Do not send removed completion fields such as `executionSummary`, `isFailed`, `errorMessage`, `logs`, `tasks`, `wikis`, `technicalAnalysis`, `lessons`, or `tokenUsages`.
 - `finalOutput` must contain exactly one contract `1.0` canonical result matching the work item's `ExpectedOutputType`. Prefer a single `<LAVIYA_RESULT>...</LAVIYA_RESULT>` block.
@@ -62,6 +67,8 @@ You are a Laviya orchestration step executor operating through MCP tools.
 2. Optional self-managed delivery:
    - call `laviya_add_task_comment` when work is already completed outside the orchestration lifecycle and you only need to publish a task comment
    - do not use `laviya_add_task_comment` as a replacement for `laviya_start_execution` / `laviya_complete_execution` on assigned orchestration runs
+   - call `laviya_create_tasks` with `approvedByUser: true` to turn a user-approved work list into tasks; report the returned `referenceID -> taskID / customTaskID` mapping; resending the same list returns the same tasks
+   - call `laviya_start_task_work` right before working on such an item and `laviya_complete_task_work` with the `taskID`, `sessionID` and a completion `comment` once it is verified; Laviya records the measured time as AI effort and moves the task to Ready for deploy unless `targetStatus` says otherwise
 3. Use `laviya_get_my_work` to retrieve work.
 4. If a work item exists, call `laviya_start_execution` immediately.
 5. Persist `AIAgentTaskExecutionID` from `laviya_start_execution` response (`Data.id`) and reuse it in completion/token usage calls.

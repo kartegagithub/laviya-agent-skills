@@ -14,6 +14,7 @@ The runtime refreshes the execution lease. Do not start again to report progress
 ## Responsibilities
 
 - Do not create or update Laviya tasks, comments, wikis, artifacts, execution fields, statuses, or workflow steps.
+- Exception outside an assigned run: when the user explicitly approves a work list, `laviya_create_tasks` may create those tasks and `laviya_start_task_work` / `laviya_complete_task_work` may track and report the work on them. Never call them during an orchestrated execution.
 - Do not choose the output destination or next step.
 - Do not invent token usage, execution evidence, tests, changed files, or API responses.
 - Return the output type required by `ExpectedOutputType`.

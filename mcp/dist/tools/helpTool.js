@@ -126,6 +126,61 @@ const toolHelpCatalog = [
         }
     },
     {
+        name: "laviya_create_tasks",
+        purpose: "Create tasks from a work list the user explicitly approved and return taskID and customTaskID per referenceID.",
+        notes: [
+            "Only call after the user approved the exact list; approvedByUser must be true. Never call it during an orchestrated execution.",
+            "projectID defaults to the project config projectId; the status defaults to the project's first task-creatable status (Backlog first).",
+            "taskTypeID: 0 Task, 10 Bug, 20 ChangeRequest, 30 Improvement, 40 Debt, 50 Suggestion, 60 Meeting, 70 Story, 80 Epic. priority: 0 NoPriority, 1 Low, 2 Medium, 3 High. complexity: 0 Easy, 1 Normal, 2 Hard, 3 Expert.",
+            "Use parentReferenceID to nest an item under an earlier item of the same call, or parentTaskID for an existing task of the project.",
+            "All items are created together or none. Resending the same list returns the already created tasks (IsReplay), so retrying after an error never duplicates them.",
+            "IsReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey."
+        ],
+        example: {
+            name: "laviya_create_tasks",
+            arguments: {
+                payload: {
+                    approvedByUser: true,
+                    tasks: [
+                        { referenceID: "W-01", title: "Add export endpoint", description: "Expose CSV export.", priority: 2, complexity: 2, estimatedEffortHours: 4 },
+                        { referenceID: "W-02", title: "Cover export endpoint with tests", parentReferenceID: "W-01", taskTypeID: 0 }
+                    ]
+                }
+            }
+        }
+    },
+    {
+        name: "laviya_start_task_work",
+        purpose: "Start the server-measured AI working time on a task right before implementing it (outside orchestration).",
+        notes: [
+            "The task moves to the project's Processing status. Calling it again returns the open session and keeps the first start time.",
+            "Keep the returned SessionID and pass it as sessionID to laviya_complete_task_work."
+        ],
+        example: {
+            name: "laviya_start_task_work",
+            arguments: { payload: { taskID: 501 } }
+        }
+    },
+    {
+        name: "laviya_complete_task_work",
+        purpose: "Finish the work on a task: Laviya records the measured time as AI effort, moves the task to Ready for deploy and adds the completion comment.",
+        notes: [
+            "Effort is measured by the server from laviya_start_task_work to this call; never send or invent hours.",
+            "Without targetStatus the project's Ready for deploy status is used (falling back to ToBeVerified, Processed, Completed). targetStatus ignores case, spaces and punctuation.",
+            "Safe to retry for the same sessionID, even with a reworded comment or a corrected targetStatus: steps already done are not repeated. Rejected statuses cannot be a target."
+        ],
+        example: {
+            name: "laviya_complete_task_work",
+            arguments: {
+                payload: {
+                    taskID: 501,
+                    sessionID: 77,
+                    comment: "Added CSV export endpoint with paging; unit tests added and passing."
+                }
+            }
+        }
+    },
+    {
         name: "laviya_diagnostics",
         purpose: "Read secret-free runtime configuration, warnings, and active lease diagnostics.",
         example: {

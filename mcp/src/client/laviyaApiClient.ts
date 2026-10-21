@@ -7,7 +7,7 @@ import {
   redactSensitiveText,
   summarizeIdentifier
 } from "../utils/redaction.js";
-import { parseLaviyaEnvelope } from "./envelope.js";
+import { describeEnvelopeMessages, parseLaviyaEnvelope } from "./envelope.js";
 import {
   LaviyaApiError,
   LaviyaBusinessError,
@@ -151,6 +151,37 @@ export class LaviyaApiClient {
     });
   }
 
+  async createTasks(payload: unknown, idempotencyKey: string): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/CreateTasks",
+      body: payload,
+      idempotencyKey,
+      timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
+    });
+  }
+
+  async startTaskWork(payload: { taskID: number }): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/StartTaskWork",
+      body: payload
+    });
+  }
+
+  async completeTaskWork(payload: unknown, idempotencyKey: string): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/CompleteTaskWork",
+      body: payload,
+      idempotencyKey,
+      timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
+    });
+  }
+
   async reportRuntimeHeartbeat(payload: unknown): Promise<unknown> {
     return this.request({
       method: "POST",
@@ -283,8 +314,9 @@ export class LaviyaApiClient {
       }
 
       if (!response.ok) {
+        const backendMessage = describeEnvelopeMessages(parsedBody);
         throw new LaviyaApiError(
-          `Laviya API error ${response.status} on ${options.path}`,
+          `Laviya API error ${response.status} on ${options.path}${backendMessage ? `: ${backendMessage}` : ""}`,
           response.status,
           parsedBody,
           parseRetryAfterMs(response.headers.get("retry-after"))

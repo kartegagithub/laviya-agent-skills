@@ -202,6 +202,18 @@ Call MCP tool laviya_add_task_comment with {"payload":{"taskID":5678,"descriptio
 ```
 
 ```text
+Call MCP tool laviya_start_task_work with {"payload":{"taskID":1234}}.
+```
+
+```text
+Call MCP tool laviya_complete_task_work with {"payload":{"taskID":1234,"sessionID":77,"comment":"Added the export endpoint and tests; all tests pass."}}.
+```
+
+```text
+Call MCP tool laviya_create_tasks with {"payload":{"approvedByUser":true,"tasks":[{"referenceID":"api","title":"Add export endpoint","priority":2,"complexity":2,"estimatedEffortHours":4},{"referenceID":"api-tests","title":"Cover export endpoint with tests","parentReferenceID":"api"}]}}.
+```
+
+```text
 Call MCP tool laviya_complete_execution with {"payload":{"taskID":5678,"aiAgentFlowRunID":1234,"aiAgentTaskExecutionID":9012,"requestKey":"8b42b153-4767-401f-974d-f81f6700f54a","agentType":"codex","finalOutput":"<LAVIYA_RESULT>{\"contractVersion\":\"1.0\",\"outputType\":\"implementation_result\",\"agentReportedStatus\":\"completed\",\"payload\":{\"summary\":\"Implemented backend change.\",\"changedFiles\":[{\"path\":\"src/services/example.ts\",\"change\":\"Implemented validation.\"}],\"tests\":{\"executed\":true,\"passed\":true,\"details\":\"Tests passed.\"},\"remainingIssues\":[]},\"attachments\":[],\"agentNotes\":[]}</LAVIYA_RESULT>"}}.
 ```
 
@@ -313,12 +325,18 @@ Then include the skill artifact:
 
 - `mcp/examples/claude/SKILL.md`
 
+For the user-driven delivery cycle (verify a work list, create approved Laviya tasks, report each finished item as Ready for deploy) also install
+`claude/laviya-delivery-cycle/SKILL.md` as a Claude Code skill, e.g. `.claude/skills/laviya-delivery-cycle/SKILL.md` in the project or `~/.claude/skills/laviya-delivery-cycle/SKILL.md`.
+
 ## 8. Available MCP Tools
 
 - `laviya_feed_task`
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_create_tasks`
+- `laviya_start_task_work`
+- `laviya_complete_task_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -329,6 +347,8 @@ Typical lifecycle:
 1. Optional local-direct bootstrap: call `laviya_feed_task` for flow-independent task feeding.
 2. Optional monitoring/control: use `laviya_get_local_work_status` / `laviya_cancel_local_work`.
 3. Optional self-managed delivery reporting: call `laviya_add_task_comment` when your own agent finishes work outside the orchestration lifecycle and only needs to publish its output to a task comment.
+   Optional planning: call `laviya_create_tasks` with `approvedByUser: true` to turn a user-approved work list into tasks; the response maps each `referenceID` to the created `taskID` / `customTaskID`.
+   Call `laviya_start_task_work` before working on such an item and `laviya_complete_task_work` with the `taskID`, `sessionID` and a completion `comment` when it is done: Laviya records the measured AI effort and moves it to Ready for deploy.
 4. Call `laviya_get_my_work` to fetch work.
    - Read `Data.ExecutionPolicy` before taking any repository action.
    - `analysis` and `review` modes are read-only and must produce findings/handoff rather than implementation.

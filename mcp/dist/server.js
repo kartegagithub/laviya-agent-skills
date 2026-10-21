@@ -7,11 +7,14 @@ import { registerAddTaskCommentTool } from "./tools/addTaskCommentTool.js";
 import { registerCancelLocalWorkTool } from "./tools/cancelLocalWorkTool.js";
 import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestratorPromptAssets.js";
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
+import { registerCreateTasksTool } from "./tools/createTasksTool.js";
 import { registerFeedTaskTool } from "./tools/feedTaskTool.js";
 import { registerGetLocalWorkStatusTool } from "./tools/getLocalWorkStatusTool.js";
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
 import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
+import { registerStartTaskWorkTool } from "./tools/startTaskWorkTool.js";
+import { registerCompleteTaskWorkTool } from "./tools/completeTaskWorkTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
 import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger } from "./utils/logger.js";
@@ -81,6 +84,24 @@ export async function createRuntimeServer(options = {}) {
         leaseManager,
         executionPolicyManager,
         logger: logger.child({ tool: "laviya_complete_execution" })
+    });
+    // Registered for every agent profile: the delivery cycle (create approved tasks, report completion) is user-driven,
+    // not orchestration management.
+    registerCreateTasksTool({
+        server,
+        client,
+        runtimeConfig,
+        logger: logger.child({ tool: "laviya_create_tasks" })
+    });
+    registerStartTaskWorkTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_start_task_work" })
+    });
+    registerCompleteTaskWorkTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_complete_task_work" })
     });
     registerDiagnosticsTool({
         server,

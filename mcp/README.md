@@ -292,6 +292,9 @@ MCP tools exposed:
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_create_tasks`
+- `laviya_start_task_work`
+- `laviya_complete_task_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -328,6 +331,25 @@ Tool contracts:
   - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with created task comment metadata.
   - Error strategy: payload validation + backend business rule propagation. Automatic retry is intentionally disabled to avoid duplicate comments.
+- `laviya_create_tasks`
+  - Input: `{ payload: { approvedByUser: true, projectID?, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
+  - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
+    `projectID` defaults to project config `projectId`; the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
+    `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`IsReplay: true`); the same key with a different list is rejected,
+    and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
+    Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
+  - Output: `{ RequestKey, IsReplay, ProjectID, MethodologyStatusID, Tasks: [{ ReferenceID, TaskID, CustomTaskID, Title, ParentTaskID }] }`.
+  - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
+- `laviya_start_task_work`
+  - Input: `{ payload: { taskID } }`
+  - Behavior: `POST /api/ai/StartTaskWork`. Starts the server-measured AI work session (or returns the open one) and moves the task to the project's Processing status.
+  - Output: work session `{ SessionID, TaskID, CustomTaskID, StartedAt, Status, ... }`.
+- `laviya_complete_task_work`
+  - Input: `{ payload: { taskID, sessionID, comment?, targetStatus?, methodologyStatusID?, requestKey? } }` (`sessionID` from `laviya_start_task_work`)
+  - Behavior: `POST /api/ai/CompleteTaskWork`. Records the measured minutes as AI effort, moves the task to the Ready for deploy status (same resolution as AI run completion,
+    or `targetStatus`; Rejected statuses are not allowed) and adds `comment` as a task comment. Each step is stored once per session; a retry for the same session resumes the missing steps,
+    even with a reworded comment or a corrected target. The default request key is derived from `taskID` + `sessionID`.
+  - Output: work session with `DurationMinutes`, `Status`, `TargetStatus`, `EffortRecorded`, `StatusChanged`, `TaskCommentID`.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
   - Behavior: resolves defaults from runtime/project config, polls work, captures the step `ExecutionPolicy`, and supports lite payload defaults.
