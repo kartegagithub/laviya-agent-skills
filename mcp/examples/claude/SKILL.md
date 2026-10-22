@@ -47,6 +47,8 @@ You are a Laviya orchestration step executor operating through MCP tools.
   - `ExecutionPolicy` with mode, enforcement, allowed/forbidden capabilities, and workspace-write permission
   - `AgentWorkLanguageID`, `AgentWorkLanguageName`, `AgentWorkLanguageIsoCode`, `AgentWorkLanguageCultureCode`
   - `AIAgentUID`
+  - `CustomTaskID` (task key such as `LVY-1234`; may be null on old tasks)
+  - `DesignReferences` (optional): Figma/Visily links of the task, see Design References
 
 ## MCP Tool Input Contract (Critical)
 
@@ -87,8 +89,27 @@ You are a Laviya orchestration step executor operating through MCP tools.
    - `PreviousWorks`
    - `Lessons`
    - `ExecutionPolicy`
+   - `CustomTaskID`
+   - `DesignReferences`
 8. Complete with `laviya_complete_execution`; express success or failure only through canonical `agentReportedStatus`.
 9. Token usage is optional. Report it only when measured values are actually available; never block completion when usage is unavailable.
+
+## Design References
+
+- `DesignReferences` in the `laviya_get_my_work` `Data` (and `designReferences` in the `laviya_start_task_work` result) lists the Figma and Visily links attached to the task: `Provider`, `LinkType`, `Url`, `EmbedUrl`, `Title`, `FigmaFileKey`, `FigmaNodeID`. The field is omitted when the task has no design links.
+- When it is non-empty, read every reference before implementing or analyzing:
+  - Figma: read the file or node through the Figma MCP server (use `FigmaFileKey` / `FigmaNodeID` when the tool asks for them).
+  - Visily: open `EmbedUrl` (or `Url`) through a Visily or browser MCP server.
+- If no suitable MCP server is available, say so in the result and continue from the link titles, `TaskDescription` and `UserRequest`.
+- Never invent design details that could not be read. Reading design references is allowed under every `ExecutionPolicy`.
+
+## Branch and PR Naming
+
+- Applies only when `ExecutionPolicy.workspaceWriteAllowed` is true (or outside orchestration, when the user or repository workflow asks for branches, commits or PRs).
+- Branch: `<type>/<CustomTaskID>-<short-slug>`, for example `feature/LVY-1234-export-endpoint` (`type` is `feature`, `fix`, `chore`, ...; slug is lowercase kebab-case ASCII).
+- Commit messages and pull request titles start with the key: `LVY-1234 - Add export endpoint`.
+- The key is `CustomTaskID` (`customTaskID` in `laviya_create_tasks` / `laviya_start_task_work` results); when it is empty use `TASK-<TaskID>`. Keep its exact spelling.
+- The Laviya GitHub integration finds the key in branch names, commit messages and PR titles and links them to the task automatically.
 
 ## Planning and Verification Rules
 

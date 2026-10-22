@@ -12,7 +12,7 @@ Laviya tools used:
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
 - `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`.
-- `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status).
+- `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status); returns `sessionID`, `customTaskID` and, when the task has Figma or Visily links, `designReferences`.
 - `laviya_complete_task_work`: record the measured time as AI effort, move the task to Ready for deploy and add the completion comment.
 
 Everything is written on behalf of the api key owner and carries Laviya's AI marker. Talk to the user in their language; write Laviya titles, descriptions and comments in the language of the work list.
@@ -66,7 +66,9 @@ Ask the user to approve the proposed task list and the target project. They may 
 Take the to-do items one at a time, in order (children before closing their parent):
 
 1. Call `laviya_start_task_work` with `{ "payload": { "taskID": <id> } }` right before starting the item and keep the returned `sessionID`. Mark the item `In progress` in the work list.
+   - When the item needs a branch, commit or pull request, name the branch `<type>/<customTaskID>-<short-slug>` (for example `feature/LVY-1234-export-endpoint`) and start every commit message and PR title with the `customTaskID` (`LVY-1234 - Add export endpoint`). Use `TASK-<taskID>` when `customTaskID` is empty. The Laviya GitHub integration then links them to the task automatically. Commit, push or open a PR only when the repository workflow or the user asks for it.
 2. Implement the item following the repository conventions.
+   - Before implementing, read every entry in `designReferences` returned by `laviya_start_task_work` and any Figma or Visily URL in the work-list item: Figma through the Figma MCP server (`figmaFileKey` / `figmaNodeID` when the tool asks for them), Visily through its `embedUrl` with a Visily or browser MCP server. If no suitable MCP server is available, tell the user and continue from the link title and the item description; never invent design details.
 3. Verify it: build, tests, or the checks the repository uses. Never claim a check that was not run.
 4. When the item is complete and verified, call `laviya_complete_task_work` with `{ "payload": { "taskID": <id>, "sessionID": <sessionID>, "comment": "<completion note>" } }`.
    - The comment says what changed, the main files, how it was verified (with results), and anything left for deploy or review.

@@ -357,6 +357,7 @@ Typical lifecycle:
 4. Call `laviya_get_my_work` to fetch work.
    - Read `Data.ExecutionPolicy` before taking any repository action.
    - `analysis` and `review` modes are read-only and must produce findings/handoff rather than implementation.
+   - `Data.CustomTaskID` is the task key (for example `LVY-1234`); `Data.DesignReferences` lists the Figma and Visily links attached to the task (`Provider`, `LinkType`, `Url`, `EmbedUrl`, `Title`, `FigmaFileKey`, `FigmaNodeID`) and is omitted when there are none.
 5. Call `laviya_start_execution` to begin execution.
 6. Call `laviya_complete_execution` to finalize the task.
    - For enforced read-only policies, include truthful canonical `executionEvidence`.
@@ -370,6 +371,16 @@ Tool response format:
   - `Data: object | null`
 - If `HasFailed=true`, treat as failed call.
 - For `laviya_get_my_work`, `Data=null` means no eligible work currently.
+
+Design references (Figma / Visily):
+
+- When a task has Figma or Visily links (added in the task's Links panel or by the Laviya Figma plugin), `laviya_get_my_work` returns them in `Data.DesignReferences` and `laviya_start_task_work` returns them in `designReferences`.
+- The skills and rules tell the agent to read every reference before implementing: Figma through the Figma MCP server, Visily through its embed link with a Visily or browser MCP server. Add the Figma MCP server to your agent (for example Figma's Dev Mode MCP server) so the agent can read the actual design; without it the agent says so and works from the link title and the task description.
+
+Branch, commit and PR naming:
+
+- Agents name branches `<type>/<CustomTaskID>-<short-slug>` (for example `feature/LVY-1234-export-endpoint`) and start commit messages and PR titles with the key (`LVY-1234 - Add export endpoint`). When a task has no `CustomTaskID`, the key is `TASK-<TaskID>`.
+- With the Laviya GitHub integration installed, the key in a branch name, commit message or PR title links that branch, commit or PR to the task automatically. Agents create branches, commits and PRs only when the execution policy allows workspace writes or the user asks.
 
 ## 9. Common Issues
 

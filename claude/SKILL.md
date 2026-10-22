@@ -12,6 +12,26 @@ description: Execute assigned Laviya work and submit one canonical final result.
 
 The final output must contain exactly one canonical contract `1.0` result matching the work item's `ExpectedOutputType`. Do not choose or update tasks, comments, wikis, artifacts, execution status, or the next workflow step. Do not invent token usage or evidence.
 
+## Design references
+
+`Data.DesignReferences` lists the Figma and Visily links attached to the task (`Provider`, `LinkType`, `Url`, `EmbedUrl`, `Title`, `FigmaFileKey`, `FigmaNodeID`). When it is non-empty, read every reference before implementing or analyzing:
+
+- Figma: read the file or node through the Figma MCP server (use `FigmaFileKey` and `FigmaNodeID` when the tool asks for them).
+- Visily: open `EmbedUrl` (or `Url`) through a Visily or browser MCP server.
+- If no suitable MCP server is available, say so in the result and continue from the link titles, the task description and `UserRequest`.
+
+Never invent design details that you could not read. Reading design references is allowed under every `ExecutionPolicy`.
+
+## Branch and PR naming
+
+Only when `ExecutionPolicy.workspaceWriteAllowed` is true and the step creates branches, commits or pull requests:
+
+- Branch: `<type>/<CustomTaskID>-<short-slug>`, for example `feature/LVY-1234-export-endpoint` (`type` is `feature`, `fix`, `chore`, ...; slug is lowercase kebab-case ASCII).
+- Commit messages and pull request titles start with the key: `LVY-1234 - Add export endpoint`.
+- The key is `Data.CustomTaskID`; when it is empty use `TASK-<TaskID>`. Keep its exact spelling.
+
+The Laviya GitHub integration finds the key in branch names, commit messages and PR titles and links them to the task automatically.
+
 ## Approved task creation (outside orchestration)
 
 When the user asks to turn a work list into Laviya tasks:

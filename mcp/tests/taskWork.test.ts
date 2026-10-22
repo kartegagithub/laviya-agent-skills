@@ -51,7 +51,18 @@ const session = {
   TargetStatus: { ID: 13, Name: "Ready for deploy" },
   EffortRecorded: true,
   StatusChanged: true,
-  TaskCommentID: 900
+  TaskCommentID: 900,
+  DesignReferences: [
+    {
+      Provider: "Figma",
+      LinkType: "Design",
+      Url: "https://www.figma.com/design/AbC123/Checkout?node-id=1-2",
+      EmbedUrl: "https://embed.figma.com/design/AbC123/Checkout?node-id=1-2&embed-host=laviya",
+      Title: "Checkout",
+      FigmaFileKey: "AbC123",
+      FigmaNodeID: "1:2"
+    }
+  ]
 };
 
 test("starts and completes measured task work through api/ai", async () => {
