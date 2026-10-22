@@ -91,6 +91,22 @@ npm version patch --no-git-tag-version
 npm publish --access public
 ```
 
+If npm rejects direct publishing with `E_STAGE_REQUIRED`, the configured token
+only permits staging. Upload the release for maintainer approval:
+
+```bash
+npm stage publish --access public
+npm stage list laviya-mcp-server
+npm stage view <stage-id>
+```
+
+A maintainer must approve the staged release with 2FA in the npmjs.com
+**Staged Packages** tab or with `npm stage approve <stage-id>`.
+Staging alone does not publish the version. Wait for approval and confirm the
+live npm version before publishing `server.json` to MCP Registry.
+
+Reference: https://docs.npmjs.com/staged-publishing/
+
 Post-publish verification:
 
 ```bash
