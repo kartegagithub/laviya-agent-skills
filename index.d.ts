@@ -3,6 +3,7 @@ export type AssetKey =
   | "executionSummarySchema"
   | "completeExecutionPayloadExample"
   | "claudeSkill"
+  | "claudeDeliveryCycleSkill"
   | "cursorRule"
   | "setupGuide"
   | "installationGuide"

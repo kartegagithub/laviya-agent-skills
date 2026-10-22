@@ -14,7 +14,7 @@ artifacts for tools such as Cursor and Claude.
 - `core/`: shared orchestration prompt assets
 - `mcp/`: TypeScript MCP runtime scaffold (`laviya-mcp-server`)
 - `cursor/`: Cursor rule artifacts
-- `claude/`: Claude skill artifacts
+- `claude/`: Claude skill artifacts (`SKILL.md` for orchestration, `laviya-delivery-cycle/SKILL.md` for the user-driven delivery cycle)
 - `docs/`: setup, npm publishing, and end-user onboarding guides
 
 ## Repository Structure
@@ -89,6 +89,10 @@ Current MCP tool set includes both orchestration and local-direct task feed flow
 - `laviya_get_local_work_status`
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
+- `laviya_list_projects`
+- `laviya_create_tasks`
+- `laviya_start_task_work`
+- `laviya_complete_task_work`
 - `laviya_get_my_work`
 - `laviya_start_execution`
 - `laviya_complete_execution`
@@ -99,6 +103,6 @@ All tools return API envelope JSON text in the shape: `{ HasFailed, Messages, Da
 
 Work items may include a backend-defined `ExecutionPolicy`. Analysis and review
 policies are read-only: agents must not implement changes, and enforced policies
-require matching completion `executionEvidence` and summary `policyCompliance`.
+require a truthful completion `executionEvidence`.
 
 For full architecture details and file-level scaffolding, refer to `mcp/README.md`.

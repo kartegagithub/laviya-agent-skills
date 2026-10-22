@@ -41,6 +41,19 @@ export function parseLaviyaEnvelope(payload: unknown, sourcePath: string): Laviy
   return normalized;
 }
 
+// Error bodies of non-2xx responses are often Laviya envelopes too (e.g. 403 from the auth filter).
+export function describeEnvelopeMessages(payload: unknown): string | undefined {
+  const envelope = asRecord(payload);
+  if (!envelope) {
+    return undefined;
+  }
+
+  const text = normalizeMessages(envelope.Messages ?? envelope.messages)
+    .map((message) => message.description)
+    .filter(Boolean);
+  return text.length > 0 ? text.join("; ") : undefined;
+}
+
 interface NormalizedMessage {
   code?: string;
   description: string;

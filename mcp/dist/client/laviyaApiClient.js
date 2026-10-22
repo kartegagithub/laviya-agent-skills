@@ -1,7 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { assertSecureBaseUrl } from "../utils/baseUrl.js";
 import { redactSecretValue, redactSensitiveText, summarizeIdentifier } from "../utils/redaction.js";
-import { parseLaviyaEnvelope } from "./envelope.js";
+import { describeEnvelopeMessages, parseLaviyaEnvelope } from "./envelope.js";
 import { LaviyaApiError, LaviyaBusinessError, LaviyaProtocolError } from "./errors.js";
 const MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024;
 const MAX_RESPONSE_BODY_BYTES = 25 * 1024 * 1024;
@@ -102,6 +102,44 @@ export class LaviyaApiClient {
             body: payload,
             idempotencyKey,
             contextRunId: extractRunId(payload)
+        });
+    }
+    async getProjects(params) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetProjects",
+            query: {
+                Search: params.search
+            }
+        });
+    }
+    async createTasks(payload, idempotencyKey) {
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/CreateTasks",
+            body: payload,
+            idempotencyKey,
+            timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
+        });
+    }
+    async startTaskWork(payload) {
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/StartTaskWork",
+            body: payload
+        });
+    }
+    async completeTaskWork(payload, idempotencyKey) {
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/CompleteTaskWork",
+            body: payload,
+            idempotencyKey,
+            timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
         });
     }
     async reportRuntimeHeartbeat(payload) {
@@ -212,7 +250,8 @@ export class LaviyaApiClient {
                 });
             }
             if (!response.ok) {
-                throw new LaviyaApiError(`Laviya API error ${response.status} on ${options.path}`, response.status, parsedBody, parseRetryAfterMs(response.headers.get("retry-after")));
+                const backendMessage = describeEnvelopeMessages(parsedBody);
+                throw new LaviyaApiError(`Laviya API error ${response.status} on ${options.path}${backendMessage ? `: ${backendMessage}` : ""}`, response.status, parsedBody, parseRetryAfterMs(response.headers.get("retry-after")));
             }
             const envelope = parseLaviyaEnvelope(parsedBody, options.path);
             this.captureAgentUid(envelope, options.path, options.contextRunId);
