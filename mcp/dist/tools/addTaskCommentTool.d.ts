@@ -5,6 +5,7 @@ export interface AddTaskCommentToolDeps {
     server: McpServer;
     client: LaviyaApiClient;
     logger: Logger;
+    projectRoot?: string;
 }
 export declare function registerAddTaskCommentTool(deps: AddTaskCommentToolDeps): void;
 //# sourceMappingURL=addTaskCommentTool.d.ts.map

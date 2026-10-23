@@ -17,6 +17,9 @@ import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { registerStartTaskWorkTool } from "./tools/startTaskWorkTool.js";
 import { registerCompleteTaskWorkTool } from "./tools/completeTaskWorkTool.js";
 import { registerStartDeliveryRunTool } from "./tools/startDeliveryRunTool.js";
+import { registerUploadTaskFileTool } from "./tools/uploadTaskFileTool.js";
+import { registerUpdateTaskDescriptionTool } from "./tools/updateTaskDescriptionTool.js";
+import { registerAssignTaskTool } from "./tools/assignTaskTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
 import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
@@ -84,7 +87,7 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     registerFeedTaskTool({ server, client, logger: logger.child({ tool: "laviya_feed_task" }) });
     registerGetLocalWorkStatusTool({ server, client, logger: logger.child({ tool: "laviya_get_local_work_status" }) });
     registerCancelLocalWorkTool({ server, client, leaseManager, logger: logger.child({ tool: "laviya_cancel_local_work" }) });
-    registerAddTaskCommentTool({ server, client, logger: logger.child({ tool: "laviya_add_task_comment" }) });
+    registerAddTaskCommentTool({ server, client, logger: logger.child({ tool: "laviya_add_task_comment" }), projectRoot: runtimeConfig.projectRoot });
     registerReportTokenUsageTool({ server, client, logger: logger.child({ tool: "laviya_report_token_usage" }) });
   }
 
@@ -124,6 +127,26 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     logger: logger.child({ tool: "laviya_create_tasks" })
+  });
+
+  registerUploadTaskFileTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_upload_task_file" }),
+    projectRoot: runtimeConfig.projectRoot
+  });
+
+  registerUpdateTaskDescriptionTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_update_task_description" }),
+    projectRoot: runtimeConfig.projectRoot
+  });
+
+  registerAssignTaskTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_assign_task" })
   });
 
   registerStartDeliveryRunTool({

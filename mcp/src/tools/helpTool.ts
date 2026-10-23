@@ -55,15 +55,55 @@ const toolHelpCatalog: ToolHelp[] = [
   },
   {
     name: "laviya_add_task_comment",
-    purpose: "Append agent output or progress information to a task as a comment.",
+    purpose: "Append agent output or progress information to a task as a comment, optionally with screenshots or files.",
+    notes: [
+      "filePaths are local files uploaded to the task attachments first; fileIDs are files already uploaded with laviya_upload_task_file. Images are shown inline in the comment, other files as links."
+    ],
     example: {
       name: "laviya_add_task_comment",
       arguments: {
         payload: {
           taskID: 123,
-          description: "Implemented the requested change and verified the tests."
+          description: "Implemented the requested change and verified the tests.",
+          filePaths: ["artifacts/after.png"]
         }
       }
+    }
+  },
+  {
+    name: "laviya_upload_task_file",
+    purpose: "Upload a local file to a task's attachments (screenshots, documents, logs, archives, videos).",
+    notes: [
+      "Allowed: png, jpg, jpeg, gif, webp, pdf, txt, md, log, json, csv, xml, zip, doc(x), xls(x), ppt(x), mp4, webm, mov; max 20 MiB. Relative paths resolve from the project root.",
+      "Returns fileID, url and embedHtml. Pass fileID to laviya_update_task_description or laviya_add_task_comment to show the file there. Not retried automatically: check the task before uploading the same file again."
+    ],
+    example: {
+      name: "laviya_upload_task_file",
+      arguments: { payload: { taskID: 123, filePath: "docs/spec.pdf" } }
+    }
+  },
+  {
+    name: "laviya_update_task_description",
+    purpose: "Add text and images/files to a task's description, or replace the description.",
+    notes: [
+      "mode append (default) keeps the current description and adds to its end; replace overwrites it, so use it only when the user asks.",
+      "text is plain text. Local filePaths are uploaded to the task attachments first; images are shown inline, other files as links."
+    ],
+    example: {
+      name: "laviya_update_task_description",
+      arguments: { payload: { taskID: 123, text: "Current layout on mobile:", filePaths: ["screenshots/mobile.png"] } }
+    }
+  },
+  {
+    name: "laviya_assign_task",
+    purpose: "Assign a task to yourself or, with PM permission, to other tenant members.",
+    notes: [
+      "Without assigneeEmails the task is assigned to you. Only PM, Director and Admin users can assign other people; for other roles the call is rejected (HTTP 403), so ask the user to assign it in Laviya.",
+      "Existing assignees are kept; assigning someone twice is harmless."
+    ],
+    example: {
+      name: "laviya_assign_task",
+      arguments: { payload: { taskID: 123, assigneeEmails: ["teammate@example.com"] } }
     }
   },
   {
@@ -161,6 +201,7 @@ const toolHelpCatalog: ToolHelp[] = [
       "The status defaults to the project's first task-creatable status (Backlog first).",
       "taskTypeID: 0 Task, 10 Bug, 20 ChangeRequest, 30 Improvement, 40 Debt, 50 Suggestion, 60 Meeting, 70 Story, 80 Epic. priority: 0 NoPriority, 1 Low, 2 Medium, 3 High. complexity: 0 Easy, 1 Normal, 2 Hard, 3 Expert.",
       "Use parentReferenceID to nest an item under an earlier item of the same call, or parentTaskID for an existing task of the project.",
+      "Created tasks are assigned to you. assigneeEmails assigns other tenant members instead, which only PM, Director and Admin users can do; otherwise the whole call is rejected and nothing is created.",
       "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
       "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey."
     ],

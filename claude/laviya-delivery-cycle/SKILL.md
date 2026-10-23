@@ -12,6 +12,8 @@ Laviya tools used:
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
 - `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`, and the `deliveryRunID` that groups them.
+- `laviya_upload_task_file`, `laviya_update_task_description`: add screenshots, documents or other files to a task's attachments, description or (with `laviya_add_task_comment` / the completion) comments.
+- `laviya_assign_task`: assign a task; without e-mails it is assigned to you. Only users with PM permission (PM, Director, Admin) can assign other people.
 - `laviya_start_delivery_run`: group tasks that already existed in Laviya into a delivery run (reuses your active run that contains them); returns the run `id`.
 - `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status); returns `sessionID`, `customTaskID` and, when the task has Figma or Visily links, `designReferences`.
 - `laviya_complete_task_work`: record the measured time as AI effort, move the task to Ready for deploy and add the completion comment.
@@ -59,6 +61,7 @@ Ask the user to approve the proposed task list and the target project. They may 
 1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <chosen project ID>, "title": "<work list name>", "tasks": [...] } }`.
    - `referenceID` = item key. Put parents before children; use `parentReferenceID` for children and `parentTaskID` for a parent that already exists in Laviya.
    - Send `estimatedEffortHours`; descriptions are plain text.
+   - Tasks are assigned to you. Pass `assigneeEmails` only when the user names other assignees; this needs PM permission or higher, otherwise the call is rejected and you should create the tasks without it.
 2. All items are created together or none. If the call fails, fix the cause shown in the error (for example a status or progress payment requirement) and call again; resending the same list never creates duplicates, it returns the tasks that already exist (`isReplay: true`). When `isReplay` is true on the first call for this list, tell the user these tasks already existed; to create the same list again on purpose, pass a new `requestKey`.
 3. Write every returned `taskID` / `customTaskID` into the work list right away and show the user the key -> Laviya ID table. Keep the returned `deliveryRunID`.
 4. When the list also has items that already carried a Laviya ID, call `laviya_start_delivery_run` with `{ "payload": { "taskIDs": [...], "title": "<work list name>" } }` for those tasks together with the tasks just created: the run created by `laviya_create_tasks` is reused and the existing tasks are added to it, so the whole list stays in one run. If nothing was created in this cycle, call it for all items you will work on. Use the returned `id` as `deliveryRunID`.
@@ -74,6 +77,7 @@ Take the to-do items one at a time, in order (children before closing their pare
 3. Verify it: build, tests, or the checks the repository uses. Never claim a check that was not run.
 4. As soon as the item is complete and verified, call `laviya_complete_task_work` immediately, before starting anything else, with `{ "payload": { "taskID": <id>, "sessionID": <sessionID>, "comment": "<completion note>" } }`.
    - The comment says what changed, the main files, how it was verified (with results), and anything left for deploy or review.
+   - When a screenshot or file helps the reviewer (UI change, report, log), add it with `laviya_add_task_comment` (`filePaths`) or `laviya_update_task_description`; never upload secrets, credentials or files the user did not ask to share.
    - Laviya measures the time between start and complete and records it as AI effort; never send or estimate hours yourself.
    - The task moves to the project's Ready for deploy status. Pass `targetStatus` only when the user names another status, and tell the user if the returned `targetStatus.name` is not Ready for deploy.
    - Never leave finished items open to complete them together at the end, and never wait for the user to ask: the measured time runs until this call, so a late call inflates the AI effort.

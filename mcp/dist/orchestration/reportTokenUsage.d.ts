@@ -77,8 +77,8 @@ export declare const reportTokenUsagePayloadSchema: z.ZodObject<{
         currency?: string | undefined;
         providerRequestID?: string | undefined;
     }[];
-    aiAgentTaskExecutionID?: number | undefined;
     requestKey?: string | undefined;
+    aiAgentTaskExecutionID?: number | undefined;
 }, {
     aiAgentFlowRunID: number;
     taskID: number;
@@ -94,8 +94,8 @@ export declare const reportTokenUsagePayloadSchema: z.ZodObject<{
         currency?: string | undefined;
         providerRequestID?: string | undefined;
     }[];
-    aiAgentTaskExecutionID?: number | undefined;
     requestKey?: string | undefined;
+    aiAgentTaskExecutionID?: number | undefined;
 }>;
 export type ReportTokenUsagePayload = z.infer<typeof reportTokenUsagePayloadSchema>;
 export declare function reportTokenUsage(client: LaviyaApiClient, logger: Logger, payload: ReportTokenUsagePayload): Promise<unknown>;

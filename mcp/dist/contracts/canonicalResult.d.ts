@@ -600,11 +600,11 @@ export declare const canonicalResultSchema: z.ZodDiscriminatedUnion<"outputType"
         summary: z.ZodString;
         tasks: z.ZodArray<z.ZodType<TaskBreakdownItem, z.ZodTypeDef, TaskBreakdownItem>, "many">;
     }, "strict", z.ZodTypeAny, {
-        summary: string;
         tasks: TaskBreakdownItem[];
+        summary: string;
     }, {
-        summary: string;
         tasks: TaskBreakdownItem[];
+        summary: string;
     }>;
     contractVersion: z.ZodLiteral<"1.0">;
     agentReportedStatus: z.ZodEnum<["completed", "failed"]>;
@@ -650,8 +650,8 @@ export declare const canonicalResultSchema: z.ZodDiscriminatedUnion<"outputType"
     }>>;
 }, "strict", z.ZodTypeAny, {
     payload: {
-        summary: string;
         tasks: TaskBreakdownItem[];
+        summary: string;
     };
     outputType: "task_breakdown";
     contractVersion: "1.0";
@@ -670,8 +670,8 @@ export declare const canonicalResultSchema: z.ZodDiscriminatedUnion<"outputType"
     } | undefined;
 }, {
     payload: {
-        summary: string;
         tasks: TaskBreakdownItem[];
+        summary: string;
     };
     outputType: "task_breakdown";
     contractVersion: "1.0";

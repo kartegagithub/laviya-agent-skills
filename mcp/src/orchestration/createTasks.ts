@@ -29,7 +29,9 @@ const createTaskItemSchema = z.object({
   complexity: z.number().int().min(0).max(3).optional().describe("0 Easy, 1 Normal, 2 Hard, 3 Expert. Default 1."),
   estimatedEffortHours: z.number().min(0).max(1000).optional().describe("Estimate in hours; Laviya stores minutes."),
   parentTaskID: z.number().int().positive().optional().describe("Existing task of the same project."),
-  parentReferenceID: z.string().trim().min(1).max(100).optional().describe("referenceID of an earlier item of this call.")
+  parentReferenceID: z.string().trim().min(1).max(100).optional().describe("referenceID of an earlier item of this call."),
+  assigneeEmails: z.array(z.string().trim().email()).max(10).optional()
+    .describe("E-mails of tenant members to assign. Omit to assign yourself. Assigning others requires PM permission (PM, Director or Admin).")
 }).strict();
 
 export const createTasksPayloadSchema = z.object({
@@ -85,7 +87,8 @@ function toRequestItem(item: CreateTaskItem, index: number) {
     complexity: item.complexity,
     estimatedEffort: item.estimatedEffortHours === undefined ? undefined : Math.round(item.estimatedEffortHours * 60 * 100) / 100,
     parentTaskID: item.parentTaskID,
-    parentReferenceID: item.parentReferenceID
+    parentReferenceID: item.parentReferenceID,
+    assigneeEmails: item.assigneeEmails
   };
 }
 

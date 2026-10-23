@@ -19,63 +19,68 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         estimatedEffortHours: z.ZodOptional<z.ZodNumber>;
         parentTaskID: z.ZodOptional<z.ZodNumber>;
         parentReferenceID: z.ZodOptional<z.ZodString>;
+        assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strict", z.ZodTypeAny, {
         title: string;
         description?: string | undefined;
         priority?: number | undefined;
-        complexity?: number | undefined;
         referenceID?: string | undefined;
         taskTypeID?: 0 | 10 | 50 | 30 | 20 | 40 | 60 | 70 | 80 | undefined;
+        complexity?: number | undefined;
         estimatedEffortHours?: number | undefined;
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
+        assigneeEmails?: string[] | undefined;
     }, {
         title: string;
         description?: string | undefined;
         priority?: number | undefined;
-        complexity?: number | undefined;
         referenceID?: string | undefined;
         taskTypeID?: 0 | 10 | 50 | 30 | 20 | 40 | 60 | 70 | 80 | undefined;
+        complexity?: number | undefined;
         estimatedEffortHours?: number | undefined;
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
+        assigneeEmails?: string[] | undefined;
     }>, "many">;
 }, "strict", z.ZodTypeAny, {
+    approvedByUser: true;
+    projectID: number;
     tasks: {
         title: string;
         description?: string | undefined;
         priority?: number | undefined;
-        complexity?: number | undefined;
         referenceID?: string | undefined;
         taskTypeID?: 0 | 10 | 50 | 30 | 20 | 40 | 60 | 70 | 80 | undefined;
+        complexity?: number | undefined;
         estimatedEffortHours?: number | undefined;
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
+        assigneeEmails?: string[] | undefined;
     }[];
-    approvedByUser: true;
-    projectID: number;
     title?: string | undefined;
-    requestKey?: string | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
+    requestKey?: string | undefined;
 }, {
+    approvedByUser: true;
+    projectID: number;
     tasks: {
         title: string;
         description?: string | undefined;
         priority?: number | undefined;
-        complexity?: number | undefined;
         referenceID?: string | undefined;
         taskTypeID?: 0 | 10 | 50 | 30 | 20 | 40 | 60 | 70 | 80 | undefined;
+        complexity?: number | undefined;
         estimatedEffortHours?: number | undefined;
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
+        assigneeEmails?: string[] | undefined;
     }[];
-    approvedByUser: true;
-    projectID: number;
     title?: string | undefined;
-    requestKey?: string | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
+    requestKey?: string | undefined;
 }>;
 export type CreateTasksPayload = z.infer<typeof createTasksPayloadSchema>;
 export declare function createTasks(client: LaviyaApiClient, logger: Logger, payload: CreateTasksPayload): Promise<unknown>;

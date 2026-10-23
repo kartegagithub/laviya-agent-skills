@@ -4,6 +4,8 @@ import { redactSecretValue, redactSensitiveText, summarizeIdentifier } from "../
 import { describeEnvelopeMessages, parseLaviyaEnvelope } from "./envelope.js";
 import { LaviyaApiError, LaviyaBusinessError, LaviyaProtocolError } from "./errors.js";
 const MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024;
+// A 20 MiB task file grows to ~27 MiB as base64.
+const MAX_UPLOAD_BODY_BYTES = 28 * 1024 * 1024;
 const MAX_RESPONSE_BODY_BYTES = 25 * 1024 * 1024;
 export class LaviyaApiClient {
     options;
@@ -124,6 +126,33 @@ export class LaviyaApiClient {
             timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
         });
     }
+    async uploadTaskFile(payload) {
+        // Not retried: every successful call adds an attachment, so a retry after a timeout could store it twice.
+        return this.request({
+            method: "POST",
+            retryMode: "never",
+            path: "/api/ai/UploadTaskFile",
+            body: payload,
+            maxBodyBytes: MAX_UPLOAD_BODY_BYTES,
+            timeoutSeconds: Math.max(180, this.options.requestTimeoutSeconds)
+        });
+    }
+    async updateTaskDescription(payload) {
+        return this.request({
+            method: "POST",
+            retryMode: "never",
+            path: "/api/ai/UpdateTaskDescription",
+            body: payload
+        });
+    }
+    async addTaskAssignees(payload) {
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/AddTaskAssignees",
+            body: payload
+        });
+    }
     async startDeliveryRun(payload) {
         return this.request({
             method: "POST",
@@ -213,8 +242,9 @@ export class LaviyaApiClient {
         const activeAgentUid = this.resolveAgentUid(options.contextRunId);
         const url = this.buildUrl(options.path, options.query);
         const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
-        if (serializedBody && Buffer.byteLength(serializedBody, "utf8") > MAX_REQUEST_BODY_BYTES) {
-            throw new LaviyaProtocolError(`Request body exceeds the ${MAX_REQUEST_BODY_BYTES} byte limit on ${options.path}.`);
+        const maxBodyBytes = options.maxBodyBytes ?? MAX_REQUEST_BODY_BYTES;
+        if (serializedBody && Buffer.byteLength(serializedBody, "utf8") > maxBodyBytes) {
+            throw new LaviyaProtocolError(`Request body exceeds the ${maxBodyBytes} byte limit on ${options.path}.`);
         }
         // Credentials travel only in headers: query strings end up in proxy, gateway and server access logs.
         const headers = {

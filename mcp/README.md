@@ -295,6 +295,9 @@ MCP tools exposed:
 - `laviya_list_projects`
 - `laviya_create_tasks`
 - `laviya_start_delivery_run`
+- `laviya_upload_task_file`
+- `laviya_update_task_description`
+- `laviya_assign_task`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
 - `laviya_get_my_work`
@@ -329,8 +332,8 @@ Tool contracts:
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with final status snapshot.
   - Error strategy: payload validation and MCP `isError` result.
 - `laviya_add_task_comment`
-  - Input: `{ payload: { taskID, description } }`
-  - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle.
+  - Input: `{ payload: { taskID, description?, filePaths?, fileIDs? } }` (description or files required)
+  - Behavior: appends self-managed agent output to the target task as a comment without entering orchestration lifecycle. `filePaths` are uploaded to the task attachments first (UploadTaskFile); the files of `fileIDs` are shown in the comment (images inline, other files as links). The api key owner must have access to the task.
   - Output: API envelope JSON (`HasFailed`, `Messages`, `Data`) with created task comment metadata.
   - Error strategy: payload validation + backend business rule propagation. Automatic retry is intentionally disabled to avoid duplicate comments.
 - `laviya_list_projects`
@@ -338,7 +341,8 @@ Tool contracts:
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, title?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, title?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails? }] } }` (strict, 1-50 items)
+    Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
     `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`isReplay: true`); the same key with a different list is rejected,
@@ -347,6 +351,16 @@ Tool contracts:
     The created tasks are grouped in a new delivery run (`title` names it; it is not part of the default request key).
   - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, deliveryRunID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
+- `laviya_upload_task_file`
+  - Input: `{ payload: { taskID, filePath, fileName? } }` (`filePath` absolute or relative to the project root)
+  - Behavior: `POST /api/ai/UploadTaskFile` with the Base64 content. Adds the file to the task attachments (history: attachment added). Allowed types: png, jpg, jpeg, gif, webp, pdf, txt, md, log, json, csv, xml, zip, doc(x), xls(x), ppt(x), mp4, webm, mov; max 20 MiB; checked locally and on the server. Not retried automatically.
+  - Output: `{ fileID, taskID, fileName, fileSize, isImage, url, embedHtml }` (`url` uses the `{apiURL}` placeholder like Site uploads).
+- `laviya_update_task_description`
+  - Input: `{ payload: { taskID, text?, mode?: "append" | "replace", filePaths?, fileIDs? } }`
+  - Behavior: uploads `filePaths` with UploadTaskFile, then `POST /api/ai/UpdateTaskDescription`. Plain `text` (escaped) and the files (images inline, other files as links) are appended to the description, or replace it with `mode: "replace"`. Records a description-changed history row.
+- `laviya_assign_task`
+  - Input: `{ payload: { taskID, assigneeEmails? } }`
+  - Behavior: `POST /api/ai/AddTaskAssignees`. Without e-mails the api key owner is assigned. Assigning other tenant members requires PM permission (PM, Director or Admin; HTTP 403 otherwise). Existing assignees are kept.
 - `laviya_start_delivery_run`
   - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
   - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run

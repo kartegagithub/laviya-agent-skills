@@ -42,6 +42,21 @@ export declare class LaviyaApiClient {
         search?: string;
     }): Promise<unknown>;
     createTasks(payload: unknown, idempotencyKey: string): Promise<unknown>;
+    uploadTaskFile(payload: {
+        taskID: number;
+        fileName: string;
+        contentBase64: string;
+    }): Promise<unknown>;
+    updateTaskDescription(payload: {
+        taskID: number;
+        text?: string;
+        mode?: string;
+        fileIDs?: number[];
+    }): Promise<unknown>;
+    addTaskAssignees(payload: {
+        taskID: number;
+        assigneeEmails?: string[];
+    }): Promise<unknown>;
     startDeliveryRun(payload: {
         taskIDs: number[];
         title?: string;

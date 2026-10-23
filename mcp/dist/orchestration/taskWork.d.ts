@@ -33,16 +33,16 @@ export declare const completeTaskWorkPayloadSchema: z.ZodObject<{
 }, "strict", z.ZodTypeAny, {
     taskID: number;
     sessionID: number;
-    requestKey?: string | undefined;
     methodologyStatusID?: number | undefined;
+    requestKey?: string | undefined;
     comment?: string | undefined;
     targetStatus?: string | undefined;
     workEndedAt?: string | undefined;
 }, {
     taskID: number;
     sessionID: number;
-    requestKey?: string | undefined;
     methodologyStatusID?: number | undefined;
+    requestKey?: string | undefined;
     comment?: string | undefined;
     targetStatus?: string | undefined;
     workEndedAt?: string | undefined;
