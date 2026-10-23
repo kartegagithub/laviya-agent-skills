@@ -179,11 +179,24 @@ const toolHelpCatalog: ToolHelp[] = [
     }
   },
   {
+    name: "laviya_start_delivery_run",
+    purpose: "Group existing Laviya tasks into a delivery run before working on them (outside orchestration), so the work shows on the Delivery runs screen.",
+    notes: [
+      "Reuses your active run that already contains any of the tasks and adds the missing ones; otherwise creates a run. laviya_create_tasks already creates a run, so call this only for tasks that existed before.",
+      "Pass the returned id as deliveryRunID to laviya_start_task_work. Each new work session uses one Agent Orchestration credit."
+    ],
+    example: {
+      name: "laviya_start_delivery_run",
+      arguments: { payload: { taskIDs: [501, 502], title: "Export improvements" } }
+    }
+  },
+  {
     name: "laviya_start_task_work",
     purpose: "Start the server-measured AI working time on a task right before implementing it (outside orchestration).",
     notes: [
       "The task moves to the project's Processing status. Calling it again returns the open session and keeps the first start time.",
-      "Keep the returned sessionID and pass it to laviya_complete_task_work."
+      "Keep the returned sessionID and pass it to laviya_complete_task_work.",
+      "Pass deliveryRunID from laviya_create_tasks or laviya_start_delivery_run; without it the task's active run is used or a single-task run is created. A new session uses one Agent Orchestration credit."
     ],
     example: {
       name: "laviya_start_task_work",
@@ -195,6 +208,7 @@ const toolHelpCatalog: ToolHelp[] = [
     purpose: "Finish the work on a task: Laviya records the measured time as AI effort, moves the task to Ready for deploy and adds the completion comment.",
     notes: [
       "Effort is measured by the server from laviya_start_task_work to this call; never send or invent hours.",
+      "Call it right after each task is verified, never in a batch at the end. Time shared by tasks worked in parallel is split between them. If you complete late, pass workEndedAt (when the work really ended).",
       "Without targetStatus the project's Ready for deploy status is used (falling back to ToBeVerified, Processed, Completed). targetStatus ignores case, spaces and punctuation.",
       "Safe to retry for the same sessionID, even with a reworded comment or a corrected targetStatus: steps already done are not repeated. Rejected statuses cannot be a target."
     ],

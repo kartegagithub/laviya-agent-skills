@@ -11,7 +11,7 @@ const retry = {
   retryOnHttpStatus: [500, 503]
 };
 
-test("API client sends credentials only through query parameters", async () => {
+test("API client sends credentials only through headers, never in the URL", async () => {
   const originalFetch = globalThis.fetch;
   let capturedUrl: URL | undefined;
   let capturedInit: RequestInit | undefined;
@@ -30,15 +30,15 @@ test("API client sends credentials only through query parameters", async () => {
     await client.startExecution({ runId: 10, taskId: 20 });
 
     assert.ok(capturedUrl);
-    assert.equal(capturedUrl.searchParams.get("apiKey"), apiKey);
-    assert.equal(capturedUrl.searchParams.get("agentUID"), agentUid);
-    assert.equal(capturedUrl.searchParams.getAll("apiKey").length, 1);
-    assert.equal(capturedUrl.searchParams.getAll("agentUID").length, 1);
+    assert.equal(capturedUrl.searchParams.has("apiKey"), false);
+    assert.equal(capturedUrl.searchParams.has("agentUID"), false);
+    assert.equal(capturedUrl.toString().includes(encodeURIComponent(apiKey)), false);
+    assert.equal(capturedUrl.searchParams.get("AIAgentFlowRunID"), "10");
 
     const headers = new Headers(capturedInit?.headers);
     assert.equal(headers.has("Authorization"), false);
-    assert.equal(headers.has("X-API-Key"), false);
-    assert.equal(headers.has("X-Agent-UID"), false);
+    assert.equal(headers.get("X-API-Key"), apiKey);
+    assert.equal(headers.get("X-Agent-UID"), agentUid);
     assert.equal(capturedInit?.redirect, "manual");
   } finally {
     globalThis.fetch = originalFetch;
@@ -108,12 +108,12 @@ test("keeps discovered agent identifiers isolated by run", async () => {
   const observed: Array<{ runId: string | null; agentUid: string | null }> = [];
   const callsByRun = new Map<string, number>();
 
-  globalThis.fetch = async (input) => {
+  globalThis.fetch = async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : input.toString());
     const runId = url.searchParams.get("AIAgentFlowRunID") ?? "";
     observed.push({
       runId,
-      agentUid: url.searchParams.get("agentUID")
+      agentUid: new Headers(init?.headers).get("X-Agent-UID")
     });
     const call = (callsByRun.get(runId) ?? 0) + 1;
     callsByRun.set(runId, call);

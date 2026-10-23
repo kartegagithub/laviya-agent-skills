@@ -42,8 +42,13 @@ export declare class LaviyaApiClient {
         search?: string;
     }): Promise<unknown>;
     createTasks(payload: unknown, idempotencyKey: string): Promise<unknown>;
+    startDeliveryRun(payload: {
+        taskIDs: number[];
+        title?: string;
+    }): Promise<unknown>;
     startTaskWork(payload: {
         taskID: number;
+        deliveryRunID?: number;
     }): Promise<unknown>;
     completeTaskWork(payload: unknown, idempotencyKey: string): Promise<unknown>;
     reportRuntimeHeartbeat(payload: unknown): Promise<unknown>;

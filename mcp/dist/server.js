@@ -16,6 +16,7 @@ import { registerReportTokenUsageTool } from "./tools/reportTokenUsageTool.js";
 import { registerStartExecutionTool } from "./tools/startExecutionTool.js";
 import { registerStartTaskWorkTool } from "./tools/startTaskWorkTool.js";
 import { registerCompleteTaskWorkTool } from "./tools/completeTaskWorkTool.js";
+import { registerStartDeliveryRunTool } from "./tools/startDeliveryRunTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
 import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger } from "./utils/logger.js";
@@ -97,6 +98,11 @@ export async function createRuntimeServer(options = {}) {
         server,
         client,
         logger: logger.child({ tool: "laviya_create_tasks" })
+    });
+    registerStartDeliveryRunTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_start_delivery_run" })
     });
     registerStartTaskWorkTool({
         server,

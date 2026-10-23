@@ -247,9 +247,9 @@ export LAVIYA_LOG_LEVEL="info"
 run so parallel executions cannot overwrite each other's agent context.
 
 Secrets must remain in environment variables, not repo config files.  
-The runtime sends `apiKey` and, when available, `agentUID` only as query parameters expected by the
-Laviya AI orchestration endpoints. It does not send `Authorization`, `X-API-Key`, or `X-Agent-UID`
-headers. Request redirects are refused so query credentials cannot be forwarded to another origin.
+The runtime sends the api key only in the `X-API-Key` header and, when available, the agent UID in the
+`X-Agent-UID` header. Credentials are never put in the URL, so they do not appear in proxy, gateway or
+server access logs. Request redirects are refused so credentials cannot be forwarded to another origin.
 Production base URLs must use HTTPS; HTTP is accepted only for loopback development addresses.
 Legacy global `auth` objects are accepted temporarily for migration, but ignored with a warning.
 
@@ -268,7 +268,7 @@ Runtime responsibilities implemented in code:
 - Discover nearest project config from current working directory.
 - Load base prompt, then append optional project override prompt.
 - Expose resolved prompt text through MCP prompt/resource endpoints.
-- Initialize API client with retries, timeout, query-only auth (`apiKey`, `agentUID`) and idempotency.
+- Initialize API client with retries, timeout, header-only auth (`X-API-Key`, `X-Agent-UID`; credentials are never placed in the URL) and idempotency.
 - Redact API keys and summarize agent identifiers in structured logs and error contexts.
 - Refuse HTTP redirects and unsafe non-loopback HTTP base URLs.
 - Parse the backend envelope centrally and map `HasFailed: true` to MCP `isError: true`.
@@ -294,6 +294,7 @@ MCP tools exposed:
 - `laviya_add_task_comment`
 - `laviya_list_projects`
 - `laviya_create_tasks`
+- `laviya_start_delivery_run`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
 - `laviya_get_my_work`
@@ -337,23 +338,32 @@ Tool contracts:
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, title?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID? }] } }` (strict, 1-50 items)
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
     `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`isReplay: true`); the same key with a different list is rejected,
     and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
-  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
+    The created tasks are grouped in a new delivery run (`title` names it; it is not part of the default request key).
+  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, deliveryRunID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
+- `laviya_start_delivery_run`
+  - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
+  - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run
+    that already contains any of the tasks (adding the missing ones), otherwise creates a run. Does not use a credit by itself.
+  - Output: `{ id, title, runStatus, projectID, taskCount, completedTaskCount, aiEffortMinutes, isReplay, tasks: [...] }`.
 - `laviya_start_task_work`
-  - Input: `{ payload: { taskID } }`
+  - Input: `{ payload: { taskID, deliveryRunID? } }`
   - Behavior: `POST /api/ai/StartTaskWork`. Starts the server-measured AI work session (or returns the open one) and moves the task to the project's Processing status.
+    The session joins `deliveryRunID`, else the caller's active run containing the task, else a new single-task run. A new session uses one Agent Orchestration credit (403 when exhausted).
   - Output: work session `{ sessionID, taskID, customTaskID, startedAt, status, ... }`.
 - `laviya_complete_task_work`
-  - Input: `{ payload: { taskID, sessionID, comment?, targetStatus?, methodologyStatusID?, requestKey? } }` (`sessionID` from `laviya_start_task_work`)
+  - Input: `{ payload: { taskID, sessionID, comment?, targetStatus?, methodologyStatusID?, workEndedAt?, requestKey? } }` (`sessionID` from `laviya_start_task_work`)
   - Behavior: `POST /api/ai/CompleteTaskWork`. Records the measured minutes as AI effort, moves the task to the Ready for deploy status (same resolution as AI run completion,
     or `targetStatus`; Rejected statuses are not allowed) and adds `comment` as a task comment. Each step is stored once per session; a retry for the same session resumes the missing steps,
     even with a reworded comment or a corrected target. The default request key is derived from `taskID` + `sessionID`.
+    Time shared with the caller's other open or overlapping sessions is split between them, so parallel work is not counted twice; `workEndedAt` (ISO 8601) ends the measurement earlier when the call is late.
+    AI effort is excluded from the owner's daily effort, overtime and capacity reports.
   - Output: work session with `durationMinutes`, `status`, `targetStatus`, `effortRecorded`, `statusChanged`, `taskCommentID`.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`

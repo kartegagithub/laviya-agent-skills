@@ -87,7 +87,7 @@ export async function loadGlobalConfig(configPath) {
     }
     const warnings = [];
     if (asRecord(raw)?.auth !== undefined) {
-        warnings.push("Global config auth settings are deprecated and ignored; the runtime uses query-only authentication.");
+        warnings.push("Global config auth settings are deprecated and ignored; the runtime sends credentials only as X-API-Key / X-Agent-UID headers.");
     }
     return {
         config: {

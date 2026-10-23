@@ -36,7 +36,7 @@
     "auth": {
       "type": "object",
       "deprecated": true,
-      "description": "Deprecated compatibility field. Ignored because the runtime uses query-only authentication.",
+      "description": "Deprecated compatibility field. Ignored because the runtime sends credentials only as X-API-Key / X-Agent-UID headers.",
       "additionalProperties": true
     },
     "retry": {

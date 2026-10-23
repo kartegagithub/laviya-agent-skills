@@ -68,8 +68,8 @@ test("posts the approved list to api/ai/CreateTasks with a deterministic request
     assert.equal(requests.length, 2);
     const [first, second] = requests;
     assert.equal(first?.url.pathname, "/api/ai/CreateTasks");
-    assert.equal(first?.url.searchParams.get("apiKey"), "test-api-key");
-    assert.equal(first?.headers.has("X-API-Key"), false);
+    assert.equal(first?.headers.get("X-API-Key"), "test-api-key");
+    assert.equal(first?.url.searchParams.has("apiKey"), false);
     assert.deepEqual(first?.body.tasks, [
       { referenceID: "W-01", title: "Add export endpoint", description: "Return List<Row>.", priority: 2, estimatedEffort: 90 },
       { referenceID: "W-02", title: "Cover export endpoint", taskTypeID: 10, parentReferenceID: "w-01" },
@@ -171,7 +171,8 @@ test("lists accessible projects through api/ai/GetProjects", async () => {
     assert.deepEqual(await listProjects(createClient(), createLogger("error"), {}), projects);
     assert.equal(requests[0]?.url.pathname, "/api/ai/GetProjects");
     assert.equal(requests[0]?.url.searchParams.get("Search"), "backend");
-    assert.equal(requests[0]?.url.searchParams.get("apiKey"), "test-api-key");
+    assert.equal(requests[0]?.headers.get("X-API-Key"), "test-api-key");
+    assert.equal(requests[0]?.url.searchParams.has("apiKey"), false);
     assert.equal(requests[1]?.url.searchParams.has("Search"), false);
   } finally {
     restore();

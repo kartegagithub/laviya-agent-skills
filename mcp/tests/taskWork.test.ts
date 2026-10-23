@@ -4,6 +4,8 @@ import { LaviyaApiClient } from "../src/client/laviyaApiClient.js";
 import {
   completeTaskWork,
   completeTaskWorkPayloadSchema,
+  startDeliveryRun,
+  startDeliveryRunPayloadSchema,
   startTaskWork,
   startTaskWorkPayloadSchema
 } from "../src/orchestration/taskWork.js";
@@ -82,7 +84,8 @@ test("starts and completes measured task work through api/ai", async () => {
     assert.equal(requests[0]?.url.pathname, "/api/ai/StartTaskWork");
     assert.deepEqual(requests[0]?.body, { taskID: 501 });
     assert.equal(requests[1]?.url.pathname, "/api/ai/CompleteTaskWork");
-    assert.equal(requests[1]?.url.searchParams.get("apiKey"), "test-api-key");
+    assert.equal(requests[1]?.headers.get("X-API-Key"), "test-api-key");
+    assert.equal(requests[1]?.url.searchParams.has("apiKey"), false);
     assert.deepEqual(
       { ...requests[1]?.body, requestKey: undefined },
       { taskID: 501, sessionID: 77, comment: "Implemented export.\nTests pass.", targetStatusName: "Ready for deploy", requestKey: undefined }
@@ -115,7 +118,30 @@ test("completion keys identify the session, so reworded retries resume it", asyn
   }
 });
 
+test("starts a delivery run for existing tasks and passes the run and late work end", async () => {
+  const { requests, restore } = installFetch(() => jsonResponse({ HasFailed: false, Data: { ID: 12, IsReplay: false } }));
+
+  try {
+    const client = createClient();
+    const logger = createLogger("error");
+    const run = await startDeliveryRun(client, logger, startDeliveryRunPayloadSchema.parse({ taskIDs: [501, 502, 501], title: "Export work" }));
+    await startTaskWork(client, logger, startTaskWorkPayloadSchema.parse({ taskID: 501, deliveryRunID: 12 }));
+    await completeTaskWork(client, logger, completeTaskWorkPayloadSchema.parse({ taskID: 501, sessionID: 77, workEndedAt: "2026-10-22T10:15:00+03:00" }));
+
+    assert.deepEqual(run, { ID: 12, IsReplay: false });
+    assert.equal(requests[0]?.url.pathname, "/api/ai/StartDeliveryRun");
+    assert.deepEqual(requests[0]?.body, { taskIDs: [501, 502], title: "Export work" });
+    assert.deepEqual(requests[1]?.body, { taskID: 501, deliveryRunID: 12 });
+    assert.equal(requests[2]?.body.workEndedAt, "2026-10-22T10:15:00+03:00");
+  } finally {
+    restore();
+  }
+});
+
 test("validates task work payloads", async () => {
+  assert.equal(startDeliveryRunPayloadSchema.safeParse({ taskIDs: [] }).success, false);
+  assert.equal(startDeliveryRunPayloadSchema.safeParse({ taskIDs: Array.from({ length: 101 }, (_, index) => index + 1) }).success, false);
+  assert.equal(completeTaskWorkPayloadSchema.safeParse({ taskID: 1, sessionID: 2, workEndedAt: "yesterday" }).success, false);
   assert.equal(startTaskWorkPayloadSchema.safeParse({ taskID: 0 }).success, false);
   assert.equal(completeTaskWorkPayloadSchema.safeParse({ taskID: 1, sessionID: 2, hours: 2 }).success, false);
   assert.equal(completeTaskWorkPayloadSchema.safeParse({ taskID: 1, comment: "Done." }).success, false, "sessionID is required");

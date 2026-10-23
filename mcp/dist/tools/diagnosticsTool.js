@@ -19,7 +19,7 @@ export function registerDiagnosticsTool(deps) {
             projectConfigPath: deps.runtimeConfig.projectConfigPath,
             globalConfigPath: deps.runtimeConfig.globalConfigPath,
             baseUrlHost: new URL(deps.runtimeConfig.baseUrl).host,
-            authMode: "query",
+            authMode: "header",
             tokenUsage: deps.runtimeConfig.completion.includeTokenUsage
                 ? "optional-enabled"
                 : "optional-disabled",

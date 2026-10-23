@@ -45,6 +45,7 @@ test("MCP runtime initializes and exposes tools, prompts, resources, and diagnos
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_list_projects"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_start_task_work"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_complete_task_work"));
+    assert.ok(tools.tools.some((tool) => tool.name === "laviya_start_delivery_run"));
 
     const prompts = await client.listPrompts();
     assert.ok(prompts.prompts.some((prompt) => prompt.name === "laviya_orchestrator_system_prompt"));
@@ -65,7 +66,7 @@ test("MCP runtime initializes and exposes tools, prompts, resources, and diagnos
       | Record<string, unknown>
       | undefined;
     const result = structuredContent?.result as Record<string, unknown>;
-    assert.equal(result.authMode, "query");
+    assert.equal(result.authMode, "header");
     assert.equal(result.activeLeaseCount, 0);
     assert.equal(JSON.stringify(result).includes("integration-test-key"), false);
 

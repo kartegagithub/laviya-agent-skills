@@ -111,7 +111,7 @@ export async function loadGlobalConfig(configPath?: string): Promise<LoadedGloba
   const warnings: string[] = [];
   if (asRecord(raw)?.auth !== undefined) {
     warnings.push(
-      "Global config auth settings are deprecated and ignored; the runtime uses query-only authentication."
+      "Global config auth settings are deprecated and ignored; the runtime sends credentials only as X-API-Key / X-Agent-UID headers."
     );
   }
 

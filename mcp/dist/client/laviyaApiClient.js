@@ -124,6 +124,14 @@ export class LaviyaApiClient {
             timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
         });
     }
+    async startDeliveryRun(payload) {
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/StartDeliveryRun",
+            body: payload
+        });
+    }
     async startTaskWork(payload) {
         return this.request({
             method: "POST",
@@ -203,12 +211,18 @@ export class LaviyaApiClient {
     }
     async requestOnce(options, attempt) {
         const activeAgentUid = this.resolveAgentUid(options.contextRunId);
-        const url = this.buildUrl(options.path, options.query, activeAgentUid);
+        const url = this.buildUrl(options.path, options.query);
         const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
         if (serializedBody && Buffer.byteLength(serializedBody, "utf8") > MAX_REQUEST_BODY_BYTES) {
             throw new LaviyaProtocolError(`Request body exceeds the ${MAX_REQUEST_BODY_BYTES} byte limit on ${options.path}.`);
         }
-        const headers = {};
+        // Credentials travel only in headers: query strings end up in proxy, gateway and server access logs.
+        const headers = {
+            "X-API-Key": this.options.apiKey
+        };
+        if (activeAgentUid) {
+            headers["X-Agent-UID"] = activeAgentUid;
+        }
         if (serializedBody !== undefined) {
             headers["Content-Type"] = "application/json; charset=utf-8";
         }
@@ -271,23 +285,12 @@ export class LaviyaApiClient {
             this.activeControllers.delete(controller);
         }
     }
-    buildUrl(path, query, activeAgentUid) {
+    buildUrl(path, query) {
         const url = new URL(path, this.options.baseUrl);
-        if (!query) {
-            url.searchParams.set("apiKey", this.options.apiKey);
-            if (activeAgentUid) {
-                url.searchParams.set("agentUID", activeAgentUid);
-            }
-            return url;
-        }
-        for (const [key, value] of Object.entries(query)) {
+        for (const [key, value] of Object.entries(query ?? {})) {
             if (value !== undefined) {
                 url.searchParams.set(key, String(value));
             }
-        }
-        url.searchParams.set("apiKey", this.options.apiKey);
-        if (activeAgentUid) {
-            url.searchParams.set("agentUID", activeAgentUid);
         }
         return url;
     }
