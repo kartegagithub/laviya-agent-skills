@@ -377,7 +377,7 @@ Tool contracts:
     or `targetStatus`; Rejected statuses are not allowed) and adds `comment` as a task comment. Each step is stored once per session; a retry for the same session resumes the missing steps,
     even with a reworded comment or a corrected target. The default request key is derived from `taskID` + `sessionID`.
     Time shared with the caller's other open or overlapping sessions is split between them, so parallel work is not counted twice; `workEndedAt` (ISO 8601) ends the measurement earlier when the call is late.
-    AI effort is excluded from the owner's daily effort, overtime and capacity reports.
+    AI effort counts toward the owner's daily effort, targets and overtime (marked as AI in reports).
   - Output: work session with `durationMinutes`, `status`, `targetStatus`, `effortRecorded`, `statusChanged`, `taskCommentID`.
 - `laviya_get_my_work`
   - Input: `runId?`, `projectId?`, `includeFileBytes?`, `previousLogsLimit?`, `output?`
