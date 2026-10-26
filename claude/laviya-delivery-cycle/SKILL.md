@@ -12,6 +12,7 @@ Laviya tools used:
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
 - `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`. Creating tasks never opens a delivery run.
+- `laviya_get_task`: read a task by ID or code (`LVY-11262`): description, status, people, attachments, sub tasks and latest comments. Read-only. Use it when the user only gives task codes; pass `downloadAttachments: "images"` when the description has screenshots and open the returned `localPath` files.
 - `laviya_upload_task_file`, `laviya_update_task_description`: add screenshots, documents or other files to a task's attachments, description or (with `laviya_add_task_comment` / the completion) comments.
 - `laviya_assign_task`: assign a task; without e-mails it is assigned to you. Only users with PM permission (PM, Director, Admin) can assign other people.
 - `laviya_start_delivery_run`: group tasks that already existed in Laviya into a delivery run (reuses your active run that contains them); returns the run `id`.

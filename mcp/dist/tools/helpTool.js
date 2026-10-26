@@ -53,6 +53,19 @@ const toolHelpCatalog = [
         }
     },
     {
+        name: "laviya_get_task",
+        purpose: "Read a task by ID or code: title, description, status, people, attachments, sub tasks, latest comments and design links.",
+        notes: [
+            "Read-only: no run is opened, no credit is used and the task is not changed. Only tasks of projects you can access are returned.",
+            "description is plain text: images in it appear as [image: /api/ai/GetFile?id=N] lines; descriptionHtml keeps the original markup.",
+            "downloadAttachments: images saves image attachments (screenshots) to a local temp folder and returns localPath for each, so you can open them; all saves every attachment (max 20)."
+        ],
+        example: {
+            name: "laviya_get_task",
+            arguments: { payload: { taskID: "LVY-11262", downloadAttachments: "images" } }
+        }
+    },
+    {
         name: "laviya_upload_task_file",
         purpose: "Upload a local file to a task's attachments (screenshots, documents, logs, archives, videos).",
         notes: [

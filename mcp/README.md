@@ -295,6 +295,7 @@ MCP tools exposed:
 - `laviya_list_projects`
 - `laviya_create_tasks`
 - `laviya_start_delivery_run`
+- `laviya_get_task`
 - `laviya_upload_task_file`
 - `laviya_update_task_description`
 - `laviya_assign_task`
@@ -351,6 +352,11 @@ Tool contracts:
     Creating tasks does not open a delivery run; a run starts only when work starts (`laviya_start_delivery_run` / `laviya_start_task_work`).
   - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
+- `laviya_get_task`
+  - Input: `{ payload: { taskID: number | "LVY-11262", downloadAttachments?: "none" | "images" | "all" } }`
+  - Behavior: `GET /api/ai/GetTask?TaskID=`. Read-only (no run, no credit, no change); only tasks of projects the api key owner can access.
+    With `images` / `all` the attachments (max 20) are saved to `<os temp>/laviya-task-files/<customTaskID>/` via `GET /api/ai/GetFile` and each gets `localPath` (or `downloadError`).
+  - Output: `{ taskID, customTaskID, title, description (plain text, images as [image: /api/ai/GetFile?id=N]), descriptionHtml, status, taskTypeID, priority, complexity, estimatedEffort, actualEffort, plannedDate, dueDate, projectID, projectName, spaceName, parentTask, subTasks, assignees, attachments, commentCount, comments (latest 20), designReferences }`.
 - `laviya_upload_task_file`
   - Input: `{ payload: { taskID, filePath, fileName? } }` (`filePath` absolute or relative to the project root)
   - Behavior: `POST /api/ai/UploadTaskFile` with the Base64 content. Adds the file to the task attachments (history: attachment added). Allowed types: png, jpg, jpeg, gif, webp, pdf, txt, md, log, json, csv, xml, zip, doc(x), xls(x), ppt(x), mp4, webm, mov; max 20 MiB; checked locally and on the server. Not retried automatically.
@@ -370,7 +376,7 @@ Tool contracts:
   - Input: `{ payload: { taskID, deliveryRunID? } }`
   - Behavior: `POST /api/ai/StartTaskWork`. Starts the server-measured AI work session (or returns the open one) and moves the task to the project's Processing status.
     The session joins `deliveryRunID`, else the caller's active run containing the task, else a new single-task run. A new session uses one Agent Orchestration credit (403 when exhausted).
-  - Output: work session `{ sessionID, taskID, customTaskID, startedAt, status, ... }`.
+  - Output: work session `{ sessionID, taskID, customTaskID, title, description, startedAt, status, ... }` (`description` is plain text).
 - `laviya_complete_task_work`
   - Input: `{ payload: { taskID, sessionID, comment?, targetStatus?, methodologyStatusID?, workEndedAt?, requestKey? } }` (`sessionID` from `laviya_start_task_work`)
   - Behavior: `POST /api/ai/CompleteTaskWork`. Records the measured minutes as AI effort, moves the task to the Ready for deploy status (same resolution as AI run completion,

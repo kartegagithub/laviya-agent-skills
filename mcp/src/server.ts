@@ -18,6 +18,7 @@ import { registerStartTaskWorkTool } from "./tools/startTaskWorkTool.js";
 import { registerCompleteTaskWorkTool } from "./tools/completeTaskWorkTool.js";
 import { registerStartDeliveryRunTool } from "./tools/startDeliveryRunTool.js";
 import { registerUploadTaskFileTool } from "./tools/uploadTaskFileTool.js";
+import { registerGetTaskTool } from "./tools/getTaskTool.js";
 import { registerUpdateTaskDescriptionTool } from "./tools/updateTaskDescriptionTool.js";
 import { registerAssignTaskTool } from "./tools/assignTaskTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
@@ -127,6 +128,12 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     logger: logger.child({ tool: "laviya_create_tasks" })
+  });
+
+  registerGetTaskTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_get_task" })
   });
 
   registerUploadTaskFileTool({

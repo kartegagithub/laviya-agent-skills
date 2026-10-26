@@ -126,6 +126,52 @@ export class LaviyaApiClient {
             timeoutSeconds: Math.max(120, this.options.requestTimeoutSeconds)
         });
     }
+    async getTask(taskID) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetTask",
+            query: { TaskID: taskID }
+        });
+    }
+    /** Bytes of a task file (GET /api/ai/GetFile); credentials go in headers like every other call. */
+    async downloadFile(fileID) {
+        const path = "/api/ai/GetFile";
+        const url = this.buildUrl(path, { id: fileID });
+        const headers = { "X-API-Key": this.options.apiKey };
+        const activeAgentUid = this.resolveAgentUid(undefined);
+        if (activeAgentUid) {
+            headers["X-Agent-UID"] = activeAgentUid;
+        }
+        const controller = new AbortController();
+        this.activeControllers.add(controller);
+        const timeout = setTimeout(() => controller.abort(), Math.max(120, this.options.requestTimeoutSeconds) * 1_000);
+        try {
+            const response = await fetch(url, { method: "GET", headers, signal: controller.signal, redirect: "manual" });
+            if (!response.ok) {
+                throw new LaviyaApiError(`Laviya API error ${response.status} on ${path} (file ${fileID})`, response.status);
+            }
+            const contentLength = Number(response.headers.get("content-length"));
+            if (Number.isFinite(contentLength) && contentLength > MAX_RESPONSE_BODY_BYTES) {
+                throw new LaviyaProtocolError(`File ${fileID} exceeds the ${MAX_RESPONSE_BODY_BYTES} byte limit.`);
+            }
+            const body = Buffer.from(await response.arrayBuffer());
+            if (body.byteLength > MAX_RESPONSE_BODY_BYTES) {
+                throw new LaviyaProtocolError(`File ${fileID} exceeds the ${MAX_RESPONSE_BODY_BYTES} byte limit.`);
+            }
+            return body;
+        }
+        catch (error) {
+            if (isAbortError(error)) {
+                throw new LaviyaApiError(`Request timeout on ${path} (file ${fileID})`);
+            }
+            throw error;
+        }
+        finally {
+            clearTimeout(timeout);
+            this.activeControllers.delete(controller);
+        }
+    }
     async uploadTaskFile(payload) {
         // Not retried: every successful call adds an attachment, so a retry after a timeout could store it twice.
         return this.request({

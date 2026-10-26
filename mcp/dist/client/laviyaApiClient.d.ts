@@ -42,6 +42,9 @@ export declare class LaviyaApiClient {
         search?: string;
     }): Promise<unknown>;
     createTasks(payload: unknown, idempotencyKey: string): Promise<unknown>;
+    getTask(taskID: string): Promise<unknown>;
+    /** Bytes of a task file (GET /api/ai/GetFile); credentials go in headers like every other call. */
+    downloadFile(fileID: number): Promise<Buffer>;
     uploadTaskFile(payload: {
         taskID: number;
         fileName: string;
