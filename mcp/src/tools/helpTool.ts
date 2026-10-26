@@ -223,7 +223,7 @@ const toolHelpCatalog: ToolHelp[] = [
     name: "laviya_start_delivery_run",
     purpose: "Group existing Laviya tasks into a delivery run before working on them (outside orchestration), so the work shows on the Delivery runs screen.",
     notes: [
-      "Reuses your active run that already contains any of the tasks and adds the missing ones; otherwise creates a run. laviya_create_tasks already creates a run, so call this only for tasks that existed before.",
+      "Reuses your active run that already contains any of the tasks and adds the missing ones; otherwise creates a run. laviya_create_tasks does not open a run: call this only when you are about to work on the tasks, never when the user only wants tasks created.",
       "Pass the returned id as deliveryRunID to laviya_start_task_work. Each new work session uses one Agent Orchestration credit."
     ],
     example: {
@@ -237,7 +237,7 @@ const toolHelpCatalog: ToolHelp[] = [
     notes: [
       "The task moves to the project's Processing status. Calling it again returns the open session and keeps the first start time.",
       "Keep the returned sessionID and pass it to laviya_complete_task_work.",
-      "Pass deliveryRunID from laviya_create_tasks or laviya_start_delivery_run; without it the task's active run is used or a single-task run is created. A new session uses one Agent Orchestration credit."
+      "Pass deliveryRunID from laviya_start_delivery_run; without it the task's active run is used or a single-task run is created. A new session uses one Agent Orchestration credit."
     ],
     example: {
       name: "laviya_start_task_work",

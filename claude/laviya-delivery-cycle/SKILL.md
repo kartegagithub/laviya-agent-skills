@@ -11,7 +11,7 @@ Laviya tools used:
 
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
-- `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`, and the `deliveryRunID` that groups them.
+- `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`. Creating tasks never opens a delivery run.
 - `laviya_upload_task_file`, `laviya_update_task_description`: add screenshots, documents or other files to a task's attachments, description or (with `laviya_add_task_comment` / the completion) comments.
 - `laviya_assign_task`: assign a task; without e-mails it is assigned to you. Only users with PM permission (PM, Director, Admin) can assign other people.
 - `laviya_start_delivery_run`: group tasks that already existed in Laviya into a delivery run (reuses your active run that contains them); returns the run `id`.
@@ -58,15 +58,16 @@ Ask the user to approve the proposed task list and the target project. They may 
 
 ## 4. Create Laviya tasks
 
-1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <chosen project ID>, "title": "<work list name>", "tasks": [...] } }`.
+1. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <chosen project ID>, "tasks": [...] } }`.
    - `referenceID` = item key. Put parents before children; use `parentReferenceID` for children and `parentTaskID` for a parent that already exists in Laviya.
    - Send `estimatedEffortHours`; descriptions are plain text.
    - Tasks are assigned to you. Pass `assigneeEmails` only when the user names other assignees; this needs PM permission or higher, otherwise the call is rejected and you should create the tasks without it.
 2. All items are created together or none. If the call fails, fix the cause shown in the error (for example a status or progress payment requirement) and call again; resending the same list never creates duplicates, it returns the tasks that already exist (`isReplay: true`). When `isReplay` is true on the first call for this list, tell the user these tasks already existed; to create the same list again on purpose, pass a new `requestKey`.
-3. Write every returned `taskID` / `customTaskID` into the work list right away and show the user the key -> Laviya ID table. Keep the returned `deliveryRunID`.
-4. When the list also has items that already carried a Laviya ID, call `laviya_start_delivery_run` with `{ "payload": { "taskIDs": [...], "title": "<work list name>" } }` for those tasks together with the tasks just created: the run created by `laviya_create_tasks` is reused and the existing tasks are added to it, so the whole list stays in one run. If nothing was created in this cycle, call it for all items you will work on. Use the returned `id` as `deliveryRunID`.
+3. Write every returned `taskID` / `customTaskID` into the work list right away and show the user the key -> Laviya ID table.
+4. If the user only wanted the tasks created (for example an analyst turning a document or presentation into tasks), stop here: do not call `laviya_start_delivery_run` or `laviya_start_task_work` for those tasks. If the analysis itself is tracked as a task, only that task is started and completed (step 5), so only its effort is recorded.
+5. When you are about to implement the items, call `laviya_start_delivery_run` once with `{ "payload": { "taskIDs": [<every item you will work on, new and existing>], "title": "<work list name>" } }` and use the returned `id` as `deliveryRunID`. Never start a run for items you will not work on now.
 
-## 5. Work through the items
+## 5. Work through the items (only when the user asked for implementation)
 
 Take the to-do items one at a time, in order (children before closing their parent):
 

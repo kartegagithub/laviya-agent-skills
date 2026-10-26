@@ -9,7 +9,7 @@ export const MAX_DELIVERY_RUN_TASKS = 100;
 export const startTaskWorkPayloadSchema = z.object({
   taskID: z.number().int().positive(),
   deliveryRunID: z.number().int().positive().optional()
-    .describe("deliveryRunID from laviya_create_tasks or laviya_start_delivery_run. Default: the active run that contains the task, else a new run.")
+    .describe("deliveryRunID from laviya_start_delivery_run. Default: the active run that contains the task, else a new run.")
 }).strict();
 
 export const startDeliveryRunPayloadSchema = z.object({

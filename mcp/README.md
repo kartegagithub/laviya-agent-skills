@@ -341,15 +341,15 @@ Tool contracts:
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, title?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails? }] } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails? }] } }` (strict, 1-50 items)
     Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
     `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`isReplay: true`); the same key with a different list is rejected,
     and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
-    The created tasks are grouped in a new delivery run (`title` names it; it is not part of the default request key).
-  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, deliveryRunID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
+    Creating tasks does not open a delivery run; a run starts only when work starts (`laviya_start_delivery_run` / `laviya_start_task_work`).
+  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
 - `laviya_upload_task_file`
   - Input: `{ payload: { taskID, filePath, fileName? } }` (`filePath` absolute or relative to the project root)
@@ -364,7 +364,7 @@ Tool contracts:
 - `laviya_start_delivery_run`
   - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
   - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run
-    that already contains any of the tasks (adding the missing ones), otherwise creates a run. Does not use a credit by itself.
+    that already contains any of the tasks (adding the missing ones), otherwise creates a run. Does not use a credit by itself. Call it only right before working on the tasks.
   - Output: `{ id, title, runStatus, projectID, taskCount, completedTaskCount, aiEffortMinutes, isReplay, tasks: [...] }`.
 - `laviya_start_task_work`
   - Input: `{ payload: { taskID, deliveryRunID? } }`

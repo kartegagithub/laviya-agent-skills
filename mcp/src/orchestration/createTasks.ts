@@ -43,8 +43,6 @@ export const createTasksPayloadSchema = z.object({
   progressPaymentID: z.number().int().positive().optional(),
   requestKey: z.string().trim().min(1).max(120).optional()
     .describe("Idempotency key. Defaults to a hash of the list, so resending the same list returns the same tasks."),
-  title: z.string().trim().min(1).max(255).optional()
-    .describe("Title of the delivery run that groups the created tasks on the Delivery runs screen."),
   tasks: z.array(createTaskItemSchema).min(1).max(MAX_CREATE_TASKS_BATCH_SIZE)
 }).strict();
 
@@ -72,8 +70,7 @@ export async function createTasks(
 
   // The backend creates all items in one transaction and replays the stored result for a repeated requestKey,
   // so a retry after a timeout never duplicates tasks.
-  // The run title is not part of the key: renaming the run must not create the tasks again.
-  const envelope = await client.createTasks({ ...body, title: payload.title, requestKey }, requestKey);
+  const envelope = await client.createTasks({ ...body, requestKey }, requestKey);
   return readData(envelope);
 }
 

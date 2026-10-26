@@ -18,7 +18,8 @@ export function registerStartDeliveryRunTool(deps: StartDeliveryRunToolDeps): vo
       title: "Start Delivery Run",
       description:
         "Outside orchestration, group existing Laviya tasks into a delivery run before working on them. Reuses your active run that already " +
-        "contains any of the tasks (adding the missing ones), otherwise creates a run. Pass the returned id as deliveryRunID to laviya_start_task_work.",
+        "contains any of the tasks (adding the missing ones), otherwise creates a run. Pass the returned id as deliveryRunID to laviya_start_task_work. " +
+        "Call it only right before working on the tasks; creating tasks alone never needs a run.",
       inputSchema: {
         payload: startDeliveryRunPayloadSchema
       },

@@ -8,7 +8,6 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
     methodologyStatusID: z.ZodOptional<z.ZodNumber>;
     progressPaymentID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
-    title: z.ZodOptional<z.ZodString>;
     tasks: z.ZodArray<z.ZodObject<{
         referenceID: z.ZodOptional<z.ZodString>;
         title: z.ZodString;
@@ -58,7 +57,6 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
     }[];
-    title?: string | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
     requestKey?: string | undefined;
@@ -77,7 +75,6 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
     }[];
-    title?: string | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
     requestKey?: string | undefined;
