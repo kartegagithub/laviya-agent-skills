@@ -488,7 +488,7 @@ Cursor integration:
 
 Claude Code integration:
 
-- Use `examples/claude/SKILL.md` and point tooling to the same MCP runtime.
+- Install `examples/claude/SKILL.md` as `~/.claude/skills/laviya-orchestrator/SKILL.md` and `../claude/laviya-delivery-cycle/SKILL.md` as `~/.claude/skills/laviya-delivery-cycle/SKILL.md` (Claude Code loads skills only from a `skills` folder; see "Install the Claude Code skills" in the repository README), and point tooling to the same MCP runtime.
 - Reference: `../docs/InstallationAndUsage.md` (Client-Specific MCP Setup > Claude).
 
 # 13. Production Readiness
