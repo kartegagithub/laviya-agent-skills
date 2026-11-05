@@ -53,6 +53,9 @@ test("MCP runtime initializes and exposes tools, prompts, resources, and diagnos
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_list_sprints"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_create_sprint"));
     assert.ok(tools.tools.some((tool) => tool.name === "laviya_assign_tasks_to_sprint"));
+    assert.ok(tools.tools.some((tool) => tool.name === "laviya_list_task_links"));
+    assert.ok(tools.tools.some((tool) => tool.name === "laviya_add_task_link"));
+    assert.ok(tools.tools.some((tool) => tool.name === "laviya_remove_task_link"));
 
     const prompts = await client.listPrompts();
     assert.ok(prompts.prompts.some((prompt) => prompt.name === "laviya_orchestrator_system_prompt"));

@@ -284,6 +284,35 @@ export class LaviyaApiClient {
     });
   }
 
+  async getTaskLinks(taskID: string): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetTaskLinks",
+      query: { TaskID: taskID }
+    });
+  }
+
+  async addTaskLink(payload: { taskID: number; url: string }): Promise<unknown> {
+    // Idempotent on the backend: a link already on the task is returned with isExisting instead of failing.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/AddTaskLink",
+      body: payload
+    });
+  }
+
+  async removeTaskLink(payload: { taskID: number; linkID: number }): Promise<unknown> {
+    // Idempotent on the backend: removing a link that is already removed returns true.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/RemoveTaskLink",
+      body: payload
+    });
+  }
+
   async startDeliveryRun(payload: { taskIDs: number[]; title?: string }): Promise<unknown> {
     return this.request({
       method: "POST",

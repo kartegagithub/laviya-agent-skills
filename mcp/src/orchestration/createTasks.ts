@@ -4,6 +4,10 @@ import { generateCanonicalRequestKey } from "../utils/canonicalJson.js";
 import type { Logger } from "../utils/logger.js";
 
 export const MAX_CREATE_TASKS_BATCH_SIZE = 50;
+export const MAX_CREATE_TASK_LINKS = 10;
+
+export const taskLinkUrlSchema = z.string().trim().max(2048).url()
+  .refine((value) => /^https?:\/\//i.test(value), "Only http and https links can be added.");
 
 const taskTypeIDSchema = z
   .union([
@@ -33,7 +37,9 @@ const createTaskItemSchema = z.object({
   assigneeEmails: z.array(z.string().trim().email()).max(10).optional()
     .describe("E-mails of tenant members to assign. Omit to assign yourself. Assigning others requires PM permission (PM, Director or Admin)."),
   folderID: z.number().int().positive().optional()
-    .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID.")
+    .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID."),
+  links: z.array(taskLinkUrlSchema).max(MAX_CREATE_TASK_LINKS).optional()
+    .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created.")
 }).strict();
 
 export const createTasksPayloadSchema = z.object({
@@ -91,7 +97,8 @@ function toRequestItem(item: CreateTaskItem, index: number) {
     parentTaskID: item.parentTaskID,
     parentReferenceID: item.parentReferenceID,
     assigneeEmails: item.assigneeEmails,
-    folderID: item.folderID
+    folderID: item.folderID,
+    links: item.links
   };
 }
 

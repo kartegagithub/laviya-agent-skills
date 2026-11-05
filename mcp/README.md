@@ -302,6 +302,9 @@ MCP tools exposed:
 - `laviya_list_sprints`
 - `laviya_create_sprint`
 - `laviya_assign_tasks_to_sprint`
+- `laviya_list_task_links`
+- `laviya_add_task_link`
+- `laviya_remove_task_link`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
 - `laviya_get_my_work`
@@ -345,7 +348,7 @@ Tool contracts:
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID? }], folderID? } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID?, links? }], folderID? } }` (strict, 1-50 items)
     Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
@@ -353,8 +356,9 @@ Tool contracts:
     and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
     `folderID` puts every task in a sprint (Laviya folder) of the same project; `tasks[].folderID` overrides it per item (sub tasks do not inherit the parent's folder). The folder must be visible to the api key owner (403) and belong to `projectID` (422); the link is created in the same transaction.
+    `tasks[].links` (max 10 http(s) URLs) are added to each newly created task after the commit, as with `laviya_add_task_link` (never on a replay); a link that fails is reported in `tasks[].linkErrors: [{ url, code, message }]` and the task stays created.
     Creating tasks does not open a delivery run; a run starts only when work starts (`laviya_start_delivery_run` / `laviya_start_task_work`).
-  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
+  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID, linkErrors? }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
 - `laviya_get_task`
   - Input: `{ payload: { taskID: number | "LVY-11262", downloadAttachments?: "none" | "images" | "all" } }`
@@ -383,6 +387,18 @@ Tool contracts:
   - Input: `{ payload: { approvedByUser: true, folderID, taskIDs: number[] (1-100), remove? } }`
   - Behavior: `POST /api/ai/SetTaskFolders`. Adds the tasks to the folder (or removes them with `remove: true`) with task history. The folder must be visible and every task accessible (403) and of the folder's project (422); otherwise nothing is changed. Safe to retry.
   - Output: `{ folderID, folderName, projectID, remove, tasks: [{ taskID, customTaskID, result: "added" | "alreadyPresent" | "removed" | "notPresent" }] }`.
+- `laviya_list_task_links`
+  - Input: `{ payload: { taskID: number | "LVY-11262" } }`
+  - Behavior: `GET /api/ai/GetTaskLinks?TaskID=`. The task's Links area (Figma, Visily, GitHub, other pages) for tasks the api key owner can access (403 otherwise). Read-only.
+  - Output: `{ taskID, customTaskID, links: [{ id, taskID, provider, linkType, url, embedUrl, externalID, title, state, metadata, isAutoLinked, createdByName, dateCreated, externalUpdatedAt, canRemove }] }`.
+- `laviya_add_task_link`
+  - Input: `{ payload: { approvedByUser: true, taskID, url } }` (http/https, max 2048 characters)
+  - Behavior: `POST /api/ai/AddTaskLink`. Adds the link like the task detail Links area (provider detection, max 50 links per task (422), link-added history; Figma preview only with the tenant's Figma add-on and the owner's Figma connection). If the task already has the link it is returned with `isExisting: true`, so retries are safe. 403 for tasks the api key owner cannot access.
+  - Output: `{ taskID, isExisting, link: { id, provider, linkType, url, embedUrl, title, metadata, canRemove, ... } }`.
+- `laviya_remove_task_link`
+  - Input: `{ payload: { approvedByUser: true, taskID, linkID } }`
+  - Behavior: `POST /api/ai/RemoveTaskLink`. The link must belong to `taskID` (404 otherwise); only its creator, the project PM or an Admin can remove it (403). A link that is already removed returns `true`, so retries are safe.
+  - Output: `true`.
 - `laviya_start_delivery_run`
   - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
   - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run

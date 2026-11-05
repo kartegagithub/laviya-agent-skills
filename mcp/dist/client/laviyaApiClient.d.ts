@@ -76,6 +76,15 @@ export declare class LaviyaApiClient {
         taskIDs: number[];
         remove: boolean;
     }): Promise<unknown>;
+    getTaskLinks(taskID: string): Promise<unknown>;
+    addTaskLink(payload: {
+        taskID: number;
+        url: string;
+    }): Promise<unknown>;
+    removeTaskLink(payload: {
+        taskID: number;
+        linkID: number;
+    }): Promise<unknown>;
     startDeliveryRun(payload: {
         taskIDs: number[];
         title?: string;

@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { Logger } from "../utils/logger.js";
 export declare const MAX_CREATE_TASKS_BATCH_SIZE = 50;
+export declare const MAX_CREATE_TASK_LINKS = 10;
+export declare const taskLinkUrlSchema: z.ZodEffects<z.ZodString, string, string>;
 export declare const createTasksPayloadSchema: z.ZodObject<{
     approvedByUser: z.ZodLiteral<true>;
     projectID: z.ZodNumber;
@@ -21,6 +23,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID: z.ZodOptional<z.ZodString>;
         assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
         folderID: z.ZodOptional<z.ZodNumber>;
+        links: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
     }, "strict", z.ZodTypeAny, {
         title: string;
         description?: string | undefined;
@@ -33,6 +36,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
+        links?: string[] | undefined;
     }, {
         title: string;
         description?: string | undefined;
@@ -45,6 +49,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
+        links?: string[] | undefined;
     }>, "many">;
 }, "strict", z.ZodTypeAny, {
     approvedByUser: true;
@@ -61,6 +66,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
+        links?: string[] | undefined;
     }[];
     folderID?: number | undefined;
     methodologyStatusID?: number | undefined;
@@ -81,6 +87,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
+        links?: string[] | undefined;
     }[];
     folderID?: number | undefined;
     methodologyStatusID?: number | undefined;

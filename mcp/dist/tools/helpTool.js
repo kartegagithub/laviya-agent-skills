@@ -199,7 +199,8 @@ const toolHelpCatalog = [
             "Created tasks are assigned to you. assigneeEmails assigns other tenant members instead, which only PM, Director and Admin users can do; otherwise the whole call is rejected and nothing is created.",
             "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
             "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey.",
-            "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint."
+            "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint.",
+            "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link."
         ],
         example: {
             name: "laviya_create_tasks",
@@ -247,6 +248,39 @@ const toolHelpCatalog = [
         example: {
             name: "laviya_assign_tasks_to_sprint",
             arguments: { payload: { approvedByUser: true, folderID: 42, taskIDs: [501, 502] } }
+        }
+    },
+    {
+        name: "laviya_list_task_links",
+        purpose: "List the links of a task (its Links area: Figma, Visily, GitHub and other pages) with id, provider, url, title and preview metadata.",
+        notes: ["Read-only. taskID is a numeric ID or a task code (LVY-11262). Use the id as linkID in laviya_remove_task_link."],
+        example: {
+            name: "laviya_list_task_links",
+            arguments: { payload: { taskID: "LVY-11262" } }
+        }
+    },
+    {
+        name: "laviya_add_task_link",
+        purpose: "Add a Figma frame, Visily board, GitHub or any other http(s) link to a task, so it shows in the task's Links area with a preview.",
+        notes: [
+            "approvedByUser must be true. A task has at most 50 links. Figma previews need the tenant's Figma add-on and your Figma connection; without them the link is still added.",
+            "If the task already has the link, it is returned with isExisting: true, so repeating the call is harmless."
+        ],
+        example: {
+            name: "laviya_add_task_link",
+            arguments: { payload: { approvedByUser: true, taskID: 11262, url: "https://www.figma.com/design/AbCdEf1234567890/Checkout?node-id=12-34" } }
+        }
+    },
+    {
+        name: "laviya_remove_task_link",
+        purpose: "Remove a link from a task.",
+        notes: [
+            "approvedByUser must be true. linkID must be a link of taskID (see laviya_list_task_links). Only the link's creator, the project PM or an Admin can remove it.",
+            "Removing a link that is already removed returns true."
+        ],
+        example: {
+            name: "laviya_remove_task_link",
+            arguments: { payload: { approvedByUser: true, taskID: 11262, linkID: 845 } }
         }
     },
     {
