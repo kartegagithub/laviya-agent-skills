@@ -218,7 +218,7 @@ const toolHelpCatalog: ToolHelp[] = [
       "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
       "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey.",
       "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint.",
-      "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link."
+      "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link. A replay lists the requested links that are not on the task with code E_LINK_NOT_VERIFIED."
     ],
     example: {
       name: "laviya_create_tasks",

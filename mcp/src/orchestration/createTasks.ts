@@ -39,7 +39,7 @@ const createTaskItemSchema = z.object({
   folderID: z.number().int().positive().optional()
     .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID."),
   links: z.array(taskLinkUrlSchema).max(MAX_CREATE_TASK_LINKS).optional()
-    .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created.")
+    .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created. On a replay, links not on the task are listed with code E_LINK_NOT_VERIFIED.")
 }).strict();
 
 export const createTasksPayloadSchema = z.object({
