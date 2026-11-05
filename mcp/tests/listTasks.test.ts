@@ -140,6 +140,8 @@ test("validates list task inputs", () => {
   assert.equal(listTasksInputSchema.safeParse({}).success, true);
   assert.equal(listTasksInputSchema.safeParse({ pageSize: 101 }).success, false);
   assert.equal(listTasksInputSchema.safeParse({ page: 0 }).success, false);
+  assert.equal(listTasksInputSchema.safeParse({ page: 21474837 }).success, false);
+  assert.equal(listTasksInputSchema.safeParse({ page: 21474836 }).success, true);
   assert.equal(listTasksInputSchema.safeParse({ assignedTo: "team" }).success, false);
   assert.equal(listTasksInputSchema.safeParse({ taskTypeIDs: [11] }).success, false);
   assert.equal(listTasksInputSchema.safeParse({ projectID: 0 }).success, false);

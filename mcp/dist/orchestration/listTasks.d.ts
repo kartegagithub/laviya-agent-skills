@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { LaviyaApiClient } from "../client/laviyaApiClient.js";
 import type { Logger } from "../utils/logger.js";
 export declare const MAX_LIST_TASKS_PAGE_SIZE = 100;
+/** Matches the backend clamp, so (page - 1) * pageSize stays inside a 32-bit int. */
+export declare const MAX_LIST_TASKS_PAGE: number;
 export declare const listTasksInputSchema: z.ZodObject<{
     projectID: z.ZodOptional<z.ZodNumber>;
     project: z.ZodOptional<z.ZodString>;

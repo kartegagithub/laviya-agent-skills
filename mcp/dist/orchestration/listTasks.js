@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { readData, taskTypeIDSchema } from "./createTasks.js";
 export const MAX_LIST_TASKS_PAGE_SIZE = 100;
+/** Matches the backend clamp, so (page - 1) * pageSize stays inside a 32-bit int. */
+export const MAX_LIST_TASKS_PAGE = Math.floor(2147483647 / MAX_LIST_TASKS_PAGE_SIZE);
 export const listTasksInputSchema = z.object({
     projectID: z.number().int().positive().optional()
         .describe("Laviya project (see laviya_list_projects). Omit both projectID and project to list every project you can access."),
@@ -13,7 +15,7 @@ export const listTasksInputSchema = z.object({
     search: z.string().trim().min(1).max(100).optional().describe("Part of the task title or task code (e.g. LVY-113)."),
     taskTypeIDs: z.array(taskTypeIDSchema).min(1).max(9).optional()
         .describe("Only these task types: 0 Task, 10 Bug, 20 ChangeRequest, 30 Improvement, 40 Debt, 50 Suggestion, 60 Meeting, 70 Story, 80 Epic."),
-    page: z.number().int().positive().optional().describe("1-based page. Default 1."),
+    page: z.number().int().positive().max(MAX_LIST_TASKS_PAGE).optional().describe("1-based page. Default 1."),
     pageSize: z.number().int().min(1).max(MAX_LIST_TASKS_PAGE_SIZE).optional()
         .describe("Default 25, max 100 (one page fits one laviya_start_delivery_run)."),
     lite: z.boolean().optional().describe("true leaves the sprints (folders) of each task out.")
