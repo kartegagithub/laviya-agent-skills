@@ -377,7 +377,7 @@ Tool contracts:
   - Output: `[{ id, projectID, name, startDate, endDate, sortOrder, taskCount }]`.
 - `laviya_create_sprint`
   - Input: `{ payload: { approvedByUser: true, projectID, name, startDate?, endDate?, sortOrder? } }` (dates `YYYY-MM-DD`)
-  - Behavior: `POST /api/ai/CreateFolder`. Creates a folder like the Site does (folder limit, default guard, sort order after the last folder). Idempotent by name: an active folder of the project with the same name (case and spaces ignored) is returned unchanged with `isExisting: true`. 403 for projects the api key owner cannot access.
+  - Behavior: `POST /api/ai/CreateFolder`. Creates a folder like the Site does (folder limit, default guard, sort order after the last folder). Idempotent by name: an active folder of the project with the same name (case and spaces ignored) is returned unchanged with `isExisting: true`. 403 for projects the api key owner cannot access, and when the same-named folder is hidden from them by its security guard.
   - Output: `{ id, projectID, name, startDate, endDate, sortOrder, taskCount, isExisting }`.
 - `laviya_assign_tasks_to_sprint`
   - Input: `{ payload: { approvedByUser: true, folderID, taskIDs: number[] (1-100), remove? } }`

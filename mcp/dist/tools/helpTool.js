@@ -229,7 +229,7 @@ const toolHelpCatalog = [
         purpose: "Create a sprint (Laviya folder) with optional start and end dates in a project, after the user approved the sprint plan.",
         notes: [
             "approvedByUser must be true. Dates are YYYY-MM-DD; startDate must not be after endDate.",
-            "Idempotent by name: if the project already has an active folder with the same name (case and spaces ignored), it is returned unchanged with isExisting: true; its dates are not changed.",
+            "Idempotent by name: if the project already has an active folder with the same name (case and spaces ignored), it is returned unchanged with isExisting: true; its dates are not changed. If that folder is hidden from you (security guard), the call fails with 403.",
             "Rejected for projects you cannot access and when the tenant's folder limit is reached."
         ],
         example: {
