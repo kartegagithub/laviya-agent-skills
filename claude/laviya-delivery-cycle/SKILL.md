@@ -15,6 +15,7 @@ Laviya tools used:
 - `laviya_get_task`: read a task by ID or code (`LVY-11262`): description, status, people, attachments, sub tasks and latest comments. Read-only. Use it when the user only gives task codes; pass `downloadAttachments: "images"` when the description has screenshots and open the returned `localPath` files.
 - `laviya_upload_task_file`, `laviya_update_task_description`: add screenshots, documents or other files to a task's attachments, description or (with `laviya_add_task_comment` / the completion) comments.
 - `laviya_assign_task`: assign a task; without e-mails it is assigned to you. Only users with PM permission (PM, Director, Admin) can assign other people.
+- `laviya_list_sprints`, `laviya_create_sprint`, `laviya_assign_tasks_to_sprint`: list, create (idempotent by name) and fill sprints, which are Laviya folders. Create or assign only what the user approved; `laviya_create_tasks` also takes `folderID` (for all items or per item) to put new tasks in a sprint.
 - `laviya_start_delivery_run`: group tasks that already existed in Laviya into a delivery run (reuses your active run that contains them); returns the run `id`.
 - `laviya_start_task_work`: start the server-measured AI working time on a task (the task moves to the project's Processing status); returns `sessionID`, `customTaskID` and, when the task has Figma or Visily links, `designReferences`.
 - `laviya_complete_task_work`: record the measured time as AI effort, move the task to Ready for deploy and add the completion comment.

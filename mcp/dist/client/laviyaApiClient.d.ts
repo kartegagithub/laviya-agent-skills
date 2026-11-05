@@ -60,6 +60,22 @@ export declare class LaviyaApiClient {
         taskID: number;
         assigneeEmails?: string[];
     }): Promise<unknown>;
+    getFolders(params: {
+        projectID: number;
+        search?: string;
+    }): Promise<unknown>;
+    createFolder(payload: {
+        projectID: number;
+        name: string;
+        startDate?: string;
+        endDate?: string;
+        sortOrder?: number;
+    }): Promise<unknown>;
+    setTaskFolders(payload: {
+        folderID: number;
+        taskIDs: number[];
+        remove: boolean;
+    }): Promise<unknown>;
     startDeliveryRun(payload: {
         taskIDs: number[];
         title?: string;

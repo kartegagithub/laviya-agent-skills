@@ -253,6 +253,37 @@ export class LaviyaApiClient {
     });
   }
 
+  async getFolders(params: { projectID: number; search?: string }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetFolders",
+      query: {
+        ProjectID: params.projectID,
+        Search: params.search
+      }
+    });
+  }
+
+  async createFolder(payload: { projectID: number; name: string; startDate?: string; endDate?: string; sortOrder?: number }): Promise<unknown> {
+    // Idempotent on the backend: an active folder of the project with the same name is returned instead of a new one.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/CreateFolder",
+      body: payload
+    });
+  }
+
+  async setTaskFolders(payload: { folderID: number; taskIDs: number[]; remove: boolean }): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/SetTaskFolders",
+      body: payload
+    });
+  }
+
   async startDeliveryRun(payload: { taskIDs: number[]; title?: string }): Promise<unknown> {
     return this.request({
       method: "POST",

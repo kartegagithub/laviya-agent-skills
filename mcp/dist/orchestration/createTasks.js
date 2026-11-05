@@ -26,7 +26,9 @@ const createTaskItemSchema = z.object({
     parentTaskID: z.number().int().positive().optional().describe("Existing task of the same project."),
     parentReferenceID: z.string().trim().min(1).max(100).optional().describe("referenceID of an earlier item of this call."),
     assigneeEmails: z.array(z.string().trim().email()).max(10).optional()
-        .describe("E-mails of tenant members to assign. Omit to assign yourself. Assigning others requires PM permission (PM, Director or Admin).")
+        .describe("E-mails of tenant members to assign. Omit to assign yourself. Assigning others requires PM permission (PM, Director or Admin)."),
+    folderID: z.number().int().positive().optional()
+        .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID.")
 }).strict();
 export const createTasksPayloadSchema = z.object({
     approvedByUser: z.literal(true),
@@ -35,6 +37,8 @@ export const createTasksPayloadSchema = z.object({
     methodologyStatusID: z.number().int().positive().optional()
         .describe("Task-creatable status of the project. Defaults to Backlog, Planned, Processing, ..."),
     progressPaymentID: z.number().int().positive().optional(),
+    folderID: z.number().int().positive().optional()
+        .describe("Sprint (Laviya folder) of the project for every task (see laviya_list_sprints / laviya_create_sprint). Items can override it."),
     requestKey: z.string().trim().min(1).max(120).optional()
         .describe("Idempotency key. Defaults to a hash of the list, so resending the same list returns the same tasks."),
     tasks: z.array(createTaskItemSchema).min(1).max(MAX_CREATE_TASKS_BATCH_SIZE)
@@ -47,6 +51,7 @@ export async function createTasks(client, logger, payload) {
         projectID,
         methodologyStatusID: payload.methodologyStatusID,
         progressPaymentID: payload.progressPaymentID,
+        folderID: payload.folderID,
         tasks
     };
     const requestKey = payload.requestKey ?? generateCanonicalRequestKey("CreateTasks", body);
@@ -67,7 +72,8 @@ function toRequestItem(item, index) {
         estimatedEffort: item.estimatedEffortHours === undefined ? undefined : Math.round(item.estimatedEffortHours * 60 * 100) / 100,
         parentTaskID: item.parentTaskID,
         parentReferenceID: item.parentReferenceID,
-        assigneeEmails: item.assigneeEmails
+        assigneeEmails: item.assigneeEmails,
+        folderID: item.folderID
     };
 }
 function validateTaskReferences(tasks) {

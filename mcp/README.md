@@ -299,6 +299,9 @@ MCP tools exposed:
 - `laviya_upload_task_file`
 - `laviya_update_task_description`
 - `laviya_assign_task`
+- `laviya_list_sprints`
+- `laviya_create_sprint`
+- `laviya_assign_tasks_to_sprint`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
 - `laviya_get_my_work`
@@ -342,13 +345,14 @@ Tool contracts:
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails? }] } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID? }], folderID? } }` (strict, 1-50 items)
     Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
     `requestKey` defaults to a hash of the list, so resending the same list returns the stored tasks (`isReplay: true`); the same key with a different list is rejected,
     and a replay whose tasks were deleted fails (send a new `requestKey` to create the list again on purpose).
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
+    `folderID` puts every task in a sprint (Laviya folder) of the same project; `tasks[].folderID` overrides it per item (sub tasks do not inherit the parent's folder). The folder must be visible to the api key owner (403) and belong to `projectID` (422); the link is created in the same transaction.
     Creating tasks does not open a delivery run; a run starts only when work starts (`laviya_start_delivery_run` / `laviya_start_task_work`).
   - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
@@ -367,6 +371,18 @@ Tool contracts:
 - `laviya_assign_task`
   - Input: `{ payload: { taskID, assigneeEmails? } }`
   - Behavior: `POST /api/ai/AddTaskAssignees`. Without e-mails the api key owner is assigned. Assigning other tenant members requires PM permission (PM, Director or Admin; HTTP 403 otherwise). Existing assignees are kept.
+- `laviya_list_sprints`
+  - Input: `projectID`, `search?` (part of the folder name)
+  - Behavior: `GET /api/ai/GetFolders?ProjectID=&Search=`. Sprints are Laviya folders. Folders of an accessible project that the api key owner can see (same rule as the Laviya folder list: project PM or folder security guard), max 200, in folder order. Read-only.
+  - Output: `[{ id, projectID, name, startDate, endDate, sortOrder, taskCount }]`.
+- `laviya_create_sprint`
+  - Input: `{ payload: { approvedByUser: true, projectID, name, startDate?, endDate?, sortOrder? } }` (dates `YYYY-MM-DD`)
+  - Behavior: `POST /api/ai/CreateFolder`. Creates a folder like the Site does (folder limit, default guard, sort order after the last folder). Idempotent by name: an active folder of the project with the same name (case and spaces ignored) is returned unchanged with `isExisting: true`. 403 for projects the api key owner cannot access.
+  - Output: `{ id, projectID, name, startDate, endDate, sortOrder, taskCount, isExisting }`.
+- `laviya_assign_tasks_to_sprint`
+  - Input: `{ payload: { approvedByUser: true, folderID, taskIDs: number[] (1-100), remove? } }`
+  - Behavior: `POST /api/ai/SetTaskFolders`. Adds the tasks to the folder (or removes them with `remove: true`) with task history. The folder must be visible and every task accessible (403) and of the folder's project (422); otherwise nothing is changed. Safe to retry.
+  - Output: `{ folderID, folderName, projectID, remove, tasks: [{ taskID, customTaskID, result: "added" | "alreadyPresent" | "removed" | "notPresent" }] }`.
 - `laviya_start_delivery_run`
   - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
   - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run

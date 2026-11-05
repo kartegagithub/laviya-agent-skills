@@ -7,6 +7,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
     projectID: z.ZodNumber;
     methodologyStatusID: z.ZodOptional<z.ZodNumber>;
     progressPaymentID: z.ZodOptional<z.ZodNumber>;
+    folderID: z.ZodOptional<z.ZodNumber>;
     requestKey: z.ZodOptional<z.ZodString>;
     tasks: z.ZodArray<z.ZodObject<{
         referenceID: z.ZodOptional<z.ZodString>;
@@ -19,6 +20,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentTaskID: z.ZodOptional<z.ZodNumber>;
         parentReferenceID: z.ZodOptional<z.ZodString>;
         assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        folderID: z.ZodOptional<z.ZodNumber>;
     }, "strict", z.ZodTypeAny, {
         title: string;
         description?: string | undefined;
@@ -30,6 +32,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
+        folderID?: number | undefined;
     }, {
         title: string;
         description?: string | undefined;
@@ -41,6 +44,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
+        folderID?: number | undefined;
     }>, "many">;
 }, "strict", z.ZodTypeAny, {
     approvedByUser: true;
@@ -56,7 +60,9 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
+        folderID?: number | undefined;
     }[];
+    folderID?: number | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
     requestKey?: string | undefined;
@@ -74,7 +80,9 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         parentTaskID?: number | undefined;
         parentReferenceID?: string | undefined;
         assigneeEmails?: string[] | undefined;
+        folderID?: number | undefined;
     }[];
+    folderID?: number | undefined;
     methodologyStatusID?: number | undefined;
     progressPaymentID?: number | undefined;
     requestKey?: string | undefined;

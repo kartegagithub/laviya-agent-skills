@@ -21,6 +21,9 @@ import { registerUploadTaskFileTool } from "./tools/uploadTaskFileTool.js";
 import { registerGetTaskTool } from "./tools/getTaskTool.js";
 import { registerUpdateTaskDescriptionTool } from "./tools/updateTaskDescriptionTool.js";
 import { registerAssignTaskTool } from "./tools/assignTaskTool.js";
+import { registerListSprintsTool } from "./tools/listSprintsTool.js";
+import { registerCreateSprintTool } from "./tools/createSprintTool.js";
+import { registerAssignTasksToSprintTool } from "./tools/assignTasksToSprintTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
 import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger, type Logger } from "./utils/logger.js";
@@ -154,6 +157,24 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     logger: logger.child({ tool: "laviya_assign_task" })
+  });
+
+  registerListSprintsTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_list_sprints" })
+  });
+
+  registerCreateSprintTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_create_sprint" })
+  });
+
+  registerAssignTasksToSprintTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_assign_tasks_to_sprint" })
   });
 
   registerStartDeliveryRunTool({

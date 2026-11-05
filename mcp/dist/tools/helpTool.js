@@ -198,7 +198,8 @@ const toolHelpCatalog = [
             "Use parentReferenceID to nest an item under an earlier item of the same call, or parentTaskID for an existing task of the project.",
             "Created tasks are assigned to you. assigneeEmails assigns other tenant members instead, which only PM, Director and Admin users can do; otherwise the whole call is rejected and nothing is created.",
             "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
-            "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey."
+            "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey.",
+            "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint."
         ],
         example: {
             name: "laviya_create_tasks",
@@ -212,6 +213,40 @@ const toolHelpCatalog = [
                     ]
                 }
             }
+        }
+    },
+    {
+        name: "laviya_list_sprints",
+        purpose: "List the sprints (Laviya folders) of a project with their dates and task counts.",
+        notes: ["Read-only. Only folders you can see in projects you can access are returned. search matches part of the folder name."],
+        example: {
+            name: "laviya_list_sprints",
+            arguments: { projectID: 3, search: "Sprint" }
+        }
+    },
+    {
+        name: "laviya_create_sprint",
+        purpose: "Create a sprint (Laviya folder) with optional start and end dates in a project, after the user approved the sprint plan.",
+        notes: [
+            "approvedByUser must be true. Dates are YYYY-MM-DD; startDate must not be after endDate.",
+            "Idempotent by name: if the project already has an active folder with the same name (case and spaces ignored), it is returned unchanged with isExisting: true; its dates are not changed.",
+            "Rejected for projects you cannot access and when the tenant's folder limit is reached."
+        ],
+        example: {
+            name: "laviya_create_sprint",
+            arguments: { payload: { approvedByUser: true, projectID: 3, name: "Sprint 12", startDate: "2026-11-09", endDate: "2026-11-20" } }
+        }
+    },
+    {
+        name: "laviya_assign_tasks_to_sprint",
+        purpose: "Add tasks to a sprint (Laviya folder), or remove them from it with remove: true.",
+        notes: [
+            "approvedByUser must be true. At most 100 taskIDs; every task must be an accessible task of the sprint's project, otherwise nothing is changed.",
+            "A task can be in several folders. Each task is reported as added, alreadyPresent, removed or notPresent, so repeating the call is harmless."
+        ],
+        example: {
+            name: "laviya_assign_tasks_to_sprint",
+            arguments: { payload: { approvedByUser: true, folderID: 42, taskIDs: [501, 502] } }
         }
     },
     {
