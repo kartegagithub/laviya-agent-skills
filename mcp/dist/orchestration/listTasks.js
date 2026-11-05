@@ -46,7 +46,7 @@ export async function listTasks(client, logger, input) {
  * Resolves a project name or task prefix through GetProjects (accessible projects only). Several partial matches are
  * accepted only when exactly one of them has that exact name or prefix.
  */
-async function resolveProjectID(client, project) {
+export async function resolveProjectID(client, project) {
     const data = readData(await client.getProjects({ search: project }));
     const projects = (Array.isArray(data) ? data : []).map((item) => {
         const record = (item ?? {});

@@ -306,6 +306,10 @@ MCP tools exposed:
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`
+- `laviya_list_wikis`
+- `laviya_get_wiki`
+- `laviya_create_wiki`
+- `laviya_update_wiki`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
 - `laviya_get_my_work`
@@ -405,6 +409,22 @@ Tool contracts:
   - Input: `{ payload: { approvedByUser: true, taskID, linkID } }`
   - Behavior: `POST /api/ai/RemoveTaskLink`. The link must belong to `taskID` (404 otherwise); only its creator, the project PM or an Admin can remove it (403). A link that is already removed returns `true`, so retries are safe.
   - Output: `true`.
+- `laviya_list_wikis`
+  - Input: `{ projectID? | project?, search?, parentWikiID? }` (`project` = name, part of it, or task prefix; exactly one project must match)
+  - Behavior: `GET /api/ai/GetWikis?ProjectID=&Search=&ParentWikiID=`. Active wikis of a project the api key owner can access (403 otherwise), filtered by the wiki security guards like the Laviya wiki page; wikis under a deleted wiki are left out. Flat list in wiki order, max 500; `parentWikiID` 0 = top-level wikis, a wiki id = its direct sub wikis. Read-only.
+  - Output: `[{ id, projectID, parentWikiID, name, sortOrder, childCount, dateModified }]`.
+- `laviya_get_wiki`
+  - Input: `{ payload: { wikiID } }`
+  - Behavior: `GET /api/ai/GetWiki?WikiID=`. Only wikis the api key owner can see (project access + wiki security guard; 403 otherwise, 404 under a deleted wiki). Read-only.
+  - Output: `{ id, name, content, contentHtml, projectID, projectName, parent, children: [{ id, name }], relatedTasks: [{ taskID, customTaskID, title, status }], author, dateCreated, dateModified }` (`content` is plain text).
+- `laviya_create_wiki`
+  - Input: `{ payload: { approvedByUser: true, projectID? | project?, parentWikiID?, name, content?, relatedTaskIDs?, requestKey? } }`
+  - Behavior: `POST /api/ai/CreateWiki`. Creates the wiki through the Laviya wiki writer (wiki limit, default security guard, mentions); without `parentWikiID` it is a top-level wiki of the project, otherwise a sub wiki of a visible wiki of the same project (422 otherwise). `content` is stored as escaped plain text (line breaks kept, Markdown stays text); `relatedTaskIDs` (tasks of the same project, max 50) are mentioned at the end. Idempotent by project + parent + name (case and spaces ignored): an existing active wiki is returned unchanged with `isExisting: true` (403 if it is hidden from the caller), so retries are safe. `requestKey` (default: hash of the request) is echoed back.
+  - Output: `{ id, projectID, parentWikiID, name, sortOrder, childCount, dateModified, isExisting, requestKey }`.
+- `laviya_update_wiki`
+  - Input: `{ payload: { approvedByUser: true, wikiID, name?, content?, mode?: "replace" | "append" } }` (name or content required)
+  - Behavior: `POST /api/ai/UpdateWiki`. Only wikis the api key owner can see (403). `mode` replace (default) overwrites the content and its task mentions, append adds the plain text at the end; omitted fields are kept. Replace and rename are retried on transport failures, append is not.
+  - Output: `{ id, projectID, parentWikiID, name, sortOrder, childCount, dateModified }`.
 - `laviya_start_delivery_run`
   - Input: `{ payload: { taskIDs: number[] (1-100), title? } }`
   - Behavior: `POST /api/ai/StartDeliveryRun`. Groups existing tasks into a delivery run shown on the orchestration Delivery runs screen: reuses the caller's active run

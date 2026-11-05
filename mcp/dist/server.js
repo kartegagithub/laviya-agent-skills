@@ -28,6 +28,10 @@ import { registerAssignTasksToSprintTool } from "./tools/assignTasksToSprintTool
 import { registerListTaskLinksTool } from "./tools/listTaskLinksTool.js";
 import { registerAddTaskLinkTool } from "./tools/addTaskLinkTool.js";
 import { registerRemoveTaskLinkTool } from "./tools/removeTaskLinkTool.js";
+import { registerListWikisTool } from "./tools/listWikisTool.js";
+import { registerGetWikiTool } from "./tools/getWikiTool.js";
+import { registerCreateWikiTool } from "./tools/createWikiTool.js";
+import { registerUpdateWikiTool } from "./tools/updateWikiTool.js";
 import { registerDiagnosticsTool } from "./tools/diagnosticsTool.js";
 import { registerHelpTool } from "./tools/helpTool.js";
 import { createLogger } from "./utils/logger.js";
@@ -166,6 +170,26 @@ export async function createRuntimeServer(options = {}) {
         server,
         client,
         logger: logger.child({ tool: "laviya_remove_task_link" })
+    });
+    registerListWikisTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_list_wikis" })
+    });
+    registerGetWikiTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_get_wiki" })
+    });
+    registerCreateWikiTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_create_wiki" })
+    });
+    registerUpdateWikiTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_update_wiki" })
     });
     registerStartDeliveryRunTool({
         server,

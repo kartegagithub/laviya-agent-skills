@@ -298,6 +298,52 @@ const toolHelpCatalog = [
         }
     },
     {
+        name: "laviya_list_wikis",
+        purpose: "List the wikis of a project as a flat tree (id, name, parentWikiID, sortOrder, childCount, dateModified).",
+        notes: [
+            "Read-only. Pass projectID or project (name, part of it, or task prefix). Only wikis your security guards let you see are listed; wikis under a deleted wiki are left out. At most 500, in wiki order.",
+            "search matches part of the wiki name. parentWikiID 0 lists the top-level wikis, a wiki id its direct sub wikis."
+        ],
+        example: {
+            name: "laviya_list_wikis",
+            arguments: { project: "Hyundai", search: "integration" }
+        }
+    },
+    {
+        name: "laviya_get_wiki",
+        purpose: "Read a wiki: name, plain-text content, stored HTML, project, parent, sub wikis and mentioned tasks.",
+        notes: ["Read-only. Only wikis you can see in Laviya can be read (403 otherwise)."],
+        example: {
+            name: "laviya_get_wiki",
+            arguments: { payload: { wikiID: 812 } }
+        }
+    },
+    {
+        name: "laviya_create_wiki",
+        purpose: "Create a wiki (or a sub wiki under parentWikiID) in a project, for example the technical document of an integration, after the user approved it.",
+        notes: [
+            "approvedByUser must be true. Use it only when the user asks to write something to the wiki. Pass projectID or project. Without parentWikiID the wiki is a top-level wiki of the project; a parent must be a wiki of the same project you can see.",
+            "content is plain text with line breaks kept; Markdown is stored as text. relatedTaskIDs (tasks of the same project, max 50) are mentioned at the end of the wiki.",
+            "Idempotent by name: an active wiki with the same name (case and spaces ignored) under the same parent is returned unchanged with isExisting: true. If that wiki is hidden from you, the call fails with 403. Rejected when the tenant's wiki limit is reached."
+        ],
+        example: {
+            name: "laviya_create_wiki",
+            arguments: { payload: { approvedByUser: true, project: "Hyundai", name: "Payment integration", content: "Overview\nThe service calls ...", relatedTaskIDs: [11262] } }
+        }
+    },
+    {
+        name: "laviya_update_wiki",
+        purpose: "Rename a wiki and/or replace or append its content, after the user approved the change.",
+        notes: [
+            "approvedByUser must be true; pass name, content or both. mode: replace (default) overwrites the whole content, including its task mentions; append adds content at the end.",
+            "Only wikis you can see in Laviya can be updated. An append is not retried automatically, so check with laviya_get_wiki before repeating it."
+        ],
+        example: {
+            name: "laviya_update_wiki",
+            arguments: { payload: { approvedByUser: true, wikiID: 812, content: "Changelog\n- Added refunds.", mode: "append" } }
+        }
+    },
+    {
         name: "laviya_start_delivery_run",
         purpose: "Group existing Laviya tasks into a delivery run before working on them (outside orchestration), so the work shows on the Delivery runs screen.",
         notes: [

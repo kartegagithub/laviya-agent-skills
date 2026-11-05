@@ -311,6 +311,55 @@ export class LaviyaApiClient {
     });
   }
 
+  async getWikis(params: { projectID: number; search?: string; parentWikiID?: number }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetWikis",
+      query: {
+        ProjectID: params.projectID,
+        Search: params.search,
+        ParentWikiID: params.parentWikiID
+      }
+    });
+  }
+
+  async getWiki(wikiID: number): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetWiki",
+      query: { WikiID: wikiID }
+    });
+  }
+
+  async createWiki(payload: {
+    projectID: number;
+    parentWikiID?: number;
+    name: string;
+    content?: string;
+    relatedTaskIDs?: number[];
+    requestKey: string;
+  }): Promise<unknown> {
+    // Idempotent on the backend: an active wiki with the same name under the same parent is returned instead of a new one.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/CreateWiki",
+      body: payload
+    });
+  }
+
+  async updateWiki(payload: { wikiID: number; name?: string; content?: string; mode: "replace" | "append" }): Promise<unknown> {
+    // Replace and rename can be repeated safely; an append retried after a lost response would add the text twice.
+    return this.request({
+      method: "POST",
+      retryMode: payload.mode === "append" ? "never" : "idempotent",
+      path: "/api/ai/UpdateWiki",
+      body: payload
+    });
+  }
+
   async getTaskLinks(taskID: string): Promise<unknown> {
     return this.request({
       method: "GET",

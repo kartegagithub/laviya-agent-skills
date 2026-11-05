@@ -37,4 +37,9 @@ export declare const listTasksInputSchema: z.ZodObject<{
 }>;
 export type ListTasksInput = z.infer<typeof listTasksInputSchema>;
 export declare function listTasks(client: LaviyaApiClient, logger: Logger, input: ListTasksInput): Promise<unknown>;
+/**
+ * Resolves a project name or task prefix through GetProjects (accessible projects only). Several partial matches are
+ * accepted only when exactly one of them has that exact name or prefix.
+ */
+export declare function resolveProjectID(client: LaviyaApiClient, project: string): Promise<number>;
 //# sourceMappingURL=listTasks.d.ts.map

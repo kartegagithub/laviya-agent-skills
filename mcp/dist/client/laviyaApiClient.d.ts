@@ -86,6 +86,26 @@ export declare class LaviyaApiClient {
         taskIDs: number[];
         remove: boolean;
     }): Promise<unknown>;
+    getWikis(params: {
+        projectID: number;
+        search?: string;
+        parentWikiID?: number;
+    }): Promise<unknown>;
+    getWiki(wikiID: number): Promise<unknown>;
+    createWiki(payload: {
+        projectID: number;
+        parentWikiID?: number;
+        name: string;
+        content?: string;
+        relatedTaskIDs?: number[];
+        requestKey: string;
+    }): Promise<unknown>;
+    updateWiki(payload: {
+        wikiID: number;
+        name?: string;
+        content?: string;
+        mode: "replace" | "append";
+    }): Promise<unknown>;
     getTaskLinks(taskID: string): Promise<unknown>;
     addTaskLink(payload: {
         taskID: number;

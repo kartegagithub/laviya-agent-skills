@@ -244,6 +244,44 @@ export class LaviyaApiClient {
             body: payload
         });
     }
+    async getWikis(params) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetWikis",
+            query: {
+                ProjectID: params.projectID,
+                Search: params.search,
+                ParentWikiID: params.parentWikiID
+            }
+        });
+    }
+    async getWiki(wikiID) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetWiki",
+            query: { WikiID: wikiID }
+        });
+    }
+    async createWiki(payload) {
+        // Idempotent on the backend: an active wiki with the same name under the same parent is returned instead of a new one.
+        return this.request({
+            method: "POST",
+            retryMode: "idempotent",
+            path: "/api/ai/CreateWiki",
+            body: payload
+        });
+    }
+    async updateWiki(payload) {
+        // Replace and rename can be repeated safely; an append retried after a lost response would add the text twice.
+        return this.request({
+            method: "POST",
+            retryMode: payload.mode === "append" ? "never" : "idempotent",
+            path: "/api/ai/UpdateWiki",
+            body: payload
+        });
+    }
     async getTaskLinks(taskID) {
         return this.request({
             method: "GET",
