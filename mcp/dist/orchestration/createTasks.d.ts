@@ -4,6 +4,7 @@ import type { Logger } from "../utils/logger.js";
 export declare const MAX_CREATE_TASKS_BATCH_SIZE = 50;
 export declare const MAX_CREATE_TASK_LINKS = 10;
 export declare const taskLinkUrlSchema: z.ZodEffects<z.ZodString, string, string>;
+export declare const taskTypeIDSchema: z.ZodUnion<[z.ZodLiteral<0>, z.ZodLiteral<10>, z.ZodLiteral<20>, z.ZodLiteral<30>, z.ZodLiteral<40>, z.ZodLiteral<50>, z.ZodLiteral<60>, z.ZodLiteral<70>, z.ZodLiteral<80>]>;
 export declare const createTasksPayloadSchema: z.ZodObject<{
     approvedByUser: z.ZodLiteral<true>;
     projectID: z.ZodNumber;

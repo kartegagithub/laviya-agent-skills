@@ -1,6 +1,6 @@
 ---
 name: laviya-delivery-cycle
-description: Run a work list (artifact, Markdown file or pasted plan) end to end with Laviya - verify what is done and what is left against the codebase, create Laviya tasks for the to-do items the user approves, write each Laviya task ID next to its item, then implement the items one by one while Laviya measures the AI working time, and move each finished task to Ready for deploy with a completion comment. Use when the user asks to verify a plan, open Laviya tasks for it, or work through it with Laviya tracking.
+description: Run a work list (artifact, Markdown file or pasted plan) end to end with Laviya - verify what is done and what is left against the codebase, create Laviya tasks for the to-do items the user approves, write each Laviya task ID next to its item, then implement the items one by one while Laviya measures the AI working time, and move each finished task to Ready for deploy with a completion comment. Also lists the Laviya tasks assigned to the user (per project, open by default) and works through the ones they select. Use when the user asks to verify a plan, open Laviya tasks for it, or work through it with Laviya tracking, or asks to list their Laviya tasks, see what is assigned to them or pending in a project, or do their assigned tasks.
 ---
 
 # Laviya Delivery Cycle
@@ -12,6 +12,7 @@ Laviya tools used:
 - `laviya_diagnostics`: confirm the MCP runtime and API host.
 - `laviya_list_projects`: list the Laviya projects the user can access, so they can choose where the tasks go.
 - `laviya_create_tasks`: create the approved to-do items; returns `tasks[]` with `referenceID`, `taskID` and `customTaskID`. Creating tasks never opens a delivery run.
+- `laviya_list_tasks`: list tasks of a project (`projectID`, or `project` by name or task prefix) or of all your projects; by default the open tasks assigned to you, highest priority first, 25 per page (`page`, `pageSize` up to 100, `hasMore`). Filter with `status` (`open`, `all` or status names), `search`, `taskTypeIDs`, `assignedTo: "anyone"`; `lite: true` leaves sprints out. Read-only.
 - `laviya_get_task`: read a task by ID or code (`LVY-11262`): description, status, people, attachments, sub tasks and latest comments. Read-only. Use it when the user only gives task codes; pass `downloadAttachments: "images"` when the description has screenshots and open the returned `localPath` files.
 - `laviya_upload_task_file`, `laviya_update_task_description`: add screenshots, documents or other files to a task's attachments, description or (with `laviya_add_task_comment` / the completion) comments.
 - `laviya_assign_task`: assign a task; without e-mails it is assigned to you. Only users with PM permission (PM, Director, Admin) can assign other people.
@@ -94,3 +95,19 @@ Take the to-do items one at a time, in order (children before closing their pare
 ## 6. Finish
 
 When every approved item is handled, give a final table: key, item, Laviya ID, final state, measured effort, verification. The work list must show the same information.
+
+## Work through assigned tasks
+
+Use this instead of steps 1-4 when the user asks what is assigned to them or pending (for example "Hyundai projesinde bana atanmış bekleyen işlerim neler?") or asks to do their assigned tasks. The Laviya tasks are the work list; nothing is created.
+
+1. Call `laviya_diagnostics`. Call `laviya_list_tasks` with the project the user named as `project` (name or task prefix), or without it for all their projects; the default is the open tasks assigned to the user. If the project matches several projects, show the candidates from the error and ask which one; then pass `projectID`. Use `lite: true` for long lists and follow `hasMore` with `page` when the user wants more.
+2. Show one table: Laviya ID (`customTaskID`), title, status, priority (NoPriority 0, Low 1, Medium 2, High 3), estimated effort in hours (`estimatedEffort` is minutes), project. Say how many tasks there are in total (`totalCount`).
+3. Ask which tasks to work on (all, or some of them) and in which order. Continue only with the tasks the user selects; never start one they did not select.
+4. Call `laviya_start_delivery_run` once with `{ "payload": { "taskIDs": [<selected taskIDs>], "title": "<project> assigned tasks" } }` (max 100) and keep the returned `id` as `deliveryRunID`.
+5. For each selected task, one at a time, follow step 5:
+   - `laviya_get_task` (with `downloadAttachments: "images"` when the description has screenshots) to read the description, comments and attachments;
+   - `laviya_start_task_work` with the task and `deliveryRunID`, keep `sessionID`;
+   - implement, then verify;
+   - `laviya_complete_task_work` immediately with that task's own completion comment. Every task gets its own measured effort, status change and comment; never complete several tasks with one call or one shared comment.
+   - If a task is unclear or blocked, do not complete it: explain why and ask before continuing with the next one.
+6. Finish with the table of step 6 (Laviya ID, title, final state, measured effort, verification).

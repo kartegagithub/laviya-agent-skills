@@ -4,7 +4,7 @@ export const MAX_CREATE_TASKS_BATCH_SIZE = 50;
 export const MAX_CREATE_TASK_LINKS = 10;
 export const taskLinkUrlSchema = z.string().trim().max(2048).url()
     .refine((value) => /^https?:\/\//i.test(value), "Only http and https links can be added.");
-const taskTypeIDSchema = z
+export const taskTypeIDSchema = z
     .union([
     z.literal(0),
     z.literal(10),

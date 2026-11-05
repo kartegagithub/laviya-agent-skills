@@ -293,6 +293,7 @@ MCP tools exposed:
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
 - `laviya_list_projects`
+- `laviya_list_tasks`
 - `laviya_create_tasks`
 - `laviya_start_delivery_run`
 - `laviya_get_task`
@@ -347,6 +348,11 @@ Tool contracts:
   - Input: `search?` (part of the name or exact task prefix)
   - Behavior: `GET /api/ai/GetProjects`. Active projects the api key owner can access (same rules as the Laviya project list), max 200, ordered by name.
   - Output: `[{ id, name, taskPrefix, spaceName }]` (the response `data`). Read-only.
+- `laviya_list_tasks`
+  - Input: `projectID?`, `project?` (name, part of it, or task prefix; not with `projectID`), `assignedTo?: "me" | "anyone"`, `status?`, `search?`, `taskTypeIDs?`, `page?`, `pageSize?` (1-100), `lite?`
+  - Behavior: `project` is resolved with `GET /api/ai/GetProjects` and must match exactly one accessible project (an exact name or task prefix wins among several partial matches); otherwise the error lists the candidates. Then `GET /api/ai/GetTasks`: one project (403 when not accessible) or every project the api key owner can access, so tasks of other projects are never listed.
+    `assignedTo` defaults to `me` (assignee or open checklist item). `status` defaults to `open` (every status except Verified, Rejected, Completed and Cancelled types, so Ready for deploy is open); `all`, or comma-separated status names of the project (unknown name: 422 with the available names). `search` matches the title or task code. Active tasks ordered by priority (High first), then ID; `pageSize` default 25, max 100. Read-only, retried as a safe GET.
+  - Output (the response `data`): `{ items: [{ taskID, customTaskID, title, status: { id, name }, priority, complexity, estimatedEffort (minutes), projectID, projectName, parentTaskID, taskTypeID, folders: [{ id, name }] }], totalCount, page, pageSize, hasMore }`; `lite` leaves `folders` out. Pass the selected `taskID`s to `laviya_start_delivery_run` to work through them.
 - `laviya_create_tasks`
   - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID?, links? }], folderID? } }` (strict, 1-50 items)
     Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).

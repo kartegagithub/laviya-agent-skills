@@ -60,6 +60,16 @@ export declare class LaviyaApiClient {
         taskID: number;
         assigneeEmails?: string[];
     }): Promise<unknown>;
+    getTasks(params: {
+        projectID?: number;
+        assignedTo?: string;
+        status?: string;
+        search?: string;
+        taskTypeIDs?: number[];
+        page?: number;
+        pageSize?: number;
+        lite?: boolean;
+    }): Promise<unknown>;
     getFolders(params: {
         projectID: number;
         search?: string;

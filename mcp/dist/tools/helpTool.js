@@ -217,6 +217,20 @@ const toolHelpCatalog = [
         }
     },
     {
+        name: "laviya_list_tasks",
+        purpose: "List tasks of a project or of every project you can access, by default the open tasks assigned to you, so the user can pick tasks to work through.",
+        notes: [
+            "Read-only. Only tasks of projects you can access are listed. project takes a name, part of it, or the task prefix and must match exactly one project (an exact name or prefix wins); otherwise the error lists the candidates. Pass either projectID or project.",
+            "assignedTo: me (default; assignee or open checklist item) or anyone. status: open (default: every status except Verified, Rejected, Completed and Cancelled types, so Ready for deploy is still open), all, or comma-separated status names such as \"Backlog, In Progress\".",
+            "Ordered by priority (3 High first), then task ID. pageSize default 25, max 100; use page and hasMore for the next page. lite leaves the sprints of each task out. estimatedEffort is in minutes.",
+            "To work through the tasks the user selects: laviya_start_delivery_run once with their taskIDs, then for each task laviya_get_task, laviya_start_task_work, implement, verify, laviya_complete_task_work."
+        ],
+        example: {
+            name: "laviya_list_tasks",
+            arguments: { project: "Hyundai", status: "open", pageSize: 25, lite: true }
+        }
+    },
+    {
         name: "laviya_list_sprints",
         purpose: "List the sprints (Laviya folders) of a project with their dates and task counts.",
         notes: ["Read-only. Only folders you can see in projects you can access are returned. search matches part of the folder name."],

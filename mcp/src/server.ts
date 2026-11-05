@@ -9,6 +9,7 @@ import { registerOrchestratorPromptAssets } from "./prompts/registerOrchestrator
 import { registerCompleteExecutionTool } from "./tools/completeExecutionTool.js";
 import { registerCreateTasksTool } from "./tools/createTasksTool.js";
 import { registerListProjectsTool } from "./tools/listProjectsTool.js";
+import { registerListTasksTool } from "./tools/listTasksTool.js";
 import { registerFeedTaskTool } from "./tools/feedTaskTool.js";
 import { registerGetLocalWorkStatusTool } from "./tools/getLocalWorkStatusTool.js";
 import { registerGetMyWorkTool } from "./tools/getMyWorkTool.js";
@@ -134,6 +135,12 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     logger: logger.child({ tool: "laviya_create_tasks" })
+  });
+
+  registerListTasksTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_list_tasks" })
   });
 
   registerGetTaskTool({

@@ -199,6 +199,23 @@ export class LaviyaApiClient {
             body: payload
         });
     }
+    async getTasks(params) {
+        return this.request({
+            method: "GET",
+            retryMode: "safe",
+            path: "/api/ai/GetTasks",
+            query: {
+                ProjectID: params.projectID,
+                AssignedTo: params.assignedTo,
+                Status: params.status,
+                Search: params.search,
+                TaskTypeIDs: params.taskTypeIDs?.length ? params.taskTypeIDs.join(",") : undefined,
+                Page: params.page,
+                PageSize: params.pageSize,
+                Lite: params.lite ? "true" : undefined
+            }
+        });
+    }
     async getFolders(params) {
         return this.request({
             method: "GET",

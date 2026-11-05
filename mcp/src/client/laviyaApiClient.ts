@@ -253,6 +253,33 @@ export class LaviyaApiClient {
     });
   }
 
+  async getTasks(params: {
+    projectID?: number;
+    assignedTo?: string;
+    status?: string;
+    search?: string;
+    taskTypeIDs?: number[];
+    page?: number;
+    pageSize?: number;
+    lite?: boolean;
+  }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetTasks",
+      query: {
+        ProjectID: params.projectID,
+        AssignedTo: params.assignedTo,
+        Status: params.status,
+        Search: params.search,
+        TaskTypeIDs: params.taskTypeIDs?.length ? params.taskTypeIDs.join(",") : undefined,
+        Page: params.page,
+        PageSize: params.pageSize,
+        Lite: params.lite ? "true" : undefined
+      }
+    });
+  }
+
   async getFolders(params: { projectID: number; search?: string }): Promise<unknown> {
     return this.request({
       method: "GET",

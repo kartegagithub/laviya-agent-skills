@@ -137,6 +137,7 @@ Core MCP tools available in this runtime:
 - `laviya_cancel_local_work`
 - `laviya_add_task_comment`
 - `laviya_list_projects`
+- `laviya_list_tasks`
 - `laviya_create_tasks`
 - `laviya_start_task_work`
 - `laviya_complete_task_work`
