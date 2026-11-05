@@ -42,4 +42,4 @@ When the user asks to turn a work list into Laviya tasks:
 
 Never call `laviya_create_tasks` during an assigned orchestration run or without explicit user approval.
 
-For the full cycle (verify the list, create tasks, write the IDs back, implement each item between `laviya_start_task_work` and `laviya_complete_task_work`, which records the AI effort and moves the task to Ready for deploy) use the `laviya-delivery-cycle` skill.
+For the full cycle (verify the list, create tasks, write the IDs back, implement each item between `laviya_start_task_work` and `laviya_complete_task_work`, which records the AI effort and moves the task to Ready for deploy) use the `laviya-delivery-cycle` skill. To turn a PRD into epics, stories, tasks, sprints and test cases, use the `laviya-prd-intake` skill.

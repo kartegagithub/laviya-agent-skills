@@ -11,6 +11,7 @@ export const assetRelativePaths = Object.freeze({
   completeExecutionPayloadExample: "core/complete-execution.payload.example.json",
   claudeSkill: "claude/SKILL.md",
   claudeDeliveryCycleSkill: "claude/laviya-delivery-cycle/SKILL.md",
+  claudePrdIntakeSkill: "claude/laviya-prd-intake/SKILL.md",
   cursorRule: "cursor/.cursor/rules/laviya-orchestrator.mdc",
   setupGuide: "docs/Setup.md",
   installationGuide: "docs/InstallationAndUsage.md",

@@ -335,26 +335,29 @@ Claude Code loads a skill only from a `skills` folder, one folder per skill name
 |---|---|---|---|
 | `laviya-orchestrator` (orchestration runs) | `mcp/examples/claude/SKILL.md` | `~/.claude/skills/laviya-orchestrator/SKILL.md` | `<project>/.claude/skills/laviya-orchestrator/SKILL.md` |
 | `laviya-delivery-cycle` (verify a work list, create tasks, report Ready for deploy) | `claude/laviya-delivery-cycle/SKILL.md` | `~/.claude/skills/laviya-delivery-cycle/SKILL.md` | `<project>/.claude/skills/laviya-delivery-cycle/SKILL.md` |
+| `laviya-prd-intake` (turn a PRD into epics, stories, tasks, sprints and test cases; example PRD: `docs/examples/prd-order-export.md`) | `claude/laviya-prd-intake/SKILL.md` | `~/.claude/skills/laviya-prd-intake/SKILL.md` | `<project>/.claude/skills/laviya-prd-intake/SKILL.md` |
 
 The paths in the second column are where the files live in this repository, not where Claude Code looks for them. A file in `~/.claude/laviya-delivery-cycle/` (without `skills`) or directly in `~/.claude/` is ignored.
 
 Windows (PowerShell, from the repository root):
 
 ```powershell
-New-Item -ItemType Directory -Force "$HOME\.claude\skills\laviya-orchestrator", "$HOME\.claude\skills\laviya-delivery-cycle" | Out-Null
+New-Item -ItemType Directory -Force "$HOME\.claude\skills\laviya-orchestrator", "$HOME\.claude\skills\laviya-delivery-cycle", "$HOME\.claude\skills\laviya-prd-intake" | Out-Null
 Copy-Item mcp\examples\claude\SKILL.md "$HOME\.claude\skills\laviya-orchestrator\SKILL.md"
 Copy-Item claude\laviya-delivery-cycle\SKILL.md "$HOME\.claude\skills\laviya-delivery-cycle\SKILL.md"
+Copy-Item claude\laviya-prd-intake\SKILL.md "$HOME\.claude\skills\laviya-prd-intake\SKILL.md"
 ```
 
 macOS / Linux (from the repository root):
 
 ```bash
-mkdir -p ~/.claude/skills/laviya-orchestrator ~/.claude/skills/laviya-delivery-cycle
+mkdir -p ~/.claude/skills/laviya-orchestrator ~/.claude/skills/laviya-delivery-cycle ~/.claude/skills/laviya-prd-intake
 cp mcp/examples/claude/SKILL.md ~/.claude/skills/laviya-orchestrator/SKILL.md
 cp claude/laviya-delivery-cycle/SKILL.md ~/.claude/skills/laviya-delivery-cycle/SKILL.md
+cp claude/laviya-prd-intake/SKILL.md ~/.claude/skills/laviya-prd-intake/SKILL.md
 ```
 
-Check: start a new Claude Code session and run `/skills`; `laviya-orchestrator` and `laviya-delivery-cycle` must be listed. Copy the files again after updating this repository. The Laviya MCP tools also work without the skills; the skills add the step-by-step rules.
+Check: start a new Claude Code session and run `/skills`; `laviya-orchestrator`, `laviya-delivery-cycle` and `laviya-prd-intake` must be listed. Copy the files again after updating this repository. The Laviya MCP tools also work without the skills; the skills add the step-by-step rules.
 
 ## 8. Available MCP Tools
 

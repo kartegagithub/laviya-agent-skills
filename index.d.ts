@@ -4,6 +4,7 @@ export type AssetKey =
   | "completeExecutionPayloadExample"
   | "claudeSkill"
   | "claudeDeliveryCycleSkill"
+  | "claudePrdIntakeSkill"
   | "cursorRule"
   | "setupGuide"
   | "installationGuide"
