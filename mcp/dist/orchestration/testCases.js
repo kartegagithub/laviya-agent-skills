@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { readData } from "./createTasks.js";
-import { fileListSchema, readTaskFile, resolveTaskFileIDs } from "./taskContent.js";
+import { fileListSchema, MAX_FILES_PER_CALL, readTaskFile, resolveTaskFileIDs } from "./taskContent.js";
 export const MAX_TEST_CASES_PER_CALL = 50;
 export const MAX_TEST_STEPS = 50;
 export const MAX_TEST_TEXT_LENGTH = 10_000;
@@ -10,7 +10,9 @@ export const testCaseInputSchema = z.object({
         .describe("Your stable key for the case (e.g. \"TC-1\" or the PRD scenario number). Saving the same referenceID again updates that case instead of adding another."),
     title: z.string().trim().min(1).max(500),
     preconditions: testTextSchema.optional().describe("Plain text."),
-    steps: z.array(z.string().trim().min(1).max(1000)).max(MAX_TEST_STEPS).optional().describe("Steps in order (stored one per line)."),
+    steps: z.array(z.string().trim().min(1).max(1000)).max(MAX_TEST_STEPS)
+        .refine((steps) => steps.join("\n").length <= MAX_TEST_TEXT_LENGTH, `Steps must be at most ${MAX_TEST_TEXT_LENGTH} characters in total.`)
+        .optional().describe("Steps in order (stored one per line)."),
     expectedResult: testTextSchema.optional().describe("Plain text."),
     sortOrder: z.number().int().optional().describe("Order in the task's list. Default: after the existing cases (unchanged on update).")
 }).strict();
@@ -53,6 +55,9 @@ export async function createTestCases(client, logger, payload) {
 export async function reportTestResult(client, logger, projectRoot, payload) {
     if ((payload.testCaseID === undefined) === (payload.referenceID === undefined)) {
         throw new Error("Pass exactly one of testCaseID or referenceID.");
+    }
+    if ((payload.filePaths?.length ?? 0) + (payload.fileIDs?.length ?? 0) > MAX_FILES_PER_CALL) {
+        throw new Error(`At most ${MAX_FILES_PER_CALL} evidence files (filePaths + fileIDs) can be reported in one call.`);
     }
     // Files are validated locally before anything is uploaded, so a bad path does not leave half the files behind.
     for (const filePath of payload.filePaths ?? []) {

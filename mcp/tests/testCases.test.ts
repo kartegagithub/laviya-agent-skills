@@ -151,6 +151,10 @@ test("rejects invalid test case payloads before calling Laviya", async () => {
     ...create,
     cases: Array.from({ length: 51 }, (_, i) => ({ referenceID: `TC-${i}`, title: "T" }))
   }).success, false);
+  assert.equal(createTestCasesPayloadSchema.safeParse({
+    ...create,
+    cases: [{ referenceID: "TC-1", title: "Login", steps: Array.from({ length: 20 }, () => "x".repeat(600)) }]
+  }).success, false, "joined steps must fit the backend's 10000 character limit");
 
   const report = { taskID: 5, testCaseID: 1, result: "passed" };
   assert.equal(reportTestResultPayloadSchema.safeParse(report).success, true);
@@ -167,6 +171,11 @@ test("rejects invalid test case payloads before calling Laviya", async () => {
     }
     await assert.rejects(reportTestResult(createClient(), createLogger("error"), process.cwd(),
       reportTestResultPayloadSchema.parse({ ...report, filePaths: ["missing.png"] })), /File not found/);
+    await assert.rejects(reportTestResult(createClient(), createLogger("error"), process.cwd(), reportTestResultPayloadSchema.parse({
+      ...report,
+      filePaths: Array.from({ length: 15 }, (_, i) => `missing-${i}.png`),
+      fileIDs: Array.from({ length: 10 }, (_, i) => i + 1)
+    })), /At most 20 evidence files/);
     assert.equal(requests.length, 0);
   } finally {
     restore();

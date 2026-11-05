@@ -8,7 +8,7 @@ export declare const testCaseInputSchema: z.ZodObject<{
     referenceID: z.ZodString;
     title: z.ZodString;
     preconditions: z.ZodOptional<z.ZodString>;
-    steps: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    steps: z.ZodOptional<z.ZodEffects<z.ZodArray<z.ZodString, "many">, string[], string[]>>;
     expectedResult: z.ZodOptional<z.ZodString>;
     sortOrder: z.ZodOptional<z.ZodNumber>;
 }, "strict", z.ZodTypeAny, {
@@ -40,7 +40,7 @@ export declare const createTestCasesPayloadSchema: z.ZodObject<{
         referenceID: z.ZodString;
         title: z.ZodString;
         preconditions: z.ZodOptional<z.ZodString>;
-        steps: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        steps: z.ZodOptional<z.ZodEffects<z.ZodArray<z.ZodString, "many">, string[], string[]>>;
         expectedResult: z.ZodOptional<z.ZodString>;
         sortOrder: z.ZodOptional<z.ZodNumber>;
     }, "strict", z.ZodTypeAny, {
