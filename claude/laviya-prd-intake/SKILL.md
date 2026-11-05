@@ -30,7 +30,7 @@ Everything is written on behalf of the api key owner and carries Laviya's AI mar
 ## 1. Preflight
 
 1. Call `laviya_diagnostics`. Stop and tell the user if the MCP runtime is not reachable.
-2. Load the PRD. List the items that already carry a Laviya ID: they are skipped, and they can still be parents of new items (`parentTaskID`).
+2. Load the PRD. If intake files from an earlier run exist next to it (`<prd file name>.laviya-intake*.json`), finish them first as described in section 5, before planning anything new. Then list the items that already carry a Laviya ID: they are skipped, and they can still be parents of new items (`parentTaskID`).
 3. Ask which Laviya project the work belongs to (`laviya_list_projects`, with `search` when the PRD or the user names one); never assume it from configuration. Show the project name and task prefix.
 4. Call `laviya_list_sprints` for the project to match the sprint names the PRD uses.
 
@@ -82,27 +82,28 @@ Ask the user to approve the exact plan (project, sprints, items, test cases, wik
 Run these steps in order and stop at the first error; every step can be repeated safely.
 
 1. Sprints: for each new sprint call `laviya_create_sprint` with `approvedByUser: true`, `projectID`, `name` (and dates if the PRD gives them). It returns the existing folder (`isExisting: true`) when the name is taken, so a re-run never creates a second sprint. Keep each sprint's folder ID.
-2. Intake file: write the exact `laviya_create_tasks` payload (without `requestKey`) to `<prd file name>.laviya-intake.json` next to the PRD (for an artifact, in the working folder the user chose). Items are ordered parents first; children use `parentReferenceID`, children of items already in Laviya use `parentTaskID`; `referenceID` is the key, `folderID` the item's sprint, `estimatedEffortHours`, `links`, `assigneeEmails` as approved.
-3. Request key: derived from PRD identity and content, so the same approved list always gets the same key and a changed list a new one:
-   `prd-<PRD-ID>-<first 16 hex characters of the SHA-256 of the payload's tasks array>`. Compute it, do not invent it:
+2. Intake file: write `{ "payload": { ... }, "requestKey": null, "created": null }` to `<prd file name>.laviya-intake.json` next to the PRD (for an artifact, in the working folder the user chose). `payload` is the exact `laviya_create_tasks` payload without `approvedByUser` and `requestKey`: `projectID`, `methodologyStatusID` / `progressPaymentID` / `folderID` when used, and `tasks`. Items are ordered parents first; children use `parentReferenceID`, children of items already in Laviya use `parentTaskID`; `referenceID` is the key, `folderID` the item's sprint, `estimatedEffortHours`, `links`, `assigneeEmails` as approved. Never overwrite an intake file that already exists: finish it first (section 5).
+   - More than 50 items: split into batches of at most 50, each with its own intake file `<prd file name>.laviya-intake.<first key>.json` (e.g. `.E-1.json`, or `.S-1.4.json` when one epic alone has more than 50 items and is split by story). Each batch is ordered parents first; a batch whose parent is in an earlier batch uses that parent's `parentTaskID` from the earlier batch's `created`, so create the batches one after another.
+3. Request key: derived from PRD identity and content, so the same approved payload always gets the same key and a changed payload (other project, status, sprint or items) a new one:
+   `prd-<PRD-ID>-<first 16 hex characters of the SHA-256 of the intake file's payload>`. Compute it, do not invent it, and store it in the intake file's `requestKey`:
    ```bash
-   node -e "const f=require('fs'),c=require('crypto');const p=JSON.parse(f.readFileSync(process.argv[1],'utf8'));console.log(c.createHash('sha256').update(JSON.stringify(p.tasks)).digest('hex').slice(0,16))" "<intake file>"
+   node -e "const f=require('fs'),c=require('crypto');const p=JSON.parse(f.readFileSync(process.argv[1],'utf8'));console.log(c.createHash('sha256').update(JSON.stringify(p.payload)).digest('hex').slice(0,16))" "<intake file>"
    ```
-4. Call `laviya_create_tasks` once with `{ "payload": { "approvedByUser": true, "projectID": <id>, "requestKey": "<key>", "tasks": [<from the intake file>] } }`. All items are created together or none.
-   - `isReplay: true` means this exact list was already created earlier (for example the write-back was interrupted); use the returned IDs and tell the user nothing new was created.
-   - An error that the request key was already used with a different request means the intake file changed after a create; do not change the key by hand. Read the PRD and the intake file again and check with `laviya_list_tasks` (`projectID`, `assignedTo: "anyone"`, `status: "all"`, `search`: title) which items exist before going on.
-   - If assigning other people is rejected (no PM permission), ask the user; on approval remove `assigneeEmails`, update the intake file and compute the key again.
-   - More than 50 items: send one call per epic (each with its own intake file and key), the epic's parents first; later calls use `parentTaskID` from earlier results.
-   - Fix other errors (status or progress payment requirement, invalid link) as the error says, update the intake file, and call again.
-5. Write back right away: put `- Laviya: <customTaskID> (#<taskID>)` next to every created item in the PRD and show the key -> Laviya ID table. Report `tasks[].linkErrors` (the task is created, the link is not).
+4. Call `laviya_create_tasks` once per intake file with `{ "payload": { "approvedByUser": true, "requestKey": "<stored key>", ...<intake payload> } }`. All items of the call are created together or none. Right after it succeeds, store `created` (`referenceID` -> `taskID`, `customTaskID`) in the intake file, before any write-back.
+   - `isReplay: true` means this exact payload was already created earlier (for example the write-back was interrupted); use the returned IDs and tell the user nothing new was created.
+   - An error that the request key was already used with a different request means the intake file was edited after a create with that key; do not change the key by hand. Read the PRD and the intake file again and check with `laviya_list_tasks` (`projectID`, `assignedTo: "anyone"`, `status: "all"`, `search`: title) which items exist before going on.
+   - An error that the tasks created with this request key were deleted: tell the user and ask whether to create them again. Only on approval, store the key with a `-r2` suffix (`-r3`, ... on later repeats) in the intake file and call again.
+   - If assigning other people is rejected (no PM permission), ask the user; on approval remove `assigneeEmails`, update the intake file and compute the key again (the failed call created nothing).
+   - Fix other errors (status or progress payment requirement, invalid link) as the error says, update the intake file, compute the key again and call again.
+5. Write back right away from the intake file's `created`: put `- Laviya: <customTaskID> (#<taskID>)` next to every created item in the PRD and show the key -> Laviya ID table. Report `tasks[].linkErrors` (the task is created, the link is not).
 6. Test cases: for each story or task with approved scenarios, call `laviya_create_test_cases` with `approvedByUser: true`, `taskID` and `cases` (the `TC-` key as `referenceID`, max 50 per call). Repeating the call updates the same cases. Write `- Laviya: TC-x on <customTaskID>` next to each scenario.
 7. Wiki (only when the user asked): `laviya_create_wiki` with `approvedByUser: true`, `projectID`, `name` (the PRD title, or "<PRD title> - Technical notes"), `content` (the PRD text or its technical notes as plain text) and `relatedTaskIDs` (the epics and stories, max 50). An existing wiki with the same name is returned unchanged (`isExisting: true`); tell the user and use `laviya_update_wiki` only if they approve a change.
-8. Delete the intake file only after the IDs are written back, or keep it if the user wants a record.
+8. Delete each intake file only after every item in its `created` is written back to the PRD and its test cases are created. If the user wants a record, rename it to `<prd file name>.laviya-done.<first key>.json` instead, so it is not resumed.
 
 ## 5. Re-running on the same PRD
 
+- Intake files decide the resume, not the PRD annotations. For every `<prd file name>.laviya-intake*.json`, whether the PRD carries none, some or all of its IDs: if `created` is filled, use it; otherwise resend its payload unchanged with its stored `requestKey` (Laviya replays the stored result, or creates the batch if the earlier call never succeeded) and store `created`. Then finish the write-back for every item in it, its test cases (step 6) and step 8. Only after that plan new items.
 - Items with `Laviya:` are skipped; when nothing is left to create, say so and stop. New items (added to the PRD later) get new keys and are created as above, under their existing parents with `parentTaskID`.
-- If the PRD has no IDs yet but an intake file exists (an earlier run stopped before the write-back), resend that intake file unchanged with the same key: Laviya replays the stored result instead of creating the tasks again.
 - The replay is per api key owner. When someone else ran the PRD before and the IDs were not written back, check with `laviya_list_tasks` (`search` by title) before creating.
 
 ## 6. Hand-off
