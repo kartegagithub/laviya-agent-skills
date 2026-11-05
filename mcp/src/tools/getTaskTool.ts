@@ -18,7 +18,7 @@ export function registerGetTaskTool(deps: GetTaskToolDeps): void {
       title: "Get Task",
       description:
         "Read a Laviya task by ID or code (e.g. LVY-11262): title, plain-text description, status, project, assignees, attachments, sub tasks, " +
-        "latest comments and design links. Read-only: opens no run, uses no credit and changes nothing. " +
+        "latest comments, design links and test cases. Read-only: opens no run, uses no credit and changes nothing. " +
         "Set downloadAttachments to images or all to save attachments locally and open them.",
       inputSchema: {
         payload: getTaskPayloadSchema

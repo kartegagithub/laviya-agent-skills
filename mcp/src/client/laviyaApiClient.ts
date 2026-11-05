@@ -360,6 +360,45 @@ export class LaviyaApiClient {
     });
   }
 
+  async getTaskTestCases(taskID: string): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetTaskTestCases",
+      query: { TaskID: taskID }
+    });
+  }
+
+  async saveTaskTestCases(payload: {
+    taskID: number;
+    cases: Array<{ referenceID: string; title: string; preconditions?: string; steps?: string; expectedResult?: string; sortOrder?: number }>;
+  }): Promise<unknown> {
+    // Idempotent on the backend: cases are upserted by referenceID, so a retry updates instead of duplicating.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/SaveTaskTestCases",
+      body: payload
+    });
+  }
+
+  async addTaskTestRun(payload: {
+    taskID: number;
+    taskTestCaseID?: number;
+    referenceID?: string;
+    result: string;
+    evidence?: string;
+    evidenceFileIDs?: number[];
+  }): Promise<unknown> {
+    // Not retried: every successful call appends a run, so a retry after a timeout could record it twice.
+    return this.request({
+      method: "POST",
+      retryMode: "never",
+      path: "/api/ai/AddTaskTestRun",
+      body: payload
+    });
+  }
+
   async getTaskLinks(taskID: string): Promise<unknown> {
     return this.request({
       method: "GET",

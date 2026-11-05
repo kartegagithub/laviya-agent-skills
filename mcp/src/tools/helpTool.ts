@@ -72,7 +72,7 @@ const toolHelpCatalog: ToolHelp[] = [
   },
   {
     name: "laviya_get_task",
-    purpose: "Read a task by ID or code: title, description, status, people, attachments, sub tasks, latest comments and design links.",
+    purpose: "Read a task by ID or code: title, description, status, people, attachments, sub tasks, latest comments, design links and test cases.",
     notes: [
       "Read-only: no run is opened, no credit is used and the task is not changed. Only tasks of projects you can access are returned.",
       "description is plain text: images in it appear as [image: /api/ai/GetFile?id=N] lines; descriptionHtml keeps the original markup.",
@@ -313,6 +313,47 @@ const toolHelpCatalog: ToolHelp[] = [
     example: {
       name: "laviya_remove_task_link",
       arguments: { payload: { approvedByUser: true, taskID: 11262, linkID: 845 } }
+    }
+  },
+  {
+    name: "laviya_list_test_cases",
+    purpose: "List the test cases of a task with steps, expected result, the latest result and the 5 most recent runs (result, evidence, evidence files, who and when).",
+    notes: ["Read-only. taskID is a numeric ID or a task code (LVY-11262). laviya_get_task also returns testCases when the task has any."],
+    example: {
+      name: "laviya_list_test_cases",
+      arguments: { payload: { taskID: "LVY-11262" } }
+    }
+  },
+  {
+    name: "laviya_create_test_cases",
+    purpose: "Create or update test cases (title, preconditions, steps, expected result) on a story or task, e.g. the test scenarios of a PRD.",
+    notes: [
+      "approvedByUser must be true. 1-50 cases per call, at most 200 per task. Each case needs a referenceID that is unique in the call.",
+      "A case whose referenceID is already on the task is updated instead of added, so repeating the call is harmless. steps are stored one per line."
+    ],
+    example: {
+      name: "laviya_create_test_cases",
+      arguments: {
+        payload: {
+          approvedByUser: true,
+          taskID: 11262,
+          cases: [
+            { referenceID: "TC-1", title: "Login with valid credentials", preconditions: "A user exists", steps: ["Open /login", "Enter e-mail and password", "Submit"], expectedResult: "The dashboard opens" }
+          ]
+        }
+      }
+    }
+  },
+  {
+    name: "laviya_report_test_result",
+    purpose: "Record a test run (passed, failed, blocked or skipped) of a task's test case with evidence text and files; it shows as the case's latest result in the task.",
+    notes: [
+      "Pass exactly one of testCaseID or referenceID. filePaths are uploaded to the task first (same rules as laviya_upload_task_file); fileIDs must be files of the same task; at most 20 files.",
+      "Every call adds a run and is never retried automatically: do not repeat a call that succeeded."
+    ],
+    example: {
+      name: "laviya_report_test_result",
+      arguments: { payload: { taskID: 11262, referenceID: "TC-1", result: "passed", evidence: "npm test: 42 passed. Logged in as demo@acme.test and saw the dashboard.", filePaths: ["screenshots/login.png"] } }
     }
   },
   {

@@ -106,6 +106,26 @@ export declare class LaviyaApiClient {
         content?: string;
         mode: "replace" | "append";
     }): Promise<unknown>;
+    getTaskTestCases(taskID: string): Promise<unknown>;
+    saveTaskTestCases(payload: {
+        taskID: number;
+        cases: Array<{
+            referenceID: string;
+            title: string;
+            preconditions?: string;
+            steps?: string;
+            expectedResult?: string;
+            sortOrder?: number;
+        }>;
+    }): Promise<unknown>;
+    addTaskTestRun(payload: {
+        taskID: number;
+        taskTestCaseID?: number;
+        referenceID?: string;
+        result: string;
+        evidence?: string;
+        evidenceFileIDs?: number[];
+    }): Promise<unknown>;
     getTaskLinks(taskID: string): Promise<unknown>;
     addTaskLink(payload: {
         taskID: number;

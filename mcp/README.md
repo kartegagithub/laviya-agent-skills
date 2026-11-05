@@ -306,6 +306,9 @@ MCP tools exposed:
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`
+- `laviya_list_test_cases`
+- `laviya_create_test_cases`
+- `laviya_report_test_result`
 - `laviya_list_wikis`
 - `laviya_get_wiki`
 - `laviya_create_wiki`
@@ -374,7 +377,7 @@ Tool contracts:
   - Input: `{ payload: { taskID: number | "LVY-11262", downloadAttachments?: "none" | "images" | "all" } }`
   - Behavior: `GET /api/ai/GetTask?TaskID=`. Read-only (no run, no credit, no change); only tasks of projects the api key owner can access.
     With `images` / `all` the attachments (max 20) are saved to `<os temp>/laviya-task-files/<customTaskID>/` via `GET /api/ai/GetFile` and each gets `localPath` (or `downloadError`).
-  - Output: `{ taskID, customTaskID, title, description (plain text, images as [image: /api/ai/GetFile?id=N]), descriptionHtml, status, taskTypeID, priority, complexity, estimatedEffort, actualEffort, plannedDate, dueDate, projectID, projectName, spaceName, parentTask, subTasks, assignees, attachments, commentCount, comments (latest 20), designReferences }`.
+  - Output: `{ taskID, customTaskID, title, description (plain text, images as [image: /api/ai/GetFile?id=N]), descriptionHtml, status, taskTypeID, priority, complexity, estimatedEffort, actualEffort, plannedDate, dueDate, projectID, projectName, spaceName, parentTask, subTasks, assignees, attachments, commentCount, comments (latest 20), designReferences, testCases }` (`testCases` only when the task has any, see `laviya_list_test_cases`).
 - `laviya_upload_task_file`
   - Input: `{ payload: { taskID, filePath, fileName? } }` (`filePath` absolute or relative to the project root)
   - Behavior: `POST /api/ai/UploadTaskFile` with the Base64 content. Adds the file to the task attachments (history: attachment added). Allowed types: png, jpg, jpeg, gif, webp, pdf, txt, md, log, json, csv, xml, zip, doc(x), xls(x), ppt(x), mp4, webm, mov; max 20 MiB; checked locally and on the server. Not retried automatically.
@@ -409,6 +412,18 @@ Tool contracts:
   - Input: `{ payload: { approvedByUser: true, taskID, linkID } }`
   - Behavior: `POST /api/ai/RemoveTaskLink`. The link must belong to `taskID` (404 otherwise); only its creator, the project PM or an Admin can remove it (403). A link that is already removed returns `true`, so retries are safe.
   - Output: `true`.
+- `laviya_list_test_cases`
+  - Input: `{ payload: { taskID: number | "LVY-11262" } }`
+  - Behavior: `GET /api/ai/GetTaskTestCases?TaskID=`. The task's Test cases area for tasks the api key owner can access (403 otherwise). Read-only.
+  - Output: `{ taskID, customTaskID, testCases: [{ id, title, preconditions, steps (one per line), expectedResult, sortOrder, referenceID, isAICreated, createdByName, dateCreated, lastResult, lastRunAt, canRemove, recentRuns: [{ id, result, evidence, evidenceFiles: [{ fileID, fileName }], runByName, runAt, isAIAction }] (newest 5) }] }`.
+- `laviya_create_test_cases`
+  - Input: `{ payload: { approvedByUser: true, taskID, cases: [{ referenceID, title, preconditions?, steps?: string[], expectedResult?, sortOrder? }] (1-50) } }`
+  - Behavior: `POST /api/ai/SaveTaskTestCases` (steps joined one per line). Upsert by `referenceID`: a case with the same referenceID on the task is updated, the others are added (max 200 per task, 422 above; test-case-added history for new cases). Safe to retry. 403 for tasks the api key owner cannot access.
+  - Output: `{ taskID, createdCount, updatedCount, testCases: [...] }` (saved cases in request order, same shape as `laviya_list_test_cases`).
+- `laviya_report_test_result`
+  - Input: `{ payload: { taskID, testCaseID? | referenceID?, result: "passed" | "failed" | "blocked" | "skipped", evidence?, filePaths?, fileIDs? } }` (exactly one of testCaseID or referenceID)
+  - Behavior: uploads `filePaths` with UploadTaskFile, then `POST /api/ai/AddTaskTestRun` with `evidenceFileIDs` (active files of the same task, max 20; 422 otherwise). Appends a run, sets the case's latest result and records a test-result history row. Not retried automatically; 404 when the case is not on the task.
+  - Output: `{ id, taskTestCaseID, result, evidence, evidenceFiles, runByName, runAt, isAIAction }`.
 - `laviya_list_wikis`
   - Input: `{ projectID? | project?, search?, parentWikiID? }` (`project` = name, part of it, or task prefix; exactly one project must match)
   - Behavior: `GET /api/ai/GetWikis?ProjectID=&Search=&ParentWikiID=`. Active wikis of a project the api key owner can access (403 otherwise), filtered by the wiki security guards like the Laviya wiki page; wikis under a deleted wiki are left out. Flat list in wiki order, max 500; `parentWikiID` 0 = top-level wikis, a wiki id = its direct sub wikis. Read-only.
