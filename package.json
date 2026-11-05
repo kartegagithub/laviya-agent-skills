@@ -1,6 +1,6 @@
 {
   "name": "laviya-agent-skills",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Reusable Laviya orchestration prompts, skills, and IDE rule assets.",
   "author": "kartegagithub",
   "license": "MIT",
