@@ -1,6 +1,6 @@
 ---
 name: laviya-delivery-cycle
-description: Run a work list (artifact, Markdown file or pasted plan) end to end with Laviya - verify what is done and what is left against the codebase, create Laviya tasks for the to-do items the user approves, write each Laviya task ID next to its item, then implement the items one by one while Laviya measures the AI working time, and move each finished task to Ready for deploy with a completion comment. Also lists the Laviya tasks assigned to the user (per project, open by default) and works through the ones they select. Use when the user asks to verify a plan, open Laviya tasks for it, or work through it with Laviya tracking, or asks to list their Laviya tasks, see what is assigned to them or pending in a project, or do their assigned tasks.
+description: Run a work list (artifact, Markdown file or pasted plan) end to end with Laviya - verify what is done and what is left against the codebase, create Laviya tasks for the to-do items the user approves, write each Laviya task ID next to its item, then implement the items one by one while Laviya measures the AI working time, and move each finished task to Ready for deploy with a completion comment. Also lists the Laviya tasks assigned to the user (per project, open by default) and works through the ones they select. Use when the user asks to verify a plan, open Laviya tasks for it, or work through it with Laviya tracking, or asks to list their Laviya tasks, see what is assigned to them or pending in a project, or do their assigned tasks, or asks to test the tasks waiting in a test status and close or send them back with their approval.
 ---
 
 # Laviya Delivery Cycle
@@ -113,3 +113,20 @@ Use this instead of steps 1-4 when the user asks what is assigned to them or pen
    - `laviya_complete_task_work` immediately with that task's own completion comment. Every task gets its own measured effort, status change and comment; never complete several tasks with one call or one shared comment.
    - If a task is unclear or blocked, do not complete it: explain why and ask before continuing with the next one.
 6. Finish with the table of step 6 (Laviya ID, title, final state, measured effort, verification).
+
+## Test stage
+
+Use this when the user asks to test the tasks waiting in a test status (for example "Test statüsündeki işleri test et"). Nothing is closed without the user's approval.
+
+1. Call `laviya_diagnostics`, then `laviya_list_tasks` with the project, `status: "<the project's test status name>"` (for example `"Test"`) and `assignedTo: "anyone"`. Show the table of "Work through assigned tasks" step 2 and ask which tasks to test; continue only with the selected ones. Use `laviya_start_delivery_run` once for them as in that section.
+2. For each selected task, one at a time:
+   - `laviya_get_task` and `laviya_list_test_cases` to read the task and its test cases. If it has no test cases, propose them and create only the approved ones with `laviya_create_test_cases`, or ask how to test it.
+   - `laviya_start_task_work` with the task and `deliveryRunID`, keep `sessionID`. The task moves to the project's Processing status while it is tested; the final status is set when the work is completed.
+   - Run the tests (the test cases' steps, the repository's automated tests, a browser check), then call `laviya_report_test_result` once per test case with `passed`, `failed`, `blocked` or `skipped` and the evidence (what was run, expected and observed, `filePaths` for screenshots or logs). Never report a result for a case that was not run.
+   - Show the user the results (case, result, evidence) and ask what to do. Do not decide yourself.
+   - Approved: `laviya_complete_task_work` with `targetStatus: "<the closing status the user named>"` (for example `"Completed"` or `"Verified"`) and a comment that sums up the results.
+   - Failed, and the user agrees: `laviya_complete_task_work` with `targetStatus` set to the status the task goes back to (for example `"Processing"` or `"In Progress"`) and a comment listing the failed cases and what was observed. When the user asks for a bug, create it with `laviya_create_tasks` (`approvedByUser: true`, `taskTypeID: 10` (Bug), `parentTaskID: <tested task ID>`, the failed case and its evidence in the description).
+   - `targetStatus` takes any status of the project's methodology except Rejected (Rejected needs a reason, which a completion never carries); if the named status does not exist, the error lists the allowed ones.
+3. Finish with a table: Laviya ID, title, results (passed / failed / blocked / skipped), final status, bug opened.
+
+A project can also start a Laviya agent flow automatically when a task enters the test status (an automation rule with the "Start AI agent flow" action). That run is worked through orchestration (`laviya_get_my_work`), not this cycle; its `test_result` step records the results on the task's test cases when `payload.details` is a JSON object whose `scenarios` carry `testCaseID` or `referenceID`. Closing the task stays a human decision there too: the run moves the task to its completion status and the user approves or sends it back.
