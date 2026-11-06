@@ -11,7 +11,7 @@ export const listTasksInputSchema = z.object({
     assignedTo: z.enum(["me", "anyone"]).optional()
         .describe("me (default): tasks assigned to you or with an open checklist item of yours. anyone: every task of the projects."),
     status: z.string().trim().min(1).max(500).optional()
-        .describe("open (default: all but Verified, Rejected, Completed and Cancelled type statuses), all, or comma-separated status names of the project (e.g. \"Backlog, In Progress\")."),
+        .describe("open (default: all but Ready for deploy (Processed), Test - Verify (ToBeVerified), Verified, Rejected, Completed and Cancelled type statuses), all, or comma-separated status names of the project (e.g. \"Backlog, In Progress\")."),
     search: z.string().trim().min(1).max(100).optional().describe("Part of the task title or task code (e.g. LVY-113)."),
     taskTypeIDs: z.array(taskTypeIDSchema).min(1).max(9).optional()
         .describe("Only these task types: 0 Task, 10 Bug, 20 ChangeRequest, 30 Improvement, 40 Debt, 50 Suggestion, 60 Meeting, 70 Story, 80 Epic."),

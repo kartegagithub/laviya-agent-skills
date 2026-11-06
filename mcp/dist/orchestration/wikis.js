@@ -6,7 +6,7 @@ export const MAX_WIKI_RELATED_TASKS = 50;
 export const MAX_WIKI_CONTENT_LENGTH = 200_000;
 const wikiNameSchema = z.string().trim().min(1).max(255);
 const wikiContentSchema = z.string().max(MAX_WIKI_CONTENT_LENGTH)
-    .describe("Plain text; line breaks are kept. Markdown is stored as text (not rendered).");
+    .describe("Markdown (headings, lists, tables, code, links); line breaks are kept. Raw HTML is shown as text; only http, https, mailto and relative links are kept.");
 const projectIDSchema = z.number().int().positive().optional()
     .describe("Laviya project (see laviya_list_projects). Pass projectID or project.");
 const projectNameSchema = z.string().trim().min(1).max(100).optional()
@@ -39,7 +39,7 @@ export const updateWikiPayloadSchema = z.object({
     approvedByUser: z.literal(true),
     wikiID: z.number().int().positive().describe("Wiki id from laviya_list_wikis or laviya_create_wiki."),
     name: wikiNameSchema.optional().describe("New title. Default: unchanged."),
-    content: wikiContentSchema.optional().describe("New content (plain text). Default: unchanged."),
+    content: wikiContentSchema.optional().describe("New content (Markdown). Default: unchanged."),
     mode: z.enum(["replace", "append"]).optional()
         .describe("replace (default) overwrites the content (and its task mentions); append adds content at the end.")
 }).strict();

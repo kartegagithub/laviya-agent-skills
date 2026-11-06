@@ -4,7 +4,7 @@ import { updateWiki, updateWikiPayloadSchema } from "../orchestration/wikis.js";
 export function registerUpdateWikiTool(deps) {
     deps.server.registerTool("laviya_update_wiki", {
         title: "Update Wiki",
-        description: "Rename a Laviya wiki and/or replace (default) or append its plain-text content, after the user approved the change. " +
+        description: "Rename a Laviya wiki and/or replace (default) or append its Markdown content, after the user approved the change. " +
             "Only wikis you can see in Laviya can be updated. Replace overwrites the whole content; append is not retried automatically.",
         inputSchema: {
             payload: updateWikiPayloadSchema

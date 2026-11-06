@@ -221,7 +221,7 @@ const toolHelpCatalog = [
         purpose: "List tasks of a project or of every project you can access, by default the open tasks assigned to you, so the user can pick tasks to work through.",
         notes: [
             "Read-only. Only tasks of projects you can access are listed. project takes a name, part of it, or the task prefix and must match exactly one project (an exact name or prefix wins); otherwise the error lists the candidates. Pass either projectID or project.",
-            "assignedTo: me (default; assignee or open checklist item) or anyone. status: open (default: every status except Verified, Rejected, Completed and Cancelled types, so Ready for deploy is still open), all, or comma-separated status names such as \"Backlog, In Progress\".",
+            "assignedTo: me (default; assignee or open checklist item) or anyone. status: open (default: every status except Ready for deploy (Processed), Test - Verify (ToBeVerified), Verified, Rejected, Completed and Cancelled types; Ready for deploy and Test - Verify mean the assignee is done and the task waits for approval), all, or comma-separated status names such as \"Backlog, In Progress\".",
             "Ordered by priority (3 High first), then task ID. pageSize default 25, max 100; use page and hasMore for the next page. lite leaves the sprints of each task out. estimatedEffort is in minutes.",
             "To work through the tasks the user selects: laviya_start_delivery_run once with their taskIDs, then for each task laviya_get_task, laviya_start_task_work, implement, verify, laviya_complete_task_work."
         ],
@@ -364,7 +364,7 @@ const toolHelpCatalog = [
         purpose: "Create a wiki (or a sub wiki under parentWikiID) in a project, for example the technical document of an integration, after the user approved it.",
         notes: [
             "approvedByUser must be true. Use it only when the user asks to write something to the wiki. Pass projectID or project. Without parentWikiID the wiki is a top-level wiki of the project; a parent must be a wiki of the same project you can see.",
-            "content is plain text with line breaks kept; Markdown is stored as text. relatedTaskIDs (tasks of the same project, max 50) are mentioned at the end of the wiki.",
+            "content is Markdown (headings, lists, tables, code, links; line breaks kept), rendered in Laviya; raw HTML is shown as text and only http, https, mailto and relative links are kept. relatedTaskIDs (tasks of the same project, max 50) are mentioned at the end of the wiki.",
             "Idempotent by name: an active wiki with the same name (case and spaces ignored) under the same parent is returned unchanged with isExisting: true. If that wiki is hidden from you, the call fails with 403. Rejected when the tenant's wiki limit is reached."
         ],
         example: {
