@@ -428,6 +428,26 @@ export class LaviyaApiClient {
     });
   }
 
+  async getTags(params: { search?: string }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetTags",
+      query: { Search: params.search }
+    });
+  }
+
+  async updateTaskTags(payload: { taskID: number; tags: string[]; remove: boolean }): Promise<unknown> {
+    // Idempotent on the backend: tags already on (or already off) the task are reported as alreadyPresent / notPresent,
+    // and a name created by a failed attempt matches the existing tag on the retry.
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/UpdateTaskTags",
+      body: payload
+    });
+  }
+
   async startDeliveryRun(payload: { taskIDs: number[]; title?: string }): Promise<unknown> {
     return this.request({
       method: "POST",

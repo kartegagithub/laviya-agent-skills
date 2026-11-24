@@ -25,6 +25,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
         folderID: z.ZodOptional<z.ZodNumber>;
         links: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        tags: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strict", z.ZodTypeAny, {
         title: string;
         description?: string | undefined;
@@ -38,6 +39,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
         links?: string[] | undefined;
+        tags?: string[] | undefined;
     }, {
         title: string;
         description?: string | undefined;
@@ -51,6 +53,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
         links?: string[] | undefined;
+        tags?: string[] | undefined;
     }>, "many">;
 }, "strict", z.ZodTypeAny, {
     approvedByUser: true;
@@ -68,6 +71,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
         links?: string[] | undefined;
+        tags?: string[] | undefined;
     }[];
     folderID?: number | undefined;
     methodologyStatusID?: number | undefined;
@@ -89,6 +93,7 @@ export declare const createTasksPayloadSchema: z.ZodObject<{
         assigneeEmails?: string[] | undefined;
         folderID?: number | undefined;
         links?: string[] | undefined;
+        tags?: string[] | undefined;
     }[];
     folderID?: number | undefined;
     methodologyStatusID?: number | undefined;

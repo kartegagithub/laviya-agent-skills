@@ -28,6 +28,8 @@ import { registerAssignTasksToSprintTool } from "./tools/assignTasksToSprintTool
 import { registerListTaskLinksTool } from "./tools/listTaskLinksTool.js";
 import { registerAddTaskLinkTool } from "./tools/addTaskLinkTool.js";
 import { registerRemoveTaskLinkTool } from "./tools/removeTaskLinkTool.js";
+import { registerListTagsTool } from "./tools/listTagsTool.js";
+import { registerUpdateTaskTagsTool } from "./tools/updateTaskTagsTool.js";
 import { registerListTestCasesTool } from "./tools/listTestCasesTool.js";
 import { registerCreateTestCasesTool } from "./tools/createTestCasesTool.js";
 import { registerReportTestResultTool } from "./tools/reportTestResultTool.js";
@@ -210,6 +212,18 @@ export async function createRuntimeServer(options: RuntimeBootstrapOptions = {})
     server,
     client,
     logger: logger.child({ tool: "laviya_remove_task_link" })
+  });
+
+  registerListTagsTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_list_tags" })
+  });
+
+  registerUpdateTaskTagsTool({
+    server,
+    client,
+    logger: logger.child({ tool: "laviya_update_task_tags" })
   });
 
   registerListTestCasesTool({

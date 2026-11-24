@@ -54,7 +54,7 @@ const toolHelpCatalog = [
     },
     {
         name: "laviya_get_task",
-        purpose: "Read a task by ID or code: title, description, status, people, attachments, sub tasks, latest comments, design links and test cases.",
+        purpose: "Read a task by ID or code: title, description, status, people, tags, attachments, sub tasks, latest comments, design links and test cases.",
         notes: [
             "Read-only: no run is opened, no credit is used and the task is not changed. Only tasks of projects you can access are returned.",
             "description is plain text: images in it appear as [image: /api/ai/GetFile?id=N] lines; descriptionHtml keeps the original markup.",
@@ -200,7 +200,8 @@ const toolHelpCatalog = [
             "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
             "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey.",
             "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint.",
-            "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link. A replay lists the requested links that are not on the task with code E_LINK_NOT_VERIFIED."
+            "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link. A replay lists the requested links that are not on the task with code E_LINK_NOT_VERIFIED.",
+            "tasks[].tags adds up to 10 tag names to each new task, matched like laviya_update_task_tags (unknown names are created); the created task returns its tags, or tagError if they could not be added. A name that looks like a typo of an existing tag rejects the whole list before any task is created. Not on a replay."
         ],
         example: {
             name: "laviya_create_tasks",
@@ -295,6 +296,28 @@ const toolHelpCatalog = [
         example: {
             name: "laviya_remove_task_link",
             arguments: { payload: { approvedByUser: true, taskID: 11262, linkID: 845 } }
+        }
+    },
+    {
+        name: "laviya_list_tags",
+        purpose: "List the active tags of your tenant (id, name, colorCode); tags are shared by all projects.",
+        notes: ["Read-only. search matches part of the name, ignoring case, spaces, '-', '_' and '.'. laviya_get_task returns the tags of a task."],
+        example: {
+            name: "laviya_list_tags",
+            arguments: { search: "front" }
+        }
+    },
+    {
+        name: "laviya_update_task_tags",
+        purpose: "Add tags to a task by name, or remove them with remove: true.",
+        notes: [
+            "approvedByUser must be true. 1-10 names per call. Names match existing tags ignoring case, spaces, '-', '_' and '.', so 'frontEnd' or 'front-end' reuses 'Frontend'.",
+            "An unknown name is created as a new tag. A name that looks like a typo of an existing tag (e.g. 'Fronted' for 'Frontend') changes nothing: the call fails naming the existing tag; ask the user which one they meant.",
+            "Each name is reported as added, alreadyPresent, removed or notPresent (isNewTag when created), with the task's tags after the change, so repeating the call is harmless. remove never creates tags."
+        ],
+        example: {
+            name: "laviya_update_task_tags",
+            arguments: { payload: { approvedByUser: true, taskID: 11262, tags: ["Frontend", "Mobile"] } }
         }
     },
     {

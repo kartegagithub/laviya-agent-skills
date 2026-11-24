@@ -306,6 +306,8 @@ MCP tools exposed:
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`
+- `laviya_list_tags`
+- `laviya_update_task_tags`
 - `laviya_list_test_cases`
 - `laviya_create_test_cases`
 - `laviya_report_test_result`
@@ -361,7 +363,7 @@ Tool contracts:
     `assignedTo` defaults to `me` (assignee or open checklist item). `status` defaults to `open` (every status except Verified, Rejected, Completed and Cancelled types, so Ready for deploy is open); `all`, or comma-separated status names of the project (unknown name: 422 with the available names). `search` matches the title or task code. Active tasks ordered by priority (High first), then ID; `pageSize` default 25, max 100. Read-only, retried as a safe GET.
   - Output (the response `data`): `{ items: [{ taskID, customTaskID, title, status: { id, name }, priority, complexity, estimatedEffort (minutes), projectID, projectName, parentTaskID, taskTypeID, folders: [{ id, name }] }], totalCount, page, pageSize, hasMore }`; `lite` leaves `folders` out. Pass the selected `taskID`s to `laviya_start_delivery_run` to work through them.
 - `laviya_create_tasks`
-  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID?, links? }], folderID? } }` (strict, 1-50 items)
+  - Input: `{ payload: { approvedByUser: true, projectID, methodologyStatusID?, progressPaymentID?, requestKey?, tasks: [{ referenceID?, title, description?, taskTypeID?, priority?, complexity?, estimatedEffortHours?, parentTaskID?, parentReferenceID?, assigneeEmails?, folderID?, links?, tags? }], folderID? } }` (strict, 1-50 items)
     Created tasks are assigned to the api key owner; `assigneeEmails` assigns other members instead (PM permission or higher only, otherwise nothing is created).
   - Behavior: `POST /api/ai/CreateTasks`. Outside orchestration, creates a user-approved list in one transaction (all items or none) and stores an idempotency record per item.
     `projectID` is required (the user chooses it, e.g. via `laviya_list_projects`; never taken from configuration); the status defaults to the project's first task-creatable status without effort requirement (Backlog first).
@@ -370,14 +372,15 @@ Tool contracts:
     Descriptions are plain text stored as escaped HTML; `estimatedEffortHours` is converted to Laviya minutes. Tasks are owned by the api key owner and marked `IsAICreated`.
     `folderID` puts every task in a sprint (Laviya folder) of the same project; `tasks[].folderID` overrides it per item (sub tasks do not inherit the parent's folder). The folder must be visible to the api key owner (403) and belong to `projectID` (422); the link is created in the same transaction.
     `tasks[].links` (max 10 http(s) URLs) are added to each newly created task after the commit, as with `laviya_add_task_link` (never on a replay); a link that fails is reported in `tasks[].linkErrors: [{ url, code, message }]` and the task stays created. A replay does not add links; it lists the requested links that are not on the task with code `E_LINK_NOT_VERIFIED` (failed, or still being added by the first request), to retry with `laviya_add_task_link`.
+    `tasks[].tags` (max 10 names) are added to each newly created task after the commit, as with `laviya_update_task_tags` (never on a replay); the task returns its `tags`, or `tagError` when they could not be added (the task stays created). A name that looks like a typo of an existing tag rejects the whole list (422) before any task is created.
     Creating tasks does not open a delivery run; a run starts only when work starts (`laviya_start_delivery_run` / `laviya_start_task_work`).
-  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID, linkErrors? }] }`.
+  - Output (the response `data`, camelCase): `{ requestKey, isReplay, projectID, methodologyStatusID, tasks: [{ referenceID, taskID, customTaskID, title, parentTaskID, linkErrors?, tags?, tagError? }] }`.
   - Error strategy: payload/reference validation before the call; transport failures are retried with the same key; business rejections (HTTP 422) are not retried.
 - `laviya_get_task`
   - Input: `{ payload: { taskID: number | "LVY-11262", downloadAttachments?: "none" | "images" | "all" } }`
   - Behavior: `GET /api/ai/GetTask?TaskID=`. Read-only (no run, no credit, no change); only tasks of projects the api key owner can access.
     With `images` / `all` the attachments (max 20) are saved to `<os temp>/laviya-task-files/<customTaskID>/` via `GET /api/ai/GetFile` and each gets `localPath` (or `downloadError`).
-  - Output: `{ taskID, customTaskID, title, description (plain text, images as [image: /api/ai/GetFile?id=N]), descriptionHtml, status, taskTypeID, priority, complexity, estimatedEffort, actualEffort, plannedDate, dueDate, projectID, projectName, spaceName, parentTask, subTasks, assignees, attachments, commentCount, comments (latest 20), designReferences, testCases }` (`testCases` only when the task has any, see `laviya_list_test_cases`).
+  - Output: `{ taskID, customTaskID, title, description (plain text, images as [image: /api/ai/GetFile?id=N]), descriptionHtml, status, taskTypeID, priority, complexity, estimatedEffort, actualEffort, plannedDate, dueDate, projectID, projectName, spaceName, parentTask, subTasks, assignees, tags, attachments, commentCount, comments (latest 20), designReferences, testCases }` (`testCases` only when the task has any, see `laviya_list_test_cases`).
 - `laviya_upload_task_file`
   - Input: `{ payload: { taskID, filePath, fileName? } }` (`filePath` absolute or relative to the project root)
   - Behavior: `POST /api/ai/UploadTaskFile` with the Base64 content. Adds the file to the task attachments (history: attachment added). Allowed types: png, jpg, jpeg, gif, webp, pdf, txt, md, log, json, csv, xml, zip, doc(x), xls(x), ppt(x), mp4, webm, mov; max 20 MiB; checked locally and on the server. Not retried automatically.
@@ -409,9 +412,19 @@ Tool contracts:
   - Behavior: `POST /api/ai/AddTaskLink`. Adds the link like the task detail Links area (provider detection, max 50 links per task (422), link-added history; Figma preview only with the tenant's Figma add-on and the owner's Figma connection). If the task already has the link it is returned with `isExisting: true`, so retries are safe. 403 for tasks the api key owner cannot access.
   - Output: `{ taskID, isExisting, link: { id, provider, linkType, url, embedUrl, title, metadata, canRemove, ... } }`.
 - `laviya_remove_task_link`
+- `laviya_list_tags`
+- `laviya_update_task_tags`
   - Input: `{ payload: { approvedByUser: true, taskID, linkID } }`
   - Behavior: `POST /api/ai/RemoveTaskLink`. The link must belong to `taskID` (404 otherwise); only its creator, the project PM or an Admin can remove it (403). A link that is already removed returns `true`, so retries are safe.
   - Output: `true`.
+- `laviya_list_tags`
+  - Input: `{ search? }` (part of the name; case, spaces, `-`, `_` and `.` ignored)
+  - Behavior: `GET /api/ai/GetTags?Search=`. The active tags of the tenant (shared by all projects), ordered by name, at most 500. Read-only.
+  - Output: `[{ id, name, colorCode }]`.
+- `laviya_update_task_tags`
+  - Input: `{ payload: { approvedByUser: true, taskID, tags: string[] (1-10, max 255 characters), remove? } }`
+  - Behavior: `POST /api/ai/UpdateTaskTags`. Names match existing tags ignoring case, spaces, `-`, `_` and `.` (`Frontend` = `frontEnd` = `front-end`). An unknown name is created as a tenant tag (default color); a name within 1 edit (4-7 characters) or 2 edits (8+) of an existing tag (e.g. `Fronted`) is treated as a typo: nothing is created or changed and the call fails (422) naming the existing tag. `remove: true` removes matching tags and never creates any. Tag added/removed history is written like in the Site. 403 for tasks the api key owner cannot access. Safe to retry.
+  - Output: `{ taskID, customTaskID, remove, results: [{ requestedName, tag: { id, name, colorCode } | null, result: "added" | "alreadyPresent" | "removed" | "notPresent", isNewTag }], tags: [{ id, name, colorCode }] }`.
 - `laviya_list_test_cases`
   - Input: `{ payload: { taskID: number | "LVY-11262" } }`
   - Behavior: `GET /api/ai/GetTaskTestCases?TaskID=`. The task's Test cases area for tasks the api key owner can access (403 otherwise). Read-only.

@@ -135,6 +135,8 @@ Current MCP tool set includes both orchestration and local-direct task feed flow
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`
+- `laviya_list_tags`
+- `laviya_update_task_tags`
 - `laviya_list_test_cases`
 - `laviya_create_test_cases`
 - `laviya_report_test_result`

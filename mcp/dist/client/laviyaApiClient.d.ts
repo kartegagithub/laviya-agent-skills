@@ -135,6 +135,14 @@ export declare class LaviyaApiClient {
         taskID: number;
         linkID: number;
     }): Promise<unknown>;
+    getTags(params: {
+        search?: string;
+    }): Promise<unknown>;
+    updateTaskTags(payload: {
+        taskID: number;
+        tags: string[];
+        remove: boolean;
+    }): Promise<unknown>;
     startDeliveryRun(payload: {
         taskIDs: number[];
         title?: string;

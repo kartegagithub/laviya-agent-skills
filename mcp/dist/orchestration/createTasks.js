@@ -33,7 +33,9 @@ const createTaskItemSchema = z.object({
     folderID: z.number().int().positive().optional()
         .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID."),
     links: z.array(taskLinkUrlSchema).max(MAX_CREATE_TASK_LINKS).optional()
-        .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created. On a replay, links not on the task are listed with code E_LINK_NOT_VERIFIED.")
+        .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created. On a replay, links not on the task are listed with code E_LINK_NOT_VERIFIED."),
+    tags: z.array(z.string().trim().min(1).max(255)).max(10).optional()
+        .describe("Up to 10 tag names added to the new task, matched like laviya_update_task_tags (case, spaces, '-', '_', '.' ignored; unknown names are created). A name that looks like a typo of an existing tag rejects the whole list before any task is created. Tags are not re-added on a replay.")
 }).strict();
 export const createTasksPayloadSchema = z.object({
     approvedByUser: z.literal(true),
@@ -79,7 +81,8 @@ function toRequestItem(item, index) {
         parentReferenceID: item.parentReferenceID,
         assigneeEmails: item.assigneeEmails,
         folderID: item.folderID,
-        links: item.links
+        links: item.links,
+        tags: item.tags
     };
 }
 function validateTaskReferences(tasks) {
