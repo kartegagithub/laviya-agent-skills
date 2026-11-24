@@ -6,7 +6,7 @@ export function registerStartTaskWorkTool(deps) {
         title: "Start Task Work",
         description: "Outside orchestration, start the server-measured AI working time on a Laviya task right before implementing it. " +
             "Moves the task to the project's Processing status and adds it to a delivery run (deliveryRunID, else the task's active run, else a new one). " +
-            "Calling it again returns the open session and keeps the first start time. A new session uses one Agent Orchestration credit.",
+            "Calling it again returns the open session and keeps the first start time. A new session uses one unit of the plan's AI quota.",
         inputSchema: {
             payload: startTaskWorkPayloadSchema
         },

@@ -461,7 +461,7 @@ Tool contracts:
 - `laviya_start_task_work`
   - Input: `{ payload: { taskID, deliveryRunID? } }`
   - Behavior: `POST /api/ai/StartTaskWork`. Starts the server-measured AI work session (or returns the open one) and moves the task to the project's Processing status.
-    The session joins `deliveryRunID`, else the caller's active run containing the task, else a new single-task run. A new session uses one Agent Orchestration credit (403 when exhausted).
+    The session joins `deliveryRunID`, else the caller's active run containing the task, else a new single-task run. A new session uses one unit of the plan's AI quota: the Agent Orchestration credit (403 when exhausted), or the monthly AI call quota once it is enforced (`E_MCP_CALL_LIMIT`).
   - Output: work session `{ sessionID, taskID, customTaskID, title, description, startedAt, status, ... }` (`description` is plain text).
 - `laviya_complete_task_work`
   - Input: `{ payload: { taskID, sessionID, comment?, targetStatus?, methodologyStatusID?, workEndedAt?, requestKey? } }` (`sessionID` from `laviya_start_task_work`)
