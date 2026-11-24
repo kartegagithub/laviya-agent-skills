@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kartegagithub/laviya",
+  "title": "Laviya",
+  "description": "Laviya project management: read and update tasks, wikis, sprints and test cases.",
+  "websiteUrl": "https://laviya.app",
+  "repository": {
+    "url": "https://github.com/kartegagithub/laviya-agent-skills",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.laviya.app/api/mcp"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ This document explains the complete release flow for `mcp`:
 
 1. Publish package to npm
 2. Submit `server.json` to MCP Registry
+3. Publish the remote (streamable-http) entry and request GitHub Copilot listing (sections 18-21)
 
 The goal is to keep all commands in one place so you do not need to search in future releases.
 
@@ -251,3 +252,84 @@ $githubToken = (Get-Content -Path ".\.mcpregistry_github_token" -Raw).Trim()
 5. `npm view laviya-mcp-server version` matches release version.
 6. `.\.tools\mcp-publisher.exe publish .\server.json` succeeded.
 
+
+## 18. Registry Entries Overview
+
+Laviya has two separate entries in the official MCP Registry (`https://registry.modelcontextprotocol.io`).
+They are intentionally **not** merged into one `server.json`: the tool sets and authentication differ,
+and `packages` + `remotes` in one entry must expose the same server.
+
+| Registry name | Transport | Auth | `server.json` | Purpose |
+| --- | --- | --- | --- | --- |
+| `io.github.kartegagithub/laviya-agent-skills` | stdio (npm `laviya-mcp-server`) | `LAVIYA_API_KEY` | `mcp/server.json` | Agent orchestration runtime |
+| `io.github.kartegagithub/laviya` | streamable-http `https://api.laviya.app/api/mcp` | OAuth 2.1 + PKCE + dynamic client registration | `mcp-remote/server.json` | Workspace access: tasks, wikis, sprints, test cases |
+
+Both names are under the `io.github.kartegagithub/` namespace, so the same GitHub login (section 11) can publish both.
+The remote entry was first published as `1.0.0` on 2026-11-10.
+
+## 19. Publish the Remote (streamable-http) Entry
+
+The remote entry has no npm package. Only `mcp-remote/server.json` is published; the server itself is the
+deployed Laviya backend, so backend releases do **not** require a registry publish.
+
+Publish again only when metadata changes (URL, description, title, website). Bump `version` first
+(for example `1.0.0` → `1.0.1`); the registry rejects an already-published version.
+
+Run in `mcp/` (PowerShell):
+
+```powershell
+$githubToken = (Get-Content -Path ".\.mcpregistry_github_token" -Raw).Trim()
+.\.tools\mcp-publisher.exe login github -token $githubToken
+.\.tools\mcp-publisher.exe validate ..\mcp-remote\server.json
+.\.tools\mcp-publisher.exe publish ..\mcp-remote\server.json
+```
+
+Verify:
+
+```powershell
+curl.exe "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.kartegagithub/laviya"
+```
+
+The response must contain `"name":"io.github.kartegagithub/laviya"`, the new `version`, and `"isLatest":true`.
+
+Before publishing a URL change, test the endpoint in VS Code with `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "laviya": { "type": "http", "url": "https://api.laviya.app/api/mcp" }
+  }
+}
+```
+
+OAuth requirements that clients (VS Code / Copilot, Claude, Codex) rely on:
+
+- `POST /api/mcp` without a token returns `401` with `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/api/mcp"`.
+- `/.well-known/oauth-authorization-server` advertises `registration_endpoint` (dynamic client registration).
+- Redirect URIs: any `https` URL, or `http` on loopback (`localhost`, `127.0.0.1`, `[::1]`) with any port.
+  VS Code uses loopback ports and `https://vscode.dev/redirect`.
+
+## 20. GitHub Copilot MCP Registry Listing
+
+GitHub's MCP Registry (`https://github.com/mcp`, used by Copilot / VS Code) is fed from the official MCP Registry,
+but it does **not** list every published server automatically. After publishing (sections 12 and 19):
+
+1. Email `partnerships@github.com` and nominate both registry names, remote entry first:
+   - `io.github.kartegagithub/laviya` (remote, OAuth)
+   - `io.github.kartegagithub/laviya-agent-skills` (stdio agent runtime)
+2. Once listed, new registry versions flow to GitHub automatically.
+
+Check listing status:
+
+```powershell
+curl.exe "https://api.mcp.github.com/v0.1/servers?search=laviya"
+```
+
+`"count":0` means the server is not listed on GitHub yet (state as of 2026-11-10).
+
+## 21. Troubleshooting
+
+- `401 … token is expired` on publish: the registry JWT is short-lived. Run the login step again, then publish.
+- `You do not have permission to publish this server`: the GitHub account behind the PAT must be a member of
+  `kartegagithub`. Make the organization membership public, then log in again.
+- `validate` works with `mcp-publisher` 1.5.0 (the binary in `.tools`); the note in section 15 applies only to older builds.

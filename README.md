@@ -8,6 +8,7 @@ artifacts for tools such as Cursor and Claude.
 
 - `laviya-agent-skills`: reusable prompt, rule, and skill asset bundle for Node-based tooling
 - `laviya-mcp-server`: stdio MCP runtime published from `mcp/`
+- Remote MCP endpoint `https://api.laviya.app/api/mcp` (OAuth), registered from `mcp-remote/server.json`
 
 ## What Is Included
 
@@ -26,6 +27,8 @@ laviya-agent-skills/
     src/
     examples/
     README.md
+  mcp-remote/
+    server.json
   cursor/
   claude/
   docs/
@@ -102,7 +105,7 @@ const orchestratorPrompt = readFileSync(resolveAssetPath("orchestratorSystemProm
 
 - Runtime architecture and implementation: `mcp/README.md`
 - Developer setup guide: `docs/Setup.md`
-- NPM publishing guide: `docs/MCPServerPublish.md`
+- NPM + MCP Registry publishing guide (stdio and remote entries, GitHub Copilot listing): `docs/MCPServerPublish.md`
 - End-user installation and usage: `docs/InstallationAndUsage.md`
 - Client-specific MCP setup (Codex, VS Code, Antigravity, Claude): `docs/InstallationAndUsage.md`
 
