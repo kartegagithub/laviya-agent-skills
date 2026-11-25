@@ -11,23 +11,7 @@ export declare const completeExecutionPayloadSchema: z.ZodObject<{
     finalOutput: z.ZodString;
     agentType: z.ZodOptional<z.ZodString>;
     agentVersion: z.ZodOptional<z.ZodString>;
-}, "strict", z.ZodTypeAny, {
-    aiAgentFlowRunID: number;
-    taskID: number;
-    aiAgentTaskExecutionID: number;
-    finalOutput: string;
-    requestKey?: string | undefined;
-    agentType?: string | undefined;
-    agentVersion?: string | undefined;
-}, {
-    aiAgentFlowRunID: number;
-    taskID: number;
-    aiAgentTaskExecutionID: number;
-    finalOutput: string;
-    requestKey?: string | undefined;
-    agentType?: string | undefined;
-    agentVersion?: string | undefined;
-}>;
+}, z.core.$strict>;
 export type CompleteExecutionPayload = z.infer<typeof completeExecutionPayloadSchema>;
 export interface PreparedCompletion {
     payload: CompleteExecutionPayload;

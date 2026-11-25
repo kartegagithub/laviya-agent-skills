@@ -5,57 +5,28 @@ export declare const MAX_TASK_FILE_BYTES: number;
 export declare const MAX_FILES_PER_CALL = 20;
 export declare const MAX_ASSIGNEES = 10;
 declare const fileListSchema: z.ZodObject<{
-    filePaths: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
-}, "strip", z.ZodTypeAny, {
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-}, {
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-}>;
+    filePaths: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+}, z.core.$strip>;
 export declare const uploadTaskFilePayloadSchema: z.ZodObject<{
     taskID: z.ZodNumber;
     filePath: z.ZodString;
     fileName: z.ZodOptional<z.ZodString>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    filePath: string;
-    fileName?: string | undefined;
-}, {
-    taskID: number;
-    filePath: string;
-    fileName?: string | undefined;
-}>;
+}, z.core.$strict>;
 export declare const updateTaskDescriptionPayloadSchema: z.ZodObject<{
-    filePaths: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
+    filePaths: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
     taskID: z.ZodNumber;
     text: z.ZodOptional<z.ZodString>;
-    mode: z.ZodOptional<z.ZodEnum<["append", "replace"]>>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    mode?: "replace" | "append" | undefined;
-    text?: string | undefined;
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-}, {
-    taskID: number;
-    mode?: "replace" | "append" | undefined;
-    text?: string | undefined;
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-}>;
+    mode: z.ZodOptional<z.ZodEnum<{
+        replace: "replace";
+        append: "append";
+    }>>;
+}, z.core.$strict>;
 export declare const assignTaskPayloadSchema: z.ZodObject<{
     taskID: z.ZodNumber;
-    assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    assigneeEmails?: string[] | undefined;
-}, {
-    taskID: number;
-    assigneeEmails?: string[] | undefined;
-}>;
+    assigneeEmails: z.ZodOptional<z.ZodArray<z.ZodString>>;
+}, z.core.$strict>;
 export type UploadTaskFilePayload = z.infer<typeof uploadTaskFilePayloadSchema>;
 export type UpdateTaskDescriptionPayload = z.infer<typeof updateTaskDescriptionPayloadSchema>;
 export type AssignTaskPayload = z.infer<typeof assignTaskPayloadSchema>;
