@@ -4,38 +4,108 @@ declare const retryPolicySchema: z.ZodObject<{
     baseDelayMs: z.ZodDefault<z.ZodNumber>;
     maxDelayMs: z.ZodDefault<z.ZodNumber>;
     jitter: z.ZodDefault<z.ZodBoolean>;
-    retryOnHttpStatus: z.ZodDefault<z.ZodArray<z.ZodNumber>>;
-}, z.core.$strict>;
+    retryOnHttpStatus: z.ZodDefault<z.ZodArray<z.ZodNumber, "many">>;
+}, "strict", z.ZodTypeAny, {
+    maxAttempts: number;
+    baseDelayMs: number;
+    maxDelayMs: number;
+    jitter: boolean;
+    retryOnHttpStatus: number[];
+}, {
+    maxAttempts?: number | undefined;
+    baseDelayMs?: number | undefined;
+    maxDelayMs?: number | undefined;
+    jitter?: boolean | undefined;
+    retryOnHttpStatus?: number[] | undefined;
+}>;
 declare const globalConfigSchema: z.ZodObject<{
-    baseUrl: z.ZodDefault<z.ZodString>;
+    baseUrl: z.ZodDefault<z.ZodEffects<z.ZodString, string, string>>;
     defaultPollIntervalSeconds: z.ZodDefault<z.ZodNumber>;
     defaultLeaseRefreshSeconds: z.ZodDefault<z.ZodNumber>;
     requestTimeoutSeconds: z.ZodDefault<z.ZodNumber>;
-    logLevel: z.ZodDefault<z.ZodEnum<{
-        error: "error";
-        debug: "debug";
-        info: "info";
-        warn: "warn";
-    }>>;
+    logLevel: z.ZodDefault<z.ZodEnum<["debug", "info", "warn", "error"]>>;
     auth: z.ZodOptional<z.ZodObject<{
-        mode: z.ZodOptional<z.ZodEnum<{
-            apiKey: "apiKey";
-            apiKeyAndBearer: "apiKeyAndBearer";
-        }>>;
+        mode: z.ZodOptional<z.ZodEnum<["apiKey", "apiKeyAndBearer"]>>;
         headerName: z.ZodOptional<z.ZodString>;
         sendBearerToken: z.ZodOptional<z.ZodBoolean>;
-    }, z.core.$loose>>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        mode: z.ZodOptional<z.ZodEnum<["apiKey", "apiKeyAndBearer"]>>;
+        headerName: z.ZodOptional<z.ZodString>;
+        sendBearerToken: z.ZodOptional<z.ZodBoolean>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        mode: z.ZodOptional<z.ZodEnum<["apiKey", "apiKeyAndBearer"]>>;
+        headerName: z.ZodOptional<z.ZodString>;
+        sendBearerToken: z.ZodOptional<z.ZodBoolean>;
+    }, z.ZodTypeAny, "passthrough">>>;
     retry: z.ZodDefault<z.ZodObject<{
         maxAttempts: z.ZodDefault<z.ZodNumber>;
         baseDelayMs: z.ZodDefault<z.ZodNumber>;
         maxDelayMs: z.ZodDefault<z.ZodNumber>;
         jitter: z.ZodDefault<z.ZodBoolean>;
-        retryOnHttpStatus: z.ZodDefault<z.ZodArray<z.ZodNumber>>;
-    }, z.core.$strict>>;
+        retryOnHttpStatus: z.ZodDefault<z.ZodArray<z.ZodNumber, "many">>;
+    }, "strict", z.ZodTypeAny, {
+        maxAttempts: number;
+        baseDelayMs: number;
+        maxDelayMs: number;
+        jitter: boolean;
+        retryOnHttpStatus: number[];
+    }, {
+        maxAttempts?: number | undefined;
+        baseDelayMs?: number | undefined;
+        maxDelayMs?: number | undefined;
+        jitter?: boolean | undefined;
+        retryOnHttpStatus?: number[] | undefined;
+    }>>;
     completion: z.ZodOptional<z.ZodObject<{
         includeTokenUsage: z.ZodBoolean;
-    }, z.core.$strict>>;
-}, z.core.$strict>;
+    }, "strict", z.ZodTypeAny, {
+        includeTokenUsage: boolean;
+    }, {
+        includeTokenUsage: boolean;
+    }>>;
+}, "strict", z.ZodTypeAny, {
+    baseUrl: string;
+    defaultPollIntervalSeconds: number;
+    defaultLeaseRefreshSeconds: number;
+    requestTimeoutSeconds: number;
+    logLevel: "debug" | "info" | "warn" | "error";
+    retry: {
+        maxAttempts: number;
+        baseDelayMs: number;
+        maxDelayMs: number;
+        jitter: boolean;
+        retryOnHttpStatus: number[];
+    };
+    auth?: z.objectOutputType<{
+        mode: z.ZodOptional<z.ZodEnum<["apiKey", "apiKeyAndBearer"]>>;
+        headerName: z.ZodOptional<z.ZodString>;
+        sendBearerToken: z.ZodOptional<z.ZodBoolean>;
+    }, z.ZodTypeAny, "passthrough"> | undefined;
+    completion?: {
+        includeTokenUsage: boolean;
+    } | undefined;
+}, {
+    baseUrl?: string | undefined;
+    defaultPollIntervalSeconds?: number | undefined;
+    defaultLeaseRefreshSeconds?: number | undefined;
+    requestTimeoutSeconds?: number | undefined;
+    logLevel?: "debug" | "info" | "warn" | "error" | undefined;
+    auth?: z.objectInputType<{
+        mode: z.ZodOptional<z.ZodEnum<["apiKey", "apiKeyAndBearer"]>>;
+        headerName: z.ZodOptional<z.ZodString>;
+        sendBearerToken: z.ZodOptional<z.ZodBoolean>;
+    }, z.ZodTypeAny, "passthrough"> | undefined;
+    retry?: {
+        maxAttempts?: number | undefined;
+        baseDelayMs?: number | undefined;
+        maxDelayMs?: number | undefined;
+        jitter?: boolean | undefined;
+        retryOnHttpStatus?: number[] | undefined;
+    } | undefined;
+    completion?: {
+        includeTokenUsage: boolean;
+    } | undefined;
+}>;
 export type RetryPolicyConfig = z.infer<typeof retryPolicySchema>;
 export type GlobalConfig = z.infer<typeof globalConfigSchema>;
 export interface LoadedGlobalConfig {

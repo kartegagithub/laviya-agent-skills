@@ -5,12 +5,8 @@ export declare const reportTokenUsagePayloadSchema: z.ZodObject<{
     taskID: z.ZodNumber;
     aiAgentFlowRunID: z.ZodNumber;
     aiAgentTaskExecutionID: z.ZodOptional<z.ZodNumber>;
-    tokenUsages: z.ZodArray<z.ZodObject<{
-        measurement: z.ZodEnum<{
-            exact: "exact";
-            estimated: "estimated";
-            unavailable: "unavailable";
-        }>;
+    tokenUsages: z.ZodArray<z.ZodEffects<z.ZodObject<{
+        measurement: z.ZodEnum<["exact", "estimated", "unavailable"]>;
         measurementSource: z.ZodOptional<z.ZodString>;
         estimationModelVersion: z.ZodOptional<z.ZodString>;
         model: z.ZodOptional<z.ZodString>;
@@ -20,9 +16,87 @@ export declare const reportTokenUsagePayloadSchema: z.ZodObject<{
         cost: z.ZodOptional<z.ZodNumber>;
         currency: z.ZodOptional<z.ZodString>;
         providerRequestID: z.ZodOptional<z.ZodString>;
-    }, z.core.$strict>>;
+    }, "strict", z.ZodTypeAny, {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }, {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }>, {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }, {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }>, "many">;
     requestKey: z.ZodOptional<z.ZodString>;
-}, z.core.$strict>;
+}, "strict", z.ZodTypeAny, {
+    aiAgentFlowRunID: number;
+    taskID: number;
+    tokenUsages: {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }[];
+    requestKey?: string | undefined;
+    aiAgentTaskExecutionID?: number | undefined;
+}, {
+    aiAgentFlowRunID: number;
+    taskID: number;
+    tokenUsages: {
+        measurement: "exact" | "estimated" | "unavailable";
+        measurementSource?: string | undefined;
+        estimationModelVersion?: string | undefined;
+        model?: string | undefined;
+        inputTokens?: number | undefined;
+        outputTokens?: number | undefined;
+        totalTokens?: number | undefined;
+        cost?: number | undefined;
+        currency?: string | undefined;
+        providerRequestID?: string | undefined;
+    }[];
+    requestKey?: string | undefined;
+    aiAgentTaskExecutionID?: number | undefined;
+}>;
 export type ReportTokenUsagePayload = z.infer<typeof reportTokenUsagePayloadSchema>;
 export declare function reportTokenUsage(client: LaviyaApiClient, logger: Logger, payload: ReportTokenUsagePayload): Promise<unknown>;
 //# sourceMappingURL=reportTokenUsage.d.ts.map

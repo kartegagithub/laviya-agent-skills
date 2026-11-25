@@ -5,28 +5,101 @@ export declare const executionSummarySchema: z.ZodObject<{
         taskId: z.ZodNumber;
         runId: z.ZodNumber;
         stepIndex: z.ZodNumber;
-    }, z.core.$strict>;
-    outcome: z.ZodEnum<{
-        success: "success";
-        failed: "failed";
+    }, "strict", z.ZodTypeAny, {
+        runId: number;
+        taskId: number;
+        stepIndex: number;
+    }, {
+        runId: number;
+        taskId: number;
+        stepIndex: number;
     }>;
-    deliverables: z.ZodArray<z.ZodString>;
-    keyDecisions: z.ZodArray<z.ZodString>;
-    assumptions: z.ZodArray<z.ZodString>;
-    risks: z.ZodArray<z.ZodString>;
+    outcome: z.ZodEnum<["success", "failed"]>;
+    deliverables: z.ZodArray<z.ZodString, "many">;
+    keyDecisions: z.ZodArray<z.ZodString, "many">;
+    assumptions: z.ZodArray<z.ZodString, "many">;
+    risks: z.ZodArray<z.ZodString, "many">;
     policyCompliance: z.ZodOptional<z.ZodObject<{
         mode: z.ZodString;
         compliant: z.ZodBoolean;
         workspaceChanged: z.ZodBoolean;
-        performedCapabilities: z.ZodArray<z.ZodString>;
-        notes: z.ZodArray<z.ZodString>;
-    }, z.core.$strict>>;
+        performedCapabilities: z.ZodArray<z.ZodString, "many">;
+        notes: z.ZodArray<z.ZodString, "many">;
+    }, "strict", z.ZodTypeAny, {
+        mode: string;
+        performedCapabilities: string[];
+        workspaceChanged: boolean;
+        notes: string[];
+        compliant: boolean;
+    }, {
+        mode: string;
+        performedCapabilities: string[];
+        workspaceChanged: boolean;
+        notes: string[];
+        compliant: boolean;
+    }>>;
     handoff: z.ZodObject<{
         forNextStep: z.ZodString;
-        questions: z.ZodArray<z.ZodString>;
-        artifacts: z.ZodArray<z.ZodString>;
-    }, z.core.$strict>;
-}, z.core.$strict>;
+        questions: z.ZodArray<z.ZodString, "many">;
+        artifacts: z.ZodArray<z.ZodString, "many">;
+    }, "strict", z.ZodTypeAny, {
+        forNextStep: string;
+        questions: string[];
+        artifacts: string[];
+    }, {
+        forNextStep: string;
+        questions: string[];
+        artifacts: string[];
+    }>;
+}, "strict", z.ZodTypeAny, {
+    stepRole: string;
+    task: {
+        runId: number;
+        taskId: number;
+        stepIndex: number;
+    };
+    outcome: "failed" | "success";
+    deliverables: string[];
+    keyDecisions: string[];
+    assumptions: string[];
+    risks: string[];
+    handoff: {
+        forNextStep: string;
+        questions: string[];
+        artifacts: string[];
+    };
+    policyCompliance?: {
+        mode: string;
+        performedCapabilities: string[];
+        workspaceChanged: boolean;
+        notes: string[];
+        compliant: boolean;
+    } | undefined;
+}, {
+    stepRole: string;
+    task: {
+        runId: number;
+        taskId: number;
+        stepIndex: number;
+    };
+    outcome: "failed" | "success";
+    deliverables: string[];
+    keyDecisions: string[];
+    assumptions: string[];
+    risks: string[];
+    handoff: {
+        forNextStep: string;
+        questions: string[];
+        artifacts: string[];
+    };
+    policyCompliance?: {
+        mode: string;
+        performedCapabilities: string[];
+        workspaceChanged: boolean;
+        notes: string[];
+        compliant: boolean;
+    } | undefined;
+}>;
 export type ExecutionSummary = z.infer<typeof executionSummarySchema>;
 export declare function parseStructuredExecutionSummary(value: unknown): ExecutionSummary | undefined;
 export declare function parseExecutionSummaryText(value: string | undefined): ExecutionSummary | undefined;
