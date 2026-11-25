@@ -5,23 +5,11 @@ export declare const MAX_DELIVERY_RUN_TASKS = 100;
 export declare const startTaskWorkPayloadSchema: z.ZodObject<{
     taskID: z.ZodNumber;
     deliveryRunID: z.ZodOptional<z.ZodNumber>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    deliveryRunID?: number | undefined;
-}, {
-    taskID: number;
-    deliveryRunID?: number | undefined;
-}>;
+}, z.core.$strict>;
 export declare const startDeliveryRunPayloadSchema: z.ZodObject<{
-    taskIDs: z.ZodArray<z.ZodNumber, "many">;
+    taskIDs: z.ZodArray<z.ZodNumber>;
     title: z.ZodOptional<z.ZodString>;
-}, "strict", z.ZodTypeAny, {
-    taskIDs: number[];
-    title?: string | undefined;
-}, {
-    taskIDs: number[];
-    title?: string | undefined;
-}>;
+}, z.core.$strict>;
 export declare const completeTaskWorkPayloadSchema: z.ZodObject<{
     taskID: z.ZodNumber;
     sessionID: z.ZodNumber;
@@ -30,23 +18,7 @@ export declare const completeTaskWorkPayloadSchema: z.ZodObject<{
     methodologyStatusID: z.ZodOptional<z.ZodNumber>;
     workEndedAt: z.ZodOptional<z.ZodString>;
     requestKey: z.ZodOptional<z.ZodString>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    sessionID: number;
-    methodologyStatusID?: number | undefined;
-    requestKey?: string | undefined;
-    comment?: string | undefined;
-    targetStatus?: string | undefined;
-    workEndedAt?: string | undefined;
-}, {
-    taskID: number;
-    sessionID: number;
-    methodologyStatusID?: number | undefined;
-    requestKey?: string | undefined;
-    comment?: string | undefined;
-    targetStatus?: string | undefined;
-    workEndedAt?: string | undefined;
-}>;
+}, z.core.$strict>;
 export type StartTaskWorkPayload = z.infer<typeof startTaskWorkPayloadSchema>;
 export type CompleteTaskWorkPayload = z.infer<typeof completeTaskWorkPayloadSchema>;
 export type StartDeliveryRunPayload = z.infer<typeof startDeliveryRunPayloadSchema>;

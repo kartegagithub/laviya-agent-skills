@@ -8,31 +8,13 @@ export declare const testCaseInputSchema: z.ZodObject<{
     referenceID: z.ZodString;
     title: z.ZodString;
     preconditions: z.ZodOptional<z.ZodString>;
-    steps: z.ZodOptional<z.ZodEffects<z.ZodArray<z.ZodString, "many">, string[], string[]>>;
+    steps: z.ZodOptional<z.ZodArray<z.ZodString>>;
     expectedResult: z.ZodOptional<z.ZodString>;
     sortOrder: z.ZodOptional<z.ZodNumber>;
-}, "strict", z.ZodTypeAny, {
-    title: string;
-    referenceID: string;
-    sortOrder?: number | undefined;
-    preconditions?: string | undefined;
-    steps?: string[] | undefined;
-    expectedResult?: string | undefined;
-}, {
-    title: string;
-    referenceID: string;
-    sortOrder?: number | undefined;
-    preconditions?: string | undefined;
-    steps?: string[] | undefined;
-    expectedResult?: string | undefined;
-}>;
+}, z.core.$strict>;
 export declare const listTestCasesPayloadSchema: z.ZodObject<{
-    taskID: z.ZodUnion<[z.ZodNumber, z.ZodString]>;
-}, "strict", z.ZodTypeAny, {
-    taskID: string | number;
-}, {
-    taskID: string | number;
-}>;
+    taskID: z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>;
+}, z.core.$strict>;
 export declare const createTestCasesPayloadSchema: z.ZodObject<{
     approvedByUser: z.ZodLiteral<true>;
     taskID: z.ZodNumber;
@@ -40,72 +22,25 @@ export declare const createTestCasesPayloadSchema: z.ZodObject<{
         referenceID: z.ZodString;
         title: z.ZodString;
         preconditions: z.ZodOptional<z.ZodString>;
-        steps: z.ZodOptional<z.ZodEffects<z.ZodArray<z.ZodString, "many">, string[], string[]>>;
+        steps: z.ZodOptional<z.ZodArray<z.ZodString>>;
         expectedResult: z.ZodOptional<z.ZodString>;
         sortOrder: z.ZodOptional<z.ZodNumber>;
-    }, "strict", z.ZodTypeAny, {
-        title: string;
-        referenceID: string;
-        sortOrder?: number | undefined;
-        preconditions?: string | undefined;
-        steps?: string[] | undefined;
-        expectedResult?: string | undefined;
-    }, {
-        title: string;
-        referenceID: string;
-        sortOrder?: number | undefined;
-        preconditions?: string | undefined;
-        steps?: string[] | undefined;
-        expectedResult?: string | undefined;
-    }>, "many">;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    approvedByUser: true;
-    cases: {
-        title: string;
-        referenceID: string;
-        sortOrder?: number | undefined;
-        preconditions?: string | undefined;
-        steps?: string[] | undefined;
-        expectedResult?: string | undefined;
-    }[];
-}, {
-    taskID: number;
-    approvedByUser: true;
-    cases: {
-        title: string;
-        referenceID: string;
-        sortOrder?: number | undefined;
-        preconditions?: string | undefined;
-        steps?: string[] | undefined;
-        expectedResult?: string | undefined;
-    }[];
-}>;
+    }, z.core.$strict>>;
+}, z.core.$strict>;
 export declare const reportTestResultPayloadSchema: z.ZodObject<{
-    filePaths: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber, "many">>;
+    filePaths: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    fileIDs: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
     taskID: z.ZodNumber;
     testCaseID: z.ZodOptional<z.ZodNumber>;
     referenceID: z.ZodOptional<z.ZodString>;
-    result: z.ZodEnum<["passed", "failed", "blocked", "skipped"]>;
+    result: z.ZodEnum<{
+        failed: "failed";
+        passed: "passed";
+        skipped: "skipped";
+        blocked: "blocked";
+    }>;
     evidence: z.ZodOptional<z.ZodString>;
-}, "strict", z.ZodTypeAny, {
-    taskID: number;
-    result: "failed" | "passed" | "skipped" | "blocked";
-    referenceID?: string | undefined;
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-    testCaseID?: number | undefined;
-    evidence?: string | undefined;
-}, {
-    taskID: number;
-    result: "failed" | "passed" | "skipped" | "blocked";
-    referenceID?: string | undefined;
-    filePaths?: string[] | undefined;
-    fileIDs?: number[] | undefined;
-    testCaseID?: number | undefined;
-    evidence?: string | undefined;
-}>;
+}, z.core.$strict>;
 export type ListTestCasesPayload = z.infer<typeof listTestCasesPayloadSchema>;
 export type CreateTestCasesPayload = z.infer<typeof createTestCasesPayloadSchema>;
 export type ReportTestResultPayload = z.infer<typeof reportTestResultPayloadSchema>;
