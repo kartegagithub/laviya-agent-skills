@@ -303,6 +303,8 @@ MCP tools exposed:
 - `laviya_list_sprints`
 - `laviya_create_sprint`
 - `laviya_assign_tasks_to_sprint`
+- `laviya_list_progress_payments`
+- `laviya_assign_tasks_to_progress_payment`
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`
@@ -403,6 +405,14 @@ Tool contracts:
   - Input: `{ payload: { approvedByUser: true, folderID, taskIDs: number[] (1-100), remove? } }`
   - Behavior: `POST /api/ai/SetTaskFolders`. Adds the tasks to the folder (or removes them with `remove: true`) with task history. The folder must be visible and every task accessible (403) and of the folder's project (422); otherwise nothing is changed. Safe to retry.
   - Output: `{ folderID, folderName, projectID, remove, tasks: [{ taskID, customTaskID, result: "added" | "alreadyPresent" | "removed" | "notPresent" }] }`.
+- `laviya_list_progress_payments`
+  - Input: `projectID`, `search?` (part of the name or code)
+  - Behavior: `GET /api/ai/GetProgressPayments?ProjectID=&Search=`. Progress payments (hakediş) of an accessible project, newest first, max 200. No budget or invoice amounts. Read-only.
+  - Output: `[{ id, projectID, name, code, startDate, endDate, approvalStatus, effortTrackingType, isAssignable, isInvoiced, taskCount }]` (`isAssignable`: manual task selection; `TrackEffortsAutomatically` ones collect the project's efforts by date and take no tasks).
+- `laviya_assign_tasks_to_progress_payment`
+  - Input: `{ payload: { approvedByUser: true, progressPaymentID, taskIDs: number[] (1-100), remove? } }`
+  - Behavior: `POST /api/ai/SetTaskProgressPayment`. Sets the progress payment of the tasks (a task has one, so assigning moves it) or, with `remove: true`, clears it from the tasks that have it; the efforts of the changed progress payments are recalculated. The progress payment's project and every task must be accessible (403) and the tasks of that project (422); only `isAssignable` progress payments take tasks (422); otherwise nothing is changed. Safe to retry.
+  - Output: `{ progressPaymentID, progressPaymentName, projectID, remove, tasks: [{ taskID, customTaskID, result: "assigned" | "alreadyAssigned" | "removed" | "notPresent", previousProgressPaymentID }] }`.
 - `laviya_list_task_links`
   - Input: `{ payload: { taskID: number | "LVY-11262" } }`
   - Behavior: `GET /api/ai/GetTaskLinks?TaskID=`. The task's Links area (Figma, Visily, GitHub, other pages) for tasks the api key owner can access (403 otherwise). Read-only.

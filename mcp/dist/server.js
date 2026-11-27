@@ -25,6 +25,8 @@ import { registerAssignTaskTool } from "./tools/assignTaskTool.js";
 import { registerListSprintsTool } from "./tools/listSprintsTool.js";
 import { registerCreateSprintTool } from "./tools/createSprintTool.js";
 import { registerAssignTasksToSprintTool } from "./tools/assignTasksToSprintTool.js";
+import { registerListProgressPaymentsTool } from "./tools/listProgressPaymentsTool.js";
+import { registerAssignTasksToProgressPaymentTool } from "./tools/assignTasksToProgressPaymentTool.js";
 import { registerListTaskLinksTool } from "./tools/listTaskLinksTool.js";
 import { registerAddTaskLinkTool } from "./tools/addTaskLinkTool.js";
 import { registerRemoveTaskLinkTool } from "./tools/removeTaskLinkTool.js";
@@ -160,6 +162,16 @@ export async function createRuntimeServer(options = {}) {
         server,
         client,
         logger: logger.child({ tool: "laviya_assign_tasks_to_sprint" })
+    });
+    registerListProgressPaymentsTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_list_progress_payments" })
+    });
+    registerAssignTasksToProgressPaymentTool({
+        server,
+        client,
+        logger: logger.child({ tool: "laviya_assign_tasks_to_progress_payment" })
     });
     registerListTaskLinksTool({
         server,

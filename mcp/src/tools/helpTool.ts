@@ -72,7 +72,7 @@ const toolHelpCatalog: ToolHelp[] = [
   },
   {
     name: "laviya_get_task",
-    purpose: "Read a task by ID or code: title, description, status, people, tags, attachments, sub tasks, latest comments, design links and test cases.",
+    purpose: "Read a task by ID or code: title, description, status, people, tags, progress payment, attachments, sub tasks, latest comments, design links and test cases.",
     notes: [
       "Read-only: no run is opened, no credit is used and the task is not changed. Only tasks of projects you can access are returned.",
       "description is plain text: images in it appear as [image: /api/ai/GetFile?id=N] lines; descriptionHtml keeps the original markup.",
@@ -217,6 +217,7 @@ const toolHelpCatalog: ToolHelp[] = [
       "Created tasks are assigned to you. assigneeEmails assigns other tenant members instead, which only PM, Director and Admin users can do; otherwise the whole call is rejected and nothing is created.",
       "All items are created together or none. Resending the same list returns the already created tasks (isReplay), so retrying after an error never duplicates them.",
       "isReplay: true means the tasks already existed from an earlier call; tell the user. To create the same list again on purpose, pass a new requestKey.",
+      "progressPaymentID puts every task in a progress payment (hakediş) of the same project; get ids with laviya_list_progress_payments. To give tasks different progress payments, or to change one later, use laviya_assign_tasks_to_progress_payment.",
       "folderID puts every task in a sprint (Laviya folder) of the same project; tasks[].folderID overrides it per item. Sub tasks do not inherit the parent's folder. Get ids with laviya_list_sprints or laviya_create_sprint.",
       "tasks[].links adds up to 10 http(s) links (Figma, Visily, GitHub, any page) to each new task after the tasks are created; not on a replay. A link that fails is listed in tasks[].linkErrors and the task stays created; retry it with laviya_add_task_link. A replay lists the requested links that are not on the task with code E_LINK_NOT_VERIFIED.",
       "tasks[].tags adds up to 10 tag names to each new task, matched like laviya_update_task_tags (unknown names are created); the created task returns its tags, or tagError if they could not be added. A name that looks like a typo of an existing tag rejects the whole list before any task is created. Not on a replay."
@@ -281,6 +282,31 @@ const toolHelpCatalog: ToolHelp[] = [
     example: {
       name: "laviya_assign_tasks_to_sprint",
       arguments: { payload: { approvedByUser: true, folderID: 42, taskIDs: [501, 502] } }
+    }
+  },
+  {
+    name: "laviya_list_progress_payments",
+    purpose: "List the progress payments (hakediş) of a project with their dates, approval status and task counts.",
+    notes: [
+      "Read-only. Only progress payments of projects you can access are returned, newest first (max 200). search matches part of the name or code. No budget or invoice amounts are returned.",
+      "isAssignable: true means manual task selection: tasks are assigned to it. effortTrackingType TrackEffortsAutomatically collects the project's efforts by date and takes no tasks."
+    ],
+    example: {
+      name: "laviya_list_progress_payments",
+      arguments: { projectID: 3, search: "Kasım" }
+    }
+  },
+  {
+    name: "laviya_assign_tasks_to_progress_payment",
+    purpose: "Assign existing tasks to a progress payment (hakediş), or clear it from them with remove: true.",
+    notes: [
+      "approvedByUser must be true. At most 100 taskIDs; every task must be an accessible task of the progress payment's project, otherwise nothing is changed.",
+      "Only progress payments with isAssignable: true take tasks. A task has one progress payment: assigning moves it and reports previousProgressPaymentID. remove only clears tasks that have this progress payment.",
+      "Each task is reported as assigned, alreadyAssigned, removed or notPresent, so repeating the call is harmless. Efforts of the changed progress payments are recalculated."
+    ],
+    example: {
+      name: "laviya_assign_tasks_to_progress_payment",
+      arguments: { payload: { approvedByUser: true, progressPaymentID: 17, taskIDs: [501, 502] } }
     }
   },
   {

@@ -371,6 +371,8 @@ Check: start a new Claude Code session and run `/skills`; `laviya-orchestrator`,
 - `laviya_list_sprints`
 - `laviya_create_sprint`
 - `laviya_assign_tasks_to_sprint`
+- `laviya_list_progress_payments`
+- `laviya_assign_tasks_to_progress_payment`
 - `laviya_list_task_links`
 - `laviya_add_task_link`
 - `laviya_remove_task_link`

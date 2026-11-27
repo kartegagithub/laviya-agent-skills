@@ -311,6 +311,27 @@ export class LaviyaApiClient {
     });
   }
 
+  async getProgressPayments(params: { projectID: number; search?: string }): Promise<unknown> {
+    return this.request({
+      method: "GET",
+      retryMode: "safe",
+      path: "/api/ai/GetProgressPayments",
+      query: {
+        ProjectID: params.projectID,
+        Search: params.search
+      }
+    });
+  }
+
+  async setTaskProgressPayment(payload: { progressPaymentID: number; taskIDs: number[]; remove: boolean }): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      retryMode: "idempotent",
+      path: "/api/ai/SetTaskProgressPayment",
+      body: payload
+    });
+  }
+
   async getWikis(params: { projectID: number; search?: string; parentWikiID?: number }): Promise<unknown> {
     return this.request({
       method: "GET",

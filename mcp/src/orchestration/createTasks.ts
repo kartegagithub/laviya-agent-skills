@@ -50,7 +50,8 @@ export const createTasksPayloadSchema = z.object({
     .describe("Laviya project the user chose for this list (see laviya_list_projects). Never assumed from configuration."),
   methodologyStatusID: z.number().int().positive().optional()
     .describe("Task-creatable status of the project. Defaults to Backlog, Planned, Processing, ..."),
-  progressPaymentID: z.number().int().positive().optional(),
+  progressPaymentID: z.number().int().positive().optional()
+    .describe("Progress payment (hakediş) of the project for every task (see laviya_list_progress_payments). Use laviya_assign_tasks_to_progress_payment to change it later or per task."),
   folderID: z.number().int().positive().optional()
     .describe("Sprint (Laviya folder) of the project for every task (see laviya_list_sprints / laviya_create_sprint). Items can override it."),
   requestKey: z.string().trim().min(1).max(120).optional()

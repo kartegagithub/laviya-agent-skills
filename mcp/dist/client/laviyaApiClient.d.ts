@@ -86,6 +86,15 @@ export declare class LaviyaApiClient {
         taskIDs: number[];
         remove: boolean;
     }): Promise<unknown>;
+    getProgressPayments(params: {
+        projectID: number;
+        search?: string;
+    }): Promise<unknown>;
+    setTaskProgressPayment(payload: {
+        progressPaymentID: number;
+        taskIDs: number[];
+        remove: boolean;
+    }): Promise<unknown>;
     getWikis(params: {
         projectID: number;
         search?: string;
