@@ -323,7 +323,7 @@ export class LaviyaApiClient {
     });
   }
 
-  async setTaskProgressPayment(payload: { progressPaymentID: number; taskIDs: number[]; remove: boolean }): Promise<unknown> {
+  async setTaskProgressPayment(payload: { progressPaymentID: number; taskIDs: number[]; remove: boolean; confirmInactiveProgressPayment?: boolean }): Promise<unknown> {
     return this.request({
       method: "POST",
       retryMode: "idempotent",

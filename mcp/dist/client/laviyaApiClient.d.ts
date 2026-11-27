@@ -94,6 +94,7 @@ export declare class LaviyaApiClient {
         progressPaymentID: number;
         taskIDs: number[];
         remove: boolean;
+        confirmInactiveProgressPayment?: boolean;
     }): Promise<unknown>;
     getWikis(params: {
         projectID: number;

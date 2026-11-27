@@ -12,7 +12,9 @@ export const assignTasksToProgressPaymentPayloadSchema = z.object({
     taskIDs: z.array(z.number().int().positive()).min(1).max(MAX_PROGRESS_PAYMENT_TASKS)
         .describe("Tasks of the progress payment's project. If any task is of another project or not accessible, nothing is changed."),
     remove: z.boolean().optional()
-        .describe("true clears the progress payment from the tasks that have it instead of assigning it. Default false.")
+        .describe("true clears the progress payment from the tasks that have it instead of assigning it. Default false."),
+    confirmInactiveProgressPayment: z.boolean().optional()
+        .describe("Set true only after the call was rejected with \"Progress payment confirmation required\" (the progress payment is in the past, has not started yet or is invoiced), you told the user exactly that and they explicitly confirmed.")
 }).strict();
 export async function listProgressPayments(client, logger, input) {
     logger.info("Listing Laviya progress payments", { projectID: input.projectID, hasSearch: Boolean(input.search) });
@@ -23,7 +25,8 @@ export async function assignTasksToProgressPayment(client, logger, payload) {
     return readData(await client.setTaskProgressPayment({
         progressPaymentID: payload.progressPaymentID,
         taskIDs: payload.taskIDs,
-        remove: payload.remove ?? false
+        remove: payload.remove ?? false,
+        confirmInactiveProgressPayment: payload.confirmInactiveProgressPayment
     }));
 }
 //# sourceMappingURL=progressPayments.js.map

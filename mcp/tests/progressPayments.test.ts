@@ -80,6 +80,10 @@ test("assigns tasks to a progress payment through api/ai/SetTaskProgressPayment 
     assert.deepEqual(requests[0]?.body, { progressPaymentID: 17, taskIDs: [501, 502], remove: false });
     assert.deepEqual(requests[1]?.body, requests[0]?.body, "the call sets a state, so a failed attempt is retried");
     assert.deepEqual(requests[2]?.body, { progressPaymentID: 17, taskIDs: [501], remove: true });
+
+    await assignTasksToProgressPayment(createClient(), createLogger("error"),
+      assignTasksToProgressPaymentPayloadSchema.parse({ approvedByUser: true, progressPaymentID: 17, taskIDs: [501], confirmInactiveProgressPayment: true }));
+    assert.deepEqual(requests[3]?.body, { progressPaymentID: 17, taskIDs: [501], remove: false, confirmInactiveProgressPayment: true });
   } finally {
     restore();
   }
@@ -92,10 +96,24 @@ test("sends the progress payment of laviya_create_tasks", async () => {
     const base = { approvedByUser: true, projectID: 3, tasks: [{ referenceID: "W-01", title: "Add export" }] };
     await createTasks(createClient(), createLogger("error"), createTasksPayloadSchema.parse(base));
     await createTasks(createClient(), createLogger("error"), createTasksPayloadSchema.parse({ ...base, progressPaymentID: 17 }));
+    await createTasks(createClient(), createLogger("error"), createTasksPayloadSchema.parse({
+      ...base,
+      progressPaymentID: 17,
+      confirmInactiveProgressPayment: true,
+      tasks: [{ referenceID: "W-01", title: "Add export" }, { referenceID: "W-02", title: "Docs", progressPaymentID: 18 }]
+    }));
+    await createTasks(createClient(), createLogger("error"), createTasksPayloadSchema.parse({ ...base, progressPaymentID: 17, confirmInactiveProgressPayment: true }));
 
     assert.equal("progressPaymentID" in (requests[0]?.body ?? {}), false);
+    assert.equal("confirmInactiveProgressPayment" in (requests[0]?.body ?? {}), false);
     assert.equal(requests[1]?.body.progressPaymentID, 17);
     assert.notEqual(requests[1]?.body.requestKey, requests[0]?.body.requestKey);
+    assert.equal(requests[2]?.body.confirmInactiveProgressPayment, true);
+    assert.deepEqual(requests[2]?.body.tasks, [
+      { referenceID: "W-01", title: "Add export" },
+      { referenceID: "W-02", title: "Docs", progressPaymentID: 18 }
+    ]);
+    assert.equal(requests[3]?.body.requestKey, requests[1]?.body.requestKey, "confirming a rejected list keeps its request key");
   } finally {
     restore();
   }

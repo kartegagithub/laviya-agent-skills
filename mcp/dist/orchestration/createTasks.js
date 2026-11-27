@@ -32,6 +32,8 @@ const createTaskItemSchema = z.object({
         .describe("E-mails of tenant members to assign. Omit to assign yourself. Assigning others requires PM permission (PM, Director or Admin)."),
     folderID: z.number().int().positive().optional()
         .describe("Sprint (Laviya folder) of this task (see laviya_list_sprints); overrides payload.folderID."),
+    progressPaymentID: z.number().int().positive().optional()
+        .describe("Progress payment (hakediş) of this task (see laviya_list_progress_payments); overrides payload.progressPaymentID."),
     links: z.array(taskLinkUrlSchema).max(MAX_CREATE_TASK_LINKS).optional()
         .describe("Up to 10 http(s) links (Figma frame, Visily board, GitHub, any page) added to the new task after it is created. A link that fails is reported in tasks[].linkErrors; the task stays created. On a replay, links not on the task are listed with code E_LINK_NOT_VERIFIED."),
     tags: z.array(z.string().trim().min(1).max(255)).max(10).optional()
@@ -44,7 +46,9 @@ export const createTasksPayloadSchema = z.object({
     methodologyStatusID: z.number().int().positive().optional()
         .describe("Task-creatable status of the project. Defaults to Backlog, Planned, Processing, ..."),
     progressPaymentID: z.number().int().positive().optional()
-        .describe("Progress payment (hakediş) of the project for every task (see laviya_list_progress_payments). Use laviya_assign_tasks_to_progress_payment to change it later or per task."),
+        .describe("Progress payment (hakediş) of the project for every task (see laviya_list_progress_payments; isAssignable ones only). Items can override it."),
+    confirmInactiveProgressPayment: z.boolean().optional()
+        .describe("Set true only after the call was rejected with \"Progress payment confirmation required\" (the progress payment is in the past, has not started yet or is invoiced), you told the user exactly that and they explicitly confirmed."),
     folderID: z.number().int().positive().optional()
         .describe("Sprint (Laviya folder) of the project for every task (see laviya_list_sprints / laviya_create_sprint). Items can override it."),
     requestKey: z.string().trim().min(1).max(120).optional()
@@ -66,7 +70,8 @@ export async function createTasks(client, logger, payload) {
     logger.info("Creating user-approved Laviya tasks", { projectID, count: tasks.length });
     // The backend creates all items in one transaction and replays the stored result for a repeated requestKey,
     // so a retry after a timeout never duplicates tasks.
-    const envelope = await client.createTasks({ ...body, requestKey }, requestKey);
+    // The confirmation is not part of the tasks, so it does not change the request key.
+    const envelope = await client.createTasks({ ...body, confirmInactiveProgressPayment: payload.confirmInactiveProgressPayment, requestKey }, requestKey);
     return readData(envelope);
 }
 function toRequestItem(item, index) {
@@ -82,6 +87,7 @@ function toRequestItem(item, index) {
         parentReferenceID: item.parentReferenceID,
         assigneeEmails: item.assigneeEmails,
         folderID: item.folderID,
+        progressPaymentID: item.progressPaymentID,
         links: item.links,
         tags: item.tags
     };

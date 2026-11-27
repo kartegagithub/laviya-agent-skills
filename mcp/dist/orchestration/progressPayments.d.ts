@@ -11,6 +11,7 @@ export declare const assignTasksToProgressPaymentPayloadSchema: z.ZodObject<{
     progressPaymentID: z.ZodNumber;
     taskIDs: z.ZodArray<z.ZodNumber>;
     remove: z.ZodOptional<z.ZodBoolean>;
+    confirmInactiveProgressPayment: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strict>;
 export type ListProgressPaymentsInput = z.infer<typeof listProgressPaymentsInputSchema>;
 export type AssignTasksToProgressPaymentPayload = z.infer<typeof assignTasksToProgressPaymentPayloadSchema>;

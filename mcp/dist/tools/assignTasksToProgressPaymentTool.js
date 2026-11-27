@@ -6,7 +6,8 @@ export function registerAssignTasksToProgressPaymentTool(deps) {
         title: "Assign Tasks To Progress Payment",
         description: "Assign existing tasks to a progress payment (hakediş), or clear it from them with remove: true, after the user approved it. A task has one " +
             "progress payment, so assigning moves it from its previous one. All tasks must belong to the progress payment's project; otherwise nothing " +
-            "is changed. Returns per task assigned, alreadyAssigned, removed or notPresent, so repeating the call is harmless.",
+            "is changed. Returns per task assigned, alreadyAssigned, removed or notPresent, so repeating the call is harmless. The change is written to the task history. " +
+            "A progress payment that is in the past, not started yet or invoiced is rejected first: tell the user why and resend with confirmInactiveProgressPayment: true only if they explicitly confirm.",
         inputSchema: {
             payload: assignTasksToProgressPaymentPayloadSchema
         },
